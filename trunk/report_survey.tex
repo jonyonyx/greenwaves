@@ -1,0 +1,91 @@
+\documentclass [a4paper, 11pt, titlepage] {article}
+
+\usepackage[ansinew]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{fancyhdr}
+\usepackage{algorithm,algorithmic}
+
+\frenchspacing \setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex plus 0.5ex minus 0.2ex}
+
+\addtolength{\textwidth}{1cm}
+\addtolength{\textheight}{1cm}
+
+\setlength{\parindent}{0pt} % for adjusting indentation
+
+\hyphenation{desirable finally sta-ti-sti-cal-ly basic tailored}
+\date{A date}
+
+%BEGIN Changing sizes of captions:
+
+% Different font in captions
+\newcommand{\captionfonts}{\footnotesize}
+\newcommand{\mycomment}[1]{
+\begin{center}
+\fbox{
+\begin{minipage}{0.8\textwidth}
+\it
+#1
+\end{minipage}
+}
+\end{center}
+}
+
+\begin{document}
+
+\setlength{\parindent}{4mm}
+\renewcommand{\algorithmiccomment}[1]{//#1}
+
+\begin{titlepage}
+  \begin{center}
+    \vspace*{\stretch{1}}
+    \noindent\rule{\linewidth}{1mm}\\[4mm]
+      {\sffamily\bfseries \Huge Green light traffic using metaheuristic optimization}\\[1mm]
+      {\sffamily\bfseries \Large
+        A Survey}\\[0mm]
+    \noindent\rule{\linewidth}{1mm}\\[30mm]
+    \large $\overline{\textrm{ Andreas Warberg, s030447 }}$
+
+    \vspace*{\stretch{3}}
+
+    \large \today \\[6mm]
+    Supervisors: René Munk Jørgensen \& Jesper Larsen \\[3mm]
+    Technical University of Denmark
+  \end{center}
+\end{titlepage}
+
+\newpage
+\pagenumbering{roman}
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+
+\section{Introduction}
+
+\newpage
+
+\section{Vocabulary}
+\input{vocabulary}
+
+\clearpage
+\pagebreak
+\section{Conclusion}
+
+\clearpage
+\newpage
+\begin{thebibliography}{1}
+\addcontentsline{toc}{section}{Litteratur}
+
+\bibitem{book} Burke, Edmund K.: "Search Methodologies", \textit{Springer 2005}
+
+
+\end{thebibliography}
+
+\clearpage
+\newpage
+\appendix
+
+\end{document}
