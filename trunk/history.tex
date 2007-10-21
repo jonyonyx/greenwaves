@@ -1,6 +1,26 @@
 \section{History of Traffic Signal Optimization}
 \label{history}
 
+There are three major types of traffic signal systems:
+
+\begin{description}
+\item[Pre-timed] signals uses static plans for phase sequences, cycle time and green splits according to the day of time. 
+
+They are based on the assumption that demand is fairly stable in a certain division of periods eg. morning, midday and evening or workday / weekend. For instance the traffic in the morning (7am to 8.30am) and afternoon (15.30pm to 17.00pm) is usually much higher than during the day or night due to the workforce coming to and leaving from work. The exception is in the weekend, where increased demand scenarios occur when eg. a football game is about to go off.
+
+Traffic may prove to be more dynamic, though, and therefore the utilization of this type of signals should be monitored on a regular basis so proper adjustments can be made.
+
+In the municipality of Copenhagen, the Centre for Traffic has most of the signal lights under pre-timed control with four plans to choose between.
+\item[Actuated] signals function like pre-timed signals but with the ability to \textit{lengthen} the green period with a certain amount, if additional vehicles are observed. 
+
+To achieve this the signal needs \textit{detector input} about the demand it faces for each phase.
+
+A special type of actuated signal is red-on-zero-demand which gives a red light to all phases, when no detector input is received. This allows the signal to quickly give green light to a phase  so vehicles may pass through unhindered. By placing the detectors close to the signal a traffic calming effect can be acheived in that vehicles must slow down slightly before the light starts to go red.
+
+In the area of Copenhagen this type of signal is preferred because it is relatively good at adapting to traffic fluctuations and works autonomously. But the signal only performs local optimization, rather than coordinating with other signals, and pedestrians must trigger the signal themselves by pushing a button rather than just waiting for the next green light, which they are not used to in Copenhagen.
+\item[Adaptive]
+\end{description}
+
 Some of the first public research into the optimization of traffic signals was published by Wardrop \cite{Wardrop} and Webster \cite{Webster}. Wardrop determines the Stochastic User Equilibrium essential for network assignment and the prediction of demand. Webster develops static optimization formulas for cycle time.
 
 The optimizations are mostly concerned with optimizing pre-timed signal plans and creating actuated signal controllers
