@@ -14,8 +14,12 @@ There are many terms concerning traffic signal optimization. This section attemp
 	
 	\item[Split] (Or \textit{cycle}-split) is the green-to-red time ratio split. Usually a higher ratio means more green time.
 	
-	\item[Traffic assignment] Also known as equilibrium flow, is the determination of vehicular flow along origin-destination paths and, consequently, along links in a traffic network. The information gained from a correct traffic assignment is vital to the determination of traffic signal settings and vice-verse. Thus many articles consider the two problems simultaneously.
+	\item[Traffic assignment], also known as equilibrium flow, is the determination of vehicular flow along origin-destination paths and, consequently, along links in a traffic network. The information gained from a correct traffic assignment is vital to the determination of traffic signal settings and vice-verse. Thus many articles consider the two problems simultaneously.
 
-	\item[Platoon] A group of vehicles travelling together. A platoon can be detected by observing the time between on vehicle and the next and applying the critical headway threshold, see \cite[sct. 2]{25}. 
+	\item[A platoon] is group of vehicles travelling together. A platoon can be detected by observing the time between on vehicle and the next and applying the critical headway threshold, see \cite[sct. 2]{25}. 
 Platoons are formed both as a consequence of car-following behaviour, which is used in simulation frameworks such as \cite{treiber-2000-62}, but also due to the batch-like nature which is imposed on the traffic by traffic signals.
+
+\item[Artery] is a main-path through a traffic network. It will generally face higher demand than auxilliary paths.
+
+\item[Traffic network] is most often described mathematically as a graph $G(V,E)$ where $V$ is the set of intersections controlled by a traffic signal and $E$ is the set of roads connecting the intersection. A path is thus a route through the network crossing a least one signalized intersection.
 \end{description}
