@@ -2,8 +2,18 @@ The objective of this survey is to cover the research into adaptive traffic cont
 
 The survey was made from a collection of about 50 papers and research reports, which cover from static optimization of a single intersection to large-scale systems designed to coordinate multiple signals.
 
+This report will discuss such things as:
+
+\begin{itemize}
+\item The objective function and the inherent multi objectivity of the problem
+\item Optimization types
+\item Cooperation among signal controllers
+\end{itemize}
+
+It will not go into detail on e-conomic or safety issues nor will it discuss optimizations for soft trafficants. Detection is not investigated in detail; it is assumed that there exist solid solutions for detection and that the control software has good to near-perfect information about the state of the traffic network.
+
 \subsection{The optimization problem}
-A signalized intersection, or network of intersections, have a number of key parameters, which are essential to the performance of the intersection.
+A signalized intersection, or network of intersections, has a number of key parameters, which are essential to the performance of the intersection.
 
 \begin{description}
 \item[Cycle time] is the time from a sequence of phases begins until they are looped again. The cycle time is very important to the chosen MOE. In \cite{41} Sun et al. explain that 
