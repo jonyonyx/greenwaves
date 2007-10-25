@@ -1,4 +1,32 @@
 \label{history}
-Some of the first public research into the optimization of traffic signals was published by Wardrop \cite{Wardrop} and Webster \cite{Webster}. Wardrop determines the Stochastic User Equilibrium essential for network assignment and the prediction of demand. Webster develops static optimization formulas for cycle time.
+Some of the first public research into the optimization of traffic signals was published by Wardrop \cite{Wardrop} and Webster \cite{Webster}. Wardrop determines the Stochastic User Equilibrium essential for network assignment and the prediction of demand. 
 
-The optimizations are mostly concerned with optimizing pre-timed signal plans and creating actuated signal controllers.
+Websters contributes with a formula to assess the average delay for vehicles using an intersection with a fixed timing plan. He also give expressions for the cycle time and green times which minimize the average delay. 
+Websters results have been widely used in the litterature eg. in \cite{1} to generate initial solutions of cycle length and green splits for a metaheuristic search and in \cite{30} to calculate cycle lengths.
+
+[MERE OM HANS VIGTIGE BIDRAG]
+
+\subsection{Traffic Assignment}
+Traffic signal should be set to accommodate the flow of traffic. Thus it is vitally important to \textit{know the flow} in advance. Wardrop contributed with two principles concerning traffic flow:
+
+\begin{enumerate}
+\item \textbf{User Equilibrium:} each trafficant has minimized his own travel time (greedy route choice)
+\item \textbf{System Equilibrium:} the average travel time is minimized (coordinated route choice)
+\end{enumerate}
+
+(Given the choice a user will select the route which he \textit{perceives} to be the best. This route does not necessarily correspond with the actual shortest route, which has led to the Stochastic User Equilibrium variation where this error is modelled by a stochastic element.)
+
+The traditional way of getting flow data is to observe arrivals - either by traffic counts or detector input - to an intersection over a time period. Auxilliary informations such as turning directions and vehicle types are collected as well, if possible. 
+
+This data is fitted by a stochastic process and the optimization is made on the assumption that the process can describe the actual arrivals.
+
+Thus there are two problems 1) determining demands and 2) optimizing the traffic signals accordingly.
+
+It is important to realize that changing the traffic signal settings will cause changes to the flow and that changing the flow should cause the signals settings to be recalculated. This has given rise to a number of papers considering the two problems at the same time in so-called bilevel formulations eg. 
+\begin{itemize}
+\item \textbf{\cite{mc}:} iterative procedure which optimizes traffic signals and then solves the traffic assignment problem untill mutual consistency (convergence) is acheived
+\item \textbf{\cite{34}:} gradient projection method for finding local optima combined with a global heuristic search
+\item And finally \textbf{\cite{2}} using a genetic algorithm approach.
+\end{itemize}
+
+Truly adaptive systems should not have to \textit{calculate} how the flow will be rather \textit{measure} it directly from sensor input.
