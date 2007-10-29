@@ -24,6 +24,8 @@ There are many terms concerning traffic signal optimization. This section attemp
 	\item[A platoon] is group of vehicles travelling together. A platoon can be detected by observing the time between on vehicle and the next and applying the critical headway threshold, see \cite[sct. 2]{25}. 
 Platoons are formed both as a consequence of car-following behaviour, which is used in simulation frameworks such as \cite{treiber-2000-62}, but also due to the batch-like nature which is imposed on the traffic by traffic signals.
 
+\item[Time horizon.] The amount of time into the future, which is taken into consideration while optimizing signal settings. Using a shorter time horizon the optimizations might prove to be flawed, but with longer time horizons the predictions of traffic become less accurate.
+
 \item[Vehicle Actuated Programming] (VAP) is an optional add-on module for the
 simulation of programmable, phase- or stage-based, and traffic-actuated signal controls in VISSIM.
 \end{description}
