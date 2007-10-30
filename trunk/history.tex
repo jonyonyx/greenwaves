@@ -39,12 +39,9 @@ It is important to realize that changing the traffic signal settings will cause 
 
 A feature of adaptive systems is that they are less dependent on a large database of historical flow data since they use online data input from detectors, which they are, in turn, more dependent on. Thereby they do not have to consider the problem of mutual equilibrium between signal settings and user equilibrium.
 
-\subsection{Detection and Signal Control}
-Detection is the Achilles' heel of adaptive traffic control systems. An otherwise perfect prediction algorithm will provide flawed information to the optimization procedure, if sensors are misplaced or there are too few of them. Even with a dense sensor network lag issues may cause problems in the prediction and timing.
+\subsection{Optimization Methods and Architectures}
+The surveyed articles span the period from the 60's to present. There are some tendencies which has been observed with respect to optimization methods.
 
-In Copenhagen upstream sensors are connected to the approaching signal controller which relay data to an area-specific hub, which is monitored by a central computer. Most of the signals are transmitted via cables, which are often severed by entrepreneurs so wireless, IP based alternatives are being explored.
+A pattern for the earlier work seems to be the presentation of a mathematical model, which optimizes for one or more of the parameters mentioned in section \ref{theproblem}. The problem is then shown to be time consuming to solve using current computers and a heuristic is presented, which can cut down on the search space eg. by using "common sense" rules such as pruning of short cycle lengths under high saturation.
 
-The most common type of sensor in the area of Copenhagen is the induction loop. It is set into the tarmack and gives an indication whenever a metallic object (vehicle) passes. To detect buses extra large loops, which can only be triggered by large vehicles, are used. 
-
-The Centre for Traffic also use video detection and radar. Video is relatively cheap and can be installed without obstructing the traffic. Radar functions a bit like video but is more reliable under bad weather conditions and gives depth information.
-Video is the most promising detection technology due to its rapid development and the possibility to perform post-processing on a computer to obtain additional informations besides vehicle detection. For instance, video images are being used in Copenhagen to measure travel speeds (a MOE). This is done by reading parts of license plates at point A and measuring the time for it to reach some other point, which is filmed.
+Later on the same models begin to become solvable by standard optimization packages due to advances in computer power as well as in the packages themselves.
