@@ -38,7 +38,7 @@ Clearly there are conflicts of interest among this selection of objectives. Some
 
 \begin{itemize}
 \item Minimizing delays for vehicles along an artery will cause longer waiting times for crossing pedestrians
-\item Prioritizing eg. public transport by skipping a phase, for instance, will lower the performance for private transport. 
+\item Prioritizing eg. public transport by skipping a phase will lower the performance for private transport. 
 
 In the SCOOT system \cite{scoot2004} a phase skipping approach to bus prioritization was implemented and tested in a London intersection. The buses enjoyed 4$s$ less delay but the delay for non-bus vehicles increased by 1$s$ in total average. The vehicles on the roads with no bus traffic suffered up to 14$s$ delay on average, however.
 \item Finally, any optimization which improves the experience of traversing the network by vehicle will probably cause more traffic and thus increase emissions
@@ -54,6 +54,6 @@ of stops per unit time and is used to measure the overall cost of
 traffic congestion associated with the traffic control plan.
 \end{quote}
 
-Thus TRANSYT faces the multiobjectivity but the weights must be defined and maintained by the traffic engineers supervising the system. This is no trivial task and requires intimate knowledge of the network as well as the optimization package.
+Thus TRANSYT faces the multiobjectivity but the weights must be defined and maintained by the traffic engineers supervising the system. This is no trivial task and requires intimate knowledge of the network as well as the optimization package. The TRANSYT manual and Danish Road Directorate agree that the weights should be set so that 1 stop $\simeq$ 20 seconds delay.
 
 In \cite{41} a true multiobjective optimization approach is tested. Sun et al. use a Non-dominated Sorting Genetic Algorithms (NSGA II) to find Pareto-optimal\footnote{No changes can be made which improves upon at least one objective while no objective values worsen} solutions for the minimization objectives \textit{average delay} and \textit{number of stops} per unit of time. 
