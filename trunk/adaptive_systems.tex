@@ -1,1 +1,24 @@
 \label{adaptive_cooperation}
+
+\subsection{Metaheuristic Search}
+All systems in this survey, which use a metaheuristic search, employ a simulator for evaluating solutions.
+
+To ensure that a reasonable amount of solutions are tested the objective function in a metaheuristic search application must be fast to evaluate. 
+
+There are three types of simulators, the main difference being the level of detail in the underlying model. They are micro, meso and macro simulators. Microsimulators model the behaviour of each vehicle and driver, mesosimulators regard the movements of platoons of vehicles and macrosimulators search for shortests paths, considering origins and destinations.
+
+Independent on the detail level of the model a simulation must run until it is converged before the objective value can be extracted. 
+
+Park et al. \cite{4} show that the CORSIM microsimulator is superior to the mesoscopic simulator from the TRANSYT package when combined with a genetic algorithm. But microsimulation is also slower to converge than the other types and thus evaluation of a solution will take longer. In a comparison study \cite{simcompare} Holst estimates the required simulation type as in table \ref{tab:convergespeed}.
+
+\begin{table}[!h]
+\begin{center}
+\begin{tabular}{c|c|c}
+\textbf{VisSim} & \textbf{Dynameq} & \textbf{Time Slice Assistant} \\
+\textit{(micro)} & \textit{(meso)} & \textit{(macro)} \\ \hline
+1000 & 100 & 1
+\end{tabular}
+\end{center}
+\label{tab:convergespeed}
+\caption{Estimate of required simulation time for convergence}
+\end{table}
