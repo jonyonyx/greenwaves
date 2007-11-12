@@ -1,0 +1,38 @@
+\label{model}
+The problem is now formulated as the minimization of a selected performance index (PI) in terms of a set of signal settings, $\Psi$, and a network, which is dependent on the signal settings.
+
+$$\min PI \left(  \Psi, N\left( \Psi\right)  \right)  $$
+
+In a general, discrete time, model time each time steps are denoted by $t$. The network consists of $N \geq 1$ signal controlled intersections indexed by $n$.
+
+In the model each signal is designated a phase for each time unit. Thus the concept of a cycle becomes virtual as they are no longer mandatory for calculating eg. the length of phases given the green splits.
+
+Without a common cycle time - or individual cycle time, even - the offset parameter also disappears. However they can be made to exist virtually, in terms of a virtual cycle, and can thus be manipulated to excert the same behaviour. 
+The main problem is during initialization when the system has just started. In this case it is possible synchronize intersections by delaying startup for those that would otherwise have a positive offset and vice versa for negative offset intersections. The same strategy can be used when increasing or decreasing the (virtual) cycle time for the arterial.
+
+Phase sequences and green splits are unified by the specification of the phase in a timeslot, $t$, referred to as $p_n(t)$. For each intersection there will be a fixed number of phases, $P_n$, which are free from right-of-way conflicts. For a simple cross intersection with left-side driven vehicles and left turning priority this number is 4:
+
+\begin{description}
+\item[Phase 1 and 2:] straight and right turning flows in N-S and E-W directions
+\item[Phase 3 and 4:] left turns in N-S and E-W directions
+\end{description}
+
+Thus a specific phase $p = p_n(t) \in \lbrace 1,...,P_n \rbrace$ is selected for each timeslot. With this definition the green splits are implicit in the phase sequence. 
+
+Now $\Psi = \lbrace \textbf{p} \rbrace $ and we can perform an optimization.
+
+Satisfaction of minimum and maximum green times is the most common constraint, usually defined within a cycle. In this model the following equation must be satisfied:
+
+$$
+\forall p,n: \; T = \lbrace t: p_n(t) = p \rbrace \; st. \; cons(T) \wedge T_{min,p,n} \leq |T| \leq T_{max,p,n} 
+$$
+Thus $T$ is a set of points in time and the $cons$ function is defined by:
+$$
+cons(T) = 
+\begin{cases}
+true & if \;  \displaystyle\sum_{t \in T}{t} = ½ \cdot (\max T + \min T) \cdot (\max T - \min T + 1) \\
+false & otherwise
+\end{cases}
+$$
+
+That is, there must be a consecutive series of time slots (tested by using the Gaussian formula) in which phase $p$ is run.
