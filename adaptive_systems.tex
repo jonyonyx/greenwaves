@@ -12,6 +12,7 @@ For large networks that is inappropriate, however. Consider a network which is s
 Another feature of considering very large networks is the possibility of traffic redirection. If it is detected - or predicted - that an arterial is, or will be, congested under current flow conditions it is sensible to redirect some traffic onto alternative routes. 
 
 \subsection{Simulation \& Evaluation of Solutions}
+\label{evaluation}
 All systems in this survey, which use a metaheuristic search, employ a simulator for evaluating solutions in the objective function. Simulations are also widely used to test the final output of some optimization procedure in order to compare the new approach to some other, well-known approaches. 
 
 In the latter case the quality of the simulation is more important than execution speed. In adaptive search procedures, which depend on simulation for calculation of the objective value the simulation must be fast and, of course, still give a realistic result. 
@@ -30,8 +31,8 @@ Park et al. \cite{4} show that the CORSIM microsimulator is superior to the meso
 1000 & 100 & 1
 \end{tabular}
 \end{center}
-\label{tab:convergespeed}
 \caption{Estimate of of relative required simulation time for convergence}
+\label{tab:convergespeed}
 \end{table}
 
 Microsimulation will not scale as well as meso- and macrosimulation since the number of vehicles in the network will grow in proportion with the total length of the roads whereas. In mesosimulators the number of platoons need not grow as fast since the could be along an artery and the same platoon is regarded or the headway threshold could be increased to compensate for the extra cars. Macrosimulators will scale in proportion with the size of the OD-matrices. 

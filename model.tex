@@ -1,15 +1,17 @@
 \label{model}
 In this section an example of a typical mathematical model for offline optimization will be presented along with a model, which allows for more dynamic systems.
 
-The following, simplied, notation is used:
+The following notation is used:
 
 \begin{table}[!ht]
 \begin{center}
 \begin{tabular}{ll}
 \hline
-C & Common cycle time \\
+$N$ & The number of signal controlled intersections in the network \\
+$n$ & The index of an intersection $n \in \lbrace 1,...,N \rbrace$ \\
+$\Psi$ & A set of signal timing settings \\
+$C_n$ & Cycle time for intersection $n$ \\
 $\theta_n$ & Offset of intersection $n$ \\
-$\Psi$ & A set of signal settings \\
 $\phi_{n,p}$ & Phase $p$ green time duration for intersection $n$  \\
 $P_n$ & The number of phases at intersection $n$
 \\ \hline
@@ -18,53 +20,58 @@ $P_n$ & The number of phases at intersection $n$
 \caption{Notation}
 \end{table}
 
+\subsubsection*{A classical model}
+
 The problem is now formulated as the minimization of a selected performance index (PI) in terms of a set of signal settings, $\Psi$, and a network of user equilibrium link flows, $\textbf{q*}(\Psi)$, which is dependent on the signal settings.
 
-Teklu \cite{2} presents a model which is typical for offline optimizers:
+Teklu \cite{2} presents a model which is typical for offline optimizers, which is given here with slight modifications:
 
 \begin{eqnarray}
 \min PI \left(  \Psi, \textbf{q*}\left( \Psi\right)  \right)
 \end{eqnarray}
 \begin{eqnarray}
-\label{eqn:cycletimeconstraints} subject\;to:\;C_{min} \leq C \leq C_{max} \\
-\label{eqn:offset} 0 \leq \theta_n \leq C-1\\
-\label{eqn:greentimelimits} \phi_{n,p,min} \leq \phi_{n,r} \leq \phi_{n,p,max}\\
-\label{eqn:commoncycledef} C = \sum_{p=1}^{P_n} \phi_{n,p}
+\label{eqn:cycletimeconstraints} subject\;to:\;C_{min} \leq C_n \leq C_{max} & \\
+\label{eqn:offset} 0 \leq \theta_n \leq C_n-1 & \forall n \\
+\label{eqn:greentimelimits} \phi_{n,p,min} \leq \phi_{n,p} \leq \phi_{n,p,max} & \forall n,p \in \lbrace 1,...,P_n \rbrace \\
+\label{eqn:commoncycledef} C_n = \sum_{p=1}^{P_n} \phi_{n,p} & \forall n
 \end{eqnarray}
 
 In the article the chosen performance index is the travel time defined as the sum of flow multiplied by travel time on each link and $\Psi = \lbrace C,\theta,\phi \rbrace$. The interphase lost times are omitted for clarity reasons.
 
-The sum of green time for all phases for an intersection must equal the common cycle time as seen in equation \ref{eqn:commoncycledef}. Equations \ref{eqn:cycletimeconstraints} and \ref{eqn:greentimelimits} are safeguards entered by traffic engineers to avoid extreme plans. Equation \ref{eqn:offset} relates the offset to the cycle time. Offset cannot exceed the common cycle time.
+The sum of green time for all phases for an intersection must equal the cycle time as seen in equation \ref{eqn:commoncycledef}. Equations \ref{eqn:cycletimeconstraints} and \ref{eqn:greentimelimits} are safeguards entered by traffic engineers to avoid extreme plans such as the total suppresion of green time for a minor road or very high cycle times (capacity), which would otherwise be chosen under congestion.
 
-It is clear that this model does not consider phase sequences. Phases are simply enumerated and allocated green time - the order is assumed given. Furthermore the restrictive periodicity of the model can be seen clearly since $\phi$ cannot change as a function of time although, at least the order could actually be changed behind the scenes.
+Equation \ref{eqn:offset} adjusts the offsets so as to create green waves but is only relevant in the common cycle time model, which is a special case of the presented model when $\forall n : C_n = C$. Offset is always considered as a modulus of a \textit{common} cycle time and thus no coordination can be made (in this model) if all intersections run on their own clock.
 
-In a general, discrete time, model time steps are denoted by $t$. The network consists of $N \geq 1$ signal controlled intersections indexed by $n$.
+In addition to this deficiency this model does not consider phase sequences. Phases are simply enumerated and allocated green time - the order is assumed given. The restrictive periodicity of the model can be seen clearly since $\phi$ cannot change as a function of time although, at least the order could actually be changed behind the scenes. Periodicity also makes it difficult to allow individual cycle times since the offset concept would no longer be applicable.
 
-In the model each signal is designated a phase for each time unit. Thus the concept of a cycle becomes virtual as they are no longer mandatory for calculating eg. the length of phases given the green splits.
+\subsubsection*{A dynamic model}
+
+In a general, discrete time, model time is indexed by $t \in H = \lbrace t_{min},...,t_{max} \rbrace$ and thus $H$ indicates the horizon of the optimization. Each signal is designated a phase for each time unit. Thus the concept of a cycle becomes virtual as they are no longer mandatory for calculating eg. the length of phases given the green splits.
 
 Without a common cycle time - or individual cycle time, even - the offset parameter also disappears. However they can be made to exist virtually, in terms of a virtual cycle, and can thus be manipulated to excert the same behaviour. 
-The main problem is during initialization when the system has just started. In this case it is possible synchronize intersections by delaying startup for those that would otherwise have a positive offset and vice versa for negative offset intersections. The same strategy can be used when increasing or decreasing the (virtual) cycle time for the arterial.
+The main problem is during initialization when the system has just started. In this case it is possible synchronize intersections by delaying startup for those that would otherwise have a positive offset. The same strategy can be used when changing the (virtual) cycle time for the arterial. As discussed in the previous chapter, the common cycle time and offsets requires a periodic model, which is highly restrictive requirement, and thus the inclusion of these concepts into a dynamic model will not be discussed further.
 
 Phase sequences and green splits are unified by the specification of the phase in a timeslot, $t$, referred to as $p_n(t)$. For each intersection there will be a fixed number of phases, $P_n$, which are free from right-of-way conflicts. For a simple cross intersection with left-side driven vehicles (see figure \ref{fig:simple_intersection}) this number is 2: straight, left, and right turning flows in north and south directions for phase 1 and in east and west directions for phase 2.
 
-\begin{figure}[!h]
+\begin{figure}[!ht]
 \begin{center}
 \includegraphics[scale=0.4]{simple_intersection.png} 
 \end{center}
 \label{fig:simple_intersection}
-\caption{Simple intersection}
+\caption{Simple 2-phase intersection}
 \end{figure}
 
-Thus a specific phase $p = p_n(t) \in \lbrace 1,...,P_n \rbrace$ is selected for each timeslot. With this definition the green splits are implicit in the phase sequence. 
+Thus a specific phase $p = p_n(t) \in \lbrace 1,...,P_n \rbrace$ is selected for each timeslot. With this definition the green splits are implicit in the phase sequence and we have $\Psi = \lbrace \textbf{p} \rbrace $.
 
-Now $\Psi = \lbrace \textbf{p} \rbrace $ and we can perform an optimization.
+In the following some constraints will be defined to show that the dynamic model is capable of satisfying constraints such as the ones for the classical model. First is defined the set of consecutive timeslots allocated to phase $p$ for intersection $n$:
 
-Satisfaction of minimum and maximum green times is the most common constraint, usually defined within a cycle. In this model the following equation must be satisfied:
 
-$$
-\forall p,n: \; T = \lbrace t: p_n(t) = p \rbrace \; st. \; cons(T) \wedge T_{min,p,n} \leq |T| \leq T_{max,p,n} 
-$$
-Thus $T$ is a set of points in time and the $cons$ function is defined by:
+\begin{eqnarray}
+T_{p,n} & = &  \lbrace t: p_n(t) = p \rbrace  \\
+CT_{p,n} & = & \lbrace T_{p,n} : cons(T_{p,n}) \rbrace
+\end{eqnarray}
+
+Where the $cons$ function is defined by:
 $$
 cons(T) = 
 \begin{cases}
@@ -73,4 +80,40 @@ false & otherwise
 \end{cases}
 $$
 
-That is, there must be a consecutive series of time slots (tested by using the Gaussian rule for summation of consecutive integers) in which phase $p$ is run.
+Satisfaction of minimum and maximum green times is the most common constraint, usually defined within a cycle. In this model the following equation must be satisfied:
+
+\begin{equation}
+\label{eqn:minmaxtimes}
+\forall p,n : T_{min,p,n} \leq |\underline{T_{p,n}}| \wedge |\overline{T_{p,n}}| \leq T_{max,p,n} 
+\end{equation}
+
+The operators $\underline{T_{p,n}}$ and $\overline{T_{p,n}}$ are used to extract the smallest and largest sets from $T_{p,n}$.
+
+That is, the length of all consecutive series of time slots (tested by using the Gaussian rule for summation of consecutive integers) in which phase $p$ is run, must satisfy the selected minimum and maximum green times. This constraint only demands that no phases are given too little or too much time. It is also necessary to ensure that phases are given green time in some minimum and maximum proportion to the other phases of the intersection.
+
+\begin{equation}
+\label{eqn:proportions}
+\forall p,n : R_{min,p,n} \leq \frac{\sum |T_{p,n}|}{|H|} \leq R_{max,p,n}
+\end{equation}
+
+Where $|H|$ is the number of time steps in the signal timing plan so far and $R_{min,p,n}$ and $R_{max,p,n}$ is the minimum and maximum ratios of time over the optimization horizon, which is allowed for phase $p$ at intersection $n$. It is clear that $\forall n : \displaystyle\sum_{p=1}^{P_n}\frac{|T_{p,n}|}{t_{max}} = 1$ due to the definition of the phase specification function, $p_n(t)$,  ie. in each time slot a signal controlled intersection is assigned to a particular phase.
+
+Considering the north-south direction (phase 1) of figure \ref{fig:simple_intersection} to lie along an arterial and the east-west direction (phase 2) being a minor road the min and max ratios could set like in table \ref{tbl:minmaxratios}.
+
+\begin{table}[!ht]
+\begin{center}
+\begin{tabular}{c|c|c}
+$p$ & $R_{min,p}$ & $R_{max,p}$ \\ \hline
+1 & $0.6$ & $0.8$ \\ 
+2 & $0.2$ & $0.4$
+\end{tabular}
+\end{center}
+\caption{Example of minimum and maximum green time ratios for a simple, 2-phase intersection}
+\label{tbl:minmaxratios}
+\end{table}
+
+Together equations \ref{eqn:minmaxtimes} and \ref{eqn:proportions}, along with proper minimum and maximum values, ensure that green time is distributed evenly over the optimization horizon since \ref{eqn:proportions} ensures that the proportions are correct and \ref{eqn:minmaxtimes} makes sure allocated green time is not bunched together in some narrow part of the horizon.
+
+These specifications result in a model which is relatively easy to represent but may not fit into the standard mixed-integer programming scheme. One solution is to use some metaheuristic procedure, or the application of a set partitioning model, for instance with column generation.
+
+The main issue, however, will always be the evaluation of solutions. This topic is discussed further in section \ref{evaluation}.
