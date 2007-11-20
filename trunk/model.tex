@@ -45,11 +45,11 @@ Equation \ref{eqn:offset} adjusts the offsets so as to create green waves but is
 In addition to this deficiency this model does not consider phase sequences. Phases are simply enumerated and allocated green time - the order is assumed given. The restrictive periodicity of the model can be seen clearly since $\phi$ cannot change as a function of time although, at least the order could actually be changed behind the scenes. Periodicity also makes it difficult to allow individual cycle times since the offset concept would no longer be applicable.
 
 \subsubsection*{A dynamic model}
-
+\label{dynamicmodel}
 In a general, discrete time, model time is indexed by $t \in H = \lbrace t_{min},...,t_{max} \rbrace$ and thus $H$ indicates the horizon of the optimization. Each signal is designated a phase for each time unit. Thus the concept of a cycle becomes virtual as they are no longer mandatory for calculating eg. the length of phases given the green splits.
 
 Without a common cycle time - or individual cycle time, even - the offset parameter also disappears. However they can be made to exist virtually, in terms of a virtual cycle, and can thus be manipulated to excert the same behaviour. 
-The main problem is during initialization when the system has just started. In this case it is possible synchronize intersections by delaying startup for those that would otherwise have a positive offset. The same strategy can be used when changing the (virtual) cycle time for the arterial. As discussed in the previous chapter, the common cycle time and offsets requires a periodic model, which is highly restrictive requirement, and thus the inclusion of these concepts into a dynamic model will not be discussed further.
+The main problem is during initialization when the system has just started. In this case it is possible synchronize intersections by delaying startup for those that would otherwise have a positive offset. The same strategy can be used when changing the (virtual) cycle time for the arterial. As discussed in the previous chapter, the common cycle time and offsets requires a periodic model, which is a highly restrictive requirement, and thus the inclusion of these concepts into a dynamic model will not be discussed further.
 
 Phase sequences and green splits are unified by the specification of the phase in a timeslot, $t$, referred to as $p_n(t)$. For each intersection there will be a fixed number of phases, $P_n$, which are free from right-of-way conflicts. For a simple cross intersection with left-side driven vehicles (see figure \ref{fig:simple_intersection}) this number is 2: straight, left, and right turning flows in north and south directions for phase 1 and in east and west directions for phase 2.
 
@@ -57,30 +57,21 @@ Phase sequences and green splits are unified by the specification of the phase i
 \begin{center}
 \includegraphics[scale=0.4]{simple_intersection.png} 
 \end{center}
-\label{fig:simple_intersection}
 \caption{Simple 2-phase intersection}
+\label{fig:simple_intersection}
 \end{figure}
 
 Thus a specific phase $p = p_n(t) \in \lbrace 1,...,P_n \rbrace$ is selected for each timeslot. With this definition the green splits are implicit in the phase sequence and we have $\Psi = \lbrace \textbf{p} \rbrace $.
 
 In the following some constraints will be defined to show that the dynamic model is capable of satisfying constraints such as the ones for the classical model. First is defined the set of consecutive timeslots allocated to phase $p$ for intersection $n$:
 
+\begin{equation}
+T_{p,n} = \bigcup_{T = \lbrace t_1,...,t_2 \rbrace} \; st. \; p \not \in \lbrace p_n(\min T - 1), p_n(\max T + 1) \rbrace \wedge\forall t \in T: p_n(t) = p 
+\end{equation}
 
-\begin{eqnarray}
-T_{p,n} & = &  \lbrace t: p_n(t) = p \rbrace  \\
-CT_{p,n} & = & \lbrace T_{p,n} : cons(T_{p,n}) \rbrace
-\end{eqnarray}
+Thus $T$ is a set of sets and each containing a consecutive number of time units which bounds the extend of particular phase.
 
-Where the $cons$ function is defined by:
-$$
-cons(T) = 
-\begin{cases}
-true & if \;  \displaystyle\sum_{t \in T}{t} = ½ \cdot (\max T + \min T) \cdot (\max T - \min T + 1) \\
-false & otherwise
-\end{cases}
-$$
-
-Satisfaction of minimum and maximum green times is the most common constraint, usually defined within a cycle. In this model the following equation must be satisfied:
+Satisfaction of minimum and maximum green times is the most common constraint, usually defined within a cycle. In the dynamic model this constraint is formulated so that the minimum and maximum green times must be respected over the entire horizon in the following equation:
 
 \begin{equation}
 \label{eqn:minmaxtimes}
