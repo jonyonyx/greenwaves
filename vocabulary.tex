@@ -14,22 +14,19 @@ There are many terms concerning traffic signal optimization. This section attemp
 
 \item[Interphase green,] or lost time, is a small amount of time inserted as a buffer between two phases. During the lost time the lights can be either red in all directions or, as in Denmark, amber lights can be used to introduce a buffer. The purpose of the buffer is to allow vehicles, which entered during the last phase, to exit the intersection before it is flooded by vehicles from the next phase.
 	
-	\item[Split] (Or \textit{cycle}-split) is the green-to-red time ratio split. Usually a higher ratio means more green time.
+	\item[Split] (Or \textit{cycle}-split) is the green time to cycle time ratio. For instance in a four-phase intersection with cycle time of $100s$ and phase splits $\left( 0.3, 0.2, 0.3, 0.2 \right)$ the actual green times will be $\left( 30s, 20s, 30s, 20s \right)$. 
 	
 	\item[Traffic assignment] also known as flow assignment, is the determination of vehicular flow along origin-destination (OD) paths and, consequently, along links in a traffic network. 
 
 \item[Artery] is a main-path through a traffic network. It will generally face higher demand than auxilliary paths.
 
-\item[Traffic network] is most often described mathematically as a graph $G(V,E)$ where $V$ is the set of intersections controlled by a traffic signal and $E$ is the set of roads connecting the intersection. A path is thus a route through the network crossing a least one signalized intersection.
+\item[Traffic network] is, in this context, thought of as a graph $G(V,E)$ where $V$ is a set of intersections controlled by a traffic signal and $E$ is the set of roads connecting the intersection. A path is thus a route through the network crossing a least one signalized intersection.
 
 	\item[A platoon] is group of vehicles travelling together. A platoon can be detected by observing the time between on vehicle and the next and applying the critical headway threshold, see \cite[sct. 2]{25}. 
 Platoons are formed both as a consequence of car-following behaviour, which is used in simulation frameworks such as \cite{treiber-2000-62}, but also due to the batch-like nature which is imposed on the traffic by traffic signals.
 
 \item[Saturation flow rate] defines the number of vehicles that can free flow on a link during a period of time.
 
-\item[Time horizon.] The amount of time into the future, which is taken into consideration while optimizing signal settings. Using a shorter time horizon the optimizations might prove to be flawed, but with longer time horizons the predictions of traffic become less accurate.
-
-\item[Vehicle Actuated Programming] (VAP) is an optional add-on module for the
-simulation of programmable, phase- or stage-based, and traffic-actuated signal controls in VISSIM.
+\item[Time horizon.] The amount of time into the future, which is taken into consideration while optimizing signal settings. Since predictions of the future traffic becomes more and more fuzzy the deeper one looks a paradox arises: using a short time horizon the optimizations might prove to be flawed when it fails to see a clever decisision, but with longer time horizons the predictions themselves become flawed and may mislead the optimization.
 
 \end{description}
