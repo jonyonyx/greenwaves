@@ -8,19 +8,27 @@ Among these are the Glostrup and Herlev implementations along the O3 ring-road. 
 The purpose of DOGS is to increase the capacity of the arterial in these cases - in low traffic situations pretimed plans will be used. The capacity increase comes by adjusting a common cycle time and thus allocating more green time to the major phases. This will cause increased delays for the minor roads, but may prevent queues from reaching the previous intersection - or even prevent queues in cases of light congestion.
 DOGS is also capable of providing priority to buses by extending the green time when buses are near an intersection.
 
-At present the system must be tailored to the environment in which is must operate. For this reason the following sections will use the Herlev area as a reference area in order to explain certain concepts.
+At present the system must be tailored to the environment in which is must operate. For this reason the following sections will use the Herlev area as a reference area in order to explain certain concepts. In figure \ref{fig:dogs_herlev} is a layout of this network.
 
-\subsubsection{Detection}
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.5]{dogs_herlev.png} 
+\end{center}
+\caption{Layout of the partial O3 arterial in Herlev, which is under DOGS control. The arrows and numbers indicate flow direction and indications of vehicle count.}
+\label{fig:dogs_herlev}
+\end{figure}
+
+\subsubsection*{Detection}
 Loops are placed in the immediate downstream of signal controllers and connected to closest controller to reduce the wire length. 
 
 The criteria which DOGS use are based on the load on the detectors and the number of vehicles detected per cycle. Furthermore the detectors are capable of measuring vehicle speeds, though this is not taken into consideration in any of the criteria.
 
-\subsubsection{Prediction}
+\subsubsection*{Prediction}
 DOGS is a purely traffic actuated system and no prediction is used when the system is activated due to heavy traffic conditions.
 
 In spite of the flexibility of the system this is a point which puts high demand on the implementing traffic engineers since traffic through the arterial must be assessed manually when the system is put into production as well as during maintenance.
 
-\subsubsection{Optimization}
+\subsubsection*{Optimization}
 Since DOGS only kicks in under congested or near-congested conditions (for the Herlev area when the load exceeds 60\%) it is simple to optimize the throughput since, as explained earlier, any increase in green time will just allow more vehicles to pass (the phase is never emptied from vehicles).
 
 The load measurement in Herlev is extracted from detectors, which are strategically placed in the ends of the arterial. During an interview with DRD and TTS it was explained that the traffic from minor roads can be neglected in the load measurement, though both parties would be interested in seeing the effect of increasing the number of detectors used.
