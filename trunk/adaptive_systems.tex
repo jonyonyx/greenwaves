@@ -1,5 +1,5 @@
 \label{adaptive_cooperation}
-Adaptive traffic control systems aims to coordinate signal controlled intersections so as to optimize some performance index eg. average delay or number of stops (or a combination).
+Adaptive traffic control systems aims to coordinate signal controlled intersections so as to optimize some performance index eg. average delay or number of stops (or a combination) but also to reduce the need for constant supervision and tuning of intersections.
 
 They do this by dynamically adjusting cycle times, phase sequences and green splits according to detected as well as predicted traffic and thereby reacting to those dynamic aspects of traffic, which cannot be captured by the static optimization routines used to generate time-of-day plans. Some authors (\cite{1}, \cite{44}, \cite{46}, \cite{scoot2004}) even skip or work around the conventional periodic scheme based on a common cycle time and make direct assignments of phases and allow phases to be skipped, in the spirit of the dynamic model presented in section \ref{dynamicmodel}. 
 
@@ -12,7 +12,7 @@ For large networks the enforcement of a common cycle is inappropriate, however. 
 Another feature of considering very large networks is the possibility of traffic redirection. If it is detected - or predicted - that an arterial is, or will be, congested under current flow conditions it is sensible to redirect some traffic onto alternative routes. 
 Redirecting traffic using traffic signals is a subtle technique which has not received much research yet though it could pose much more efficient than current traffic information systems, which inform road users of congestions and alternative routes, but allows them to ignore the advice.
 
-This final section will give in-depth discussions of three highly adaptive systems, which do not rely on offline optimization. The systems are:
+In this section some in-depth discussions are given for three highly adaptive systems, which do not rely on offline optimization. The systems are:
 
 \begin{enumerate}
 \item \textbf{RHODES} by Pitu Mirchandani and Larry Head presented in \cite{44}
@@ -27,8 +27,8 @@ Comparisons will be made for the systems to highlight differences in areas such 
 \subsection{RHODES}
 \input{rhodes}
 
-\subsection{MICMAC}
-\input{micmac}
+\subsection{Phase-by-Phase}
+\input{phase-by-phase}
 
 \subsection{DOGS}
 \input{dogs}
