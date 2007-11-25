@@ -7,17 +7,30 @@ The following notation is used:
 \begin{center}
 \begin{tabular}{ll}
 \hline
-$N$ & The number of signal controlled intersections in the network \\
-$n$ & The index of an intersection $n \in \lbrace 1,...,N \rbrace$ \\
+$n \in \lbrace 1,...,N \rbrace$ & Signal indexes \\
+$p \in \lbrace 1,...,P_n \rbrace$ & Indexes of phases at signal $n$ \\ 
 $\Psi$ & A set of signal timing settings \\
 $C_n$ & Cycle time for intersection $n$ \\
 $\theta_n$ & Offset of intersection $n$ \\
-$\phi_{n,p}$ & Phase $p$ green time duration for intersection $n$  \\
-$P_n$ & The number of phases at intersection $n$
-\\ \hline
+$\phi_{np}$ & Phase $p$ green time for intersection $n$  \\
+$I_{np}$ & Interstage (lost) time between the end of phase $p$ until the next phase  \\
+\hline
 \end{tabular}
 \end{center}
-\caption{Notation}
+\caption{Notation for the traffic signal model part}
+\end{table}
+
+\begin{table}[!ht]
+\begin{center}
+\begin{tabular}{ll}
+\hline
+$l \in \lbrace 1,...,L \rbrace$ & Link indexes \\
+$q_l \in \textbf{q*}(\Psi)$ & User equilibrium link flows given signal timing parameters  \\
+$t_l(\Psi,\textbf{q*}(\Psi))$ & Travel time on link $l$ considering signal timings and user response \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Notation for the traffic network model part}
 \end{table}
 
 \subsubsection*{A classical model}
@@ -27,18 +40,18 @@ The problem is now formulated as the minimization of a selected performance inde
 Teklu \cite{2} presents a model which is typical for offline optimizers, which is given here with slight modifications:
 
 \begin{eqnarray}
-\min PI \left(  \Psi, \textbf{q*}\left( \Psi\right)  \right)
+\min & TT(\Psi, \textbf{q*}\left( \Psi\right)) = \displaystyle\sum_{l = 1}^{L} q_l \cdot t_l(\Psi,\textbf{q*}(\Psi))
 \end{eqnarray}
 \begin{eqnarray}
 \label{eqn:cycletimeconstraints} subject\;to:\;C_{min} \leq C_n \leq C_{max} & \\
 \label{eqn:offset} 0 \leq \theta_n \leq C_n-1 & \forall n \\
-\label{eqn:greentimelimits} \phi_{n,p,min} \leq \phi_{n,p} \leq \phi_{n,p,max} & \forall n,p \in \lbrace 1,...,P_n \rbrace \\
-\label{eqn:commoncycledef} C_n = \sum_{p=1}^{P_n} \phi_{n,p} & \forall n
+\label{eqn:greentimelimits} \phi_{np,min} \leq \phi_{np} \leq \phi_{np,max} & \forall n,p \in \lbrace 1,...,P_n \rbrace \\
+\label{eqn:commoncycledef} C_n = \sum_{p=1}^{P_n} ( \phi_{np} + I_{np} ) & \forall n
 \end{eqnarray}
 
-In the article the chosen performance index is the travel time defined as the sum of flow multiplied by travel time on each link and $\Psi = \lbrace C,\theta,\phi \rbrace$. The interphase lost times are omitted for clarity reasons.
+In the article the chosen performance index is the travel time defined as the sum of flow multiplied by travel time on each link and $\Psi = \lbrace C,\theta,\phi \rbrace$. The user equilibrium flows are calculated using a variational inequality, which is not reprinted here considering the scope of the survey.
 
-The sum of green time for all phases for an intersection must equal the cycle time as seen in equation \ref{eqn:commoncycledef}. Equations \ref{eqn:cycletimeconstraints} and \ref{eqn:greentimelimits} are safeguards entered by traffic engineers to avoid extreme plans such as the total suppresion of green time for a minor road or very high cycle times (capacity), which would otherwise be chosen under congestion.
+The sum of green- and lost time for all phases of an intersection must equal the cycle time as seen in equation \ref{eqn:commoncycledef}. Equations \ref{eqn:cycletimeconstraints} and \ref{eqn:greentimelimits} are safeguards entered by traffic engineers to avoid extreme plans such as the total suppresion of green time for a minor road or very high cycle times (capacity), which would otherwise be chosen under congestion.
 
 Equation \ref{eqn:offset} adjusts the offsets so as to create green waves but is only relevant in the common cycle time model, which is a special case of the presented model when $\forall n : C_n = C$. Offset is always considered as a modulus of a \textit{common} cycle time and thus no coordination can be made (in this model) if all intersections run on their own clock.
 

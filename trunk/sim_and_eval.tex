@@ -1,11 +1,19 @@
 \label{evaluation}
-All systems in this survey, which use a metaheuristic search, employ a simulator for evaluating solutions in the objective function. Simulations are, in general, widely used to test the final output of some signal optimization procedure in order to compare the new approach to some other, well-known approach eg. TRANSYT. 
+Until this point there has been no discussions of how solutions are evaluated. Fitness determination of a solutions is a major issue, especially in metaheuristic search, which put "blind faith" in the evaluation procedure. Furthermore the metaheuristic must evaluate a certain amount of solutions before confidence in the final solution is established, thus each evaluation must be fast, if the search is a part of an adaptive system rather than an offline optimizer.
 
-In the latter case the quality of the simulation is more important than execution speed. In adaptive search procedures, which depend on simulation for calculation of the objective value the simulation must be fast and, of course, still give a realistic result. 
+There are two major methods for this evaluation. The first is based on the modelling of the complete system as a bilevel model (see section \ref{offline}) so that all necessary informations concerning signal states and traffic can be incorporated into the objective function. 
 
-Simulation is very important in order to establish a search procedure. In table \ref{tab:convergespeed} are the names of three major simulators, which are highly trusted to produce reliable traffic. The Danish Road Directorate prefer VisSim for simulations of infrastructure expansions as well as testing of signal timing plans. In the latter case also TRANSYT is highly regarded and will also perform much faster.
+The second approach, simulation, handles the complexity issue of modelling the bilevel system and allows the modeller to rely on the simulation results as a black box for fitness evaluation. 
 
-There are three types of simulators, the main difference being the level of detail in the underlying model. They are micro-, meso- and macrosimulators. Microsimulators model the behaviour of each vehicle and driver, mesosimulators regard the movements of platoons of vehicles and macrosimulators search for a user equilibrium (see section \ref{usereq}), considering origins and destinations.
+Simulation is widely used in the articles of this survey and so this section will discuss this method of evaluation.
+
+There are a number of highly regarded simulations available. The primary use are for infrastructure expansions. In traffic signal optimization they are almost always used to establish confidence in performance for some signal optimization procedure. This confidence comes from observing the actions of the system during the simulation but also by comparing aggregated fitness values with those coming from some other, well-known approach. In this regard the TRANSYT offline traffic signal optimization package is often used as a baseline. 
+
+In this case the quality of the simulation is more important than execution speed. 
+In table \ref{tab:convergespeed} are the names of three major simulators, which are highly trusted to produce reliable traffic. 
+From the interviews it emerged that the Danish Road Directorate prefer VisSim for simulations of infrastructure expansions as well as testing of signal timing plans. In the latter case also TRANSYT is highly regarded and will also perform much faster.
+
+There are three types of simulators, the main difference being the level of detail in the underlying model. They are micro-, meso- and macrosimulators. Microsimulators model the behaviour of each vehicle and driver, mesosimulators regard the movements of platoons of vehicles and macrosimulators search for a user equilibrium (see section \ref{usereq}), considering origins (input links) and destinations (output links).
 
 Independent on the detail level of the model a simulation must run until it is converged before the objective value can be extracted. 
 
