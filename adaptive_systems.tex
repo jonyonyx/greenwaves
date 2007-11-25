@@ -12,15 +12,13 @@ For large networks the enforcement of a common cycle is inappropriate, however. 
 Another feature of considering very large networks is the possibility of traffic redirection. If it is detected - or predicted - that an arterial is, or will be, congested under current flow conditions it is sensible to redirect some traffic onto alternative routes. 
 Redirecting traffic using traffic signals is a subtle technique which has not received much research yet though it could pose much more efficient than current traffic information systems, which inform road users of congestions and alternative routes, but allows them to ignore the advice.
 
-In this section some in-depth discussions are given for three highly adaptive systems, which do not rely on offline optimization. The systems are:
+In this section some in-depth discussions are given for three adaptive systems, which do not rely on offline optimization. The systems are:
 
 \begin{enumerate}
-\item \textbf{RHODES} by Pitu Mirchandani and Larry Head presented in \cite{44}
-\item A Phase-by-Phase optimization strategy by Michael Shenoda and Randy Machemehl presented in \cite{1}, in this survey dubbed \textbf{MICMAC}
-\item \textbf{DOGS} by danish Technical Traffic Solution (TTS) evaluated in the danish article \cite{dogs}
+\item \textbf{RHODES} by Pitu Mirchandani and Larry Head presented in \cite{44} - a hierarchical system for network-wide optimization
+\item A \textbf{Phase-by-Phase} optimization strategy by Michael Shenoda and Randy Machemehl presented in \cite{1} - a system using the metaheuristic tabu search for determining greens for isolated intersections in a phase-by-phase manner
+\item \textbf{DOGS} by danish Technical Traffic Solution (TTS) evaluated in the danish article \cite{dogs}, which provides criteria-based capacity increases along an arterial
 \end{enumerate}
-
-The first two systems optimize for general traffic networks whereas DOGS (Dynamisk Optimering af Grøntider og Samordning $\sim$ dynamic optimizationg of greens and coordination) optimize for arterials.
 
 Comparisons will be made for the systems to highlight differences in areas such as \textit{detection}, \textit{prediction}, \textit{optimization strategy} and \textit{level of responsiveness}.
 
