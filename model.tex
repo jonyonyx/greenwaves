@@ -59,7 +59,7 @@ In addition to this deficiency this model does not consider phase sequences. Pha
 
 \subsubsection*{A dynamic model}
 \label{dynamicmodel}
-In a general, discrete time, model time is indexed by $t \in H = \lbrace t_{min},...,t_{max} \rbrace$ and thus $H$ indicates the horizon of the optimization. Each signal is designated a phase for each time unit. Thus the concept of a cycle becomes virtual as they are no longer mandatory for calculating eg. the length of phases given the green splits.
+In a general, discrete time, model\footnote{In article \ref{36} is an example of a general continuous model, with has similarities to the presented model} time is indexed by $t \in H = \lbrace t_{min},...,t_{max} \rbrace$ and thus $H$ indicates the horizon of the optimization. Each signal is designated a phase for each time unit. Thus the concept of a cycle becomes virtual as they are no longer mandatory for calculating eg. the length of phases given the green splits.
 
 Without a common cycle time - or individual cycle time, even - the offset parameter also disappears. However they can be made to exist virtually, in terms of a virtual cycle, and can thus be manipulated to excert the same behaviour. 
 The main problem is during initialization when the system has just started. In this case it is possible synchronize intersections by delaying startup for those that would otherwise have a positive offset. The same strategy can be used when changing the (virtual) cycle time for the arterial. As discussed in the previous chapter, the common cycle time and offsets requires a periodic model, which is a highly restrictive requirement, and thus the inclusion of these concepts into a dynamic model will not be discussed further.
