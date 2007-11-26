@@ -11,9 +11,9 @@ The proposed overall scheme to improve upon these issues are the isolated optimi
 The optimization process has been made independent from determination of the network state ie. detection and prediction and as such some these subjects are mostly discussions and proposals for improvements.
 
 \subsubsection*{Detection}
-The individual tracking of vehicles allows an arrival based model. This can be realized only with video detection with eg. license plate recognition; traditional loop detections cannot yet identify individual vehicles.
+PP relies on individual tracking of vehicles to obtain an arrival based model. For networks this can be realized only with video detection with eg. license plate recognition; traditional loop detections cannot yet identify individual vehicles.
 
-The PP system has not been implemented, so results of practical experiments are not available, but the prediction process will rely on sofisticated detection.
+The PP system currently works for isolated intersections and so detection loops are sufficient to estimate arrival times. For detector placement, the authors suggest using simulation.
 
 \subsubsection*{Prediction}
 In the proposed form the PP system uses a Poisson process to generate interarrival times.
@@ -99,6 +99,6 @@ The intersection was subjected to 8 different data sets of arrival times. In fig
 
 The results should only be taken as indications since a number of assumptions were made for PP eg. that the prediction algorithm supplied perfect information. In addition the actuated control was only semi-actuated since detectors were only used in one direction, the other being timed as in the pretimed case, which was optimized using Websters formulas.
 
-In spite of these issues it is interesting to observe the the (semi-)actuated control strategy is not always superior to pretimed plans. It is clear, however, that both strategies are severely outperformed by PP. Under the given assumptions (especially that concerning accuracy of predictions) PP can be regarded as an near-optimal system.
+In spite of these issues it is interesting to observe the the (semi-)actuated control strategy is not always superior to pretimed plans. It is clear, however, that both strategies are severely outperformed by PP. Under the given assumptions - in particular that concerning accuracy of predictions - PP can be used to establish a baseline for the best possible performance. This becomes even more true when the phase ordering constraint is dropped allowing reordering and skipping of phases.
 
 Unfortunately Shenoda and Machemehl do not test PP on a networks or even along an arterial. The optimization procedure does not consider coordination in itself though it is proposed that the prediction routine should consider departures from adjacent intersections, such as the method by Head employed in RHODES. It is speculated that such propagation of departure information could give rise to some coordination, depending on the horizon of optimization.
