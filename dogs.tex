@@ -76,9 +76,9 @@ L_{enable,i+1} \geq & \max(Load(DN),Load(DS))  & > L_{enable,i}
 The decision of switching from program $i$ to the program for lower demand, $i-1$, is determined by this relation:
 
 \begin{eqnarray*}
-I_{disable,i-1} \leq & \min(Intensity(DN),Intensity(DS)) & < I_{disable,i} \\
+I_{disable,i-1} \leq & \max(Intensity(DN),Intensity(DS)) & < I_{disable,i} \\
 & \wedge & \\
-L_{disable,i-1} \leq & \min(Load(DN),Load(DS))  & < L_{disable,i}
+L_{disable,i-1} \leq & \max(Load(DN),Load(DS))  & < L_{disable,i}
 \end{eqnarray*}
 
 In the DOGS controlled area in Herlev there are 8 different programs to choose from and the enable and disable thresholds for programs respect the ordering implicit in the above equations:
