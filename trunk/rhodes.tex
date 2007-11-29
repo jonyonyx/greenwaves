@@ -63,3 +63,12 @@ At the network flow control level the REALBAND algorithm forms progression bands
 At the lower level a dynamic programming approach, COP, takes the results from REALBAND and distributes green time for some horizon, T, to the phases received from the above level. The phases and their ordering must be respected so as to not introduce conflicts, which have been resolved by REALBAND. For the same reason there are restrictions for the maximum change in either direction of the given green times, but COP is allowed to use its more detailed predictions to perform the mentioned fine-tuning of green times.
 
 \subsubsection*{Evaluation}
+RHODES has been implemented in software and evaluated in CORSIM as part of the evaluation for Federal Highway Administration (FHWA) inclusion in RT-TRACS. RT-TRACS is an effort to choose and standardize a peak performance traffic signal optimization system for the american traffic networks.
+
+The simulation is done for an arterial of 9 intersections with steady increase and then decrease of traffic over a 2 hour period. This is a FHWA test case and the baseline traffic control system is semi-actuated control based on the results of offline tools including TRANSYT and PASSER, which represents the best-can-do from an offline approach and can be considered as a hard competitor. 
+
+Testing shows that RHODES is more capable of exploiting the capacity of the arterial. As long as there is no congestion the throughput will match the demand and in the comparison RHODES can simply take more load before experiencing congestion.
+
+Real adaptive systems should excel in the case of low demand, since the overcapacity will then allow RHODES to, rougly said, cater for each vehicle. The effect, compared to the semi-actuated control, is convincing with 50\% reduction in delays for low demand and 30\% reduction for high demand. This effect is expected to disappear when demand reaches the capacity of the arterial in which case, for both systems in the comparison, only throughput can be improved by increasing the green time along the arterial and maintaining proper coordination.
+
+The simulation was run multiple times and for both throughput and delay it is clear that RHODES is more consistent and offers less variability from run to run.
