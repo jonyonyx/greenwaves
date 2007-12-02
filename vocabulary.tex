@@ -1,34 +1,37 @@
 \label{vocabulary}
-There are many terms concerning traffic signal optimization. This section attempts to extract the most important terms and give solid descriptions.
+When this litterature study was commenced it quickly became evident there was a great deal of terminology in the field and that most articles assumed the author to be familiar with it. 
 
+Fortunately the terms of traffic signal optimization seems to be fairly standardized and most articles will share terminology, unlike other fields.
+
+This section attempts to extract the most important terms and give solid descriptions, so that the field can be adopted by newcomers more quickly.
 
 \begin{description}
 
 	\item[MOE] Measure Of Effectiveness. Also referred to as the performance index (PI).
-	Most often used is the average delay, also common is the time in (traffic) network and number of stops. 
+	Most often used is the average delay, also common is the travel time through the network and number of stops or some combination.
 			
 	\item[Cycle] The turnaround time for all phases of a traffic signal to complete.
 	
-	\item[Phase,] also referred to as \textit{stage} corresponds to a particular state of the red and green lights of the traffic lights in an intersection. 
-	For instance there may be a green phase in the north and south direction for a two-way intersection (which implies red phase in the east-west direction).
+	\item[Phase,] also referred to as \textit{stage}, corresponds to a particular state of the red and green lights of the traffic lights in an intersection. 
+	For instance there may be a green phase in the north and south direction for a two-way intersection (which implies red phase in the east-west direction). Usually when \textit{a phase} is mentioned it is implicit that it is the green phase.
 
 \item[Interphase green,] or lost time, is a small amount of time inserted as a buffer between two phases. During the lost time the lights can be either red in all directions or, as in Denmark, amber lights can be used to introduce a buffer. The purpose of the buffer is to allow vehicles, which entered during the last phase, to exit the intersection before it is flooded by vehicles from the next phase.
 	
-	\item[Split] (Or \textit{cycle}-split) is the green time to cycle time ratio. For instance in a four-phase intersection with cycle time of $100s$ and phase splits $\left( 0.3, 0.2, 0.3, 0.2 \right)$ the actual green times will be $\left( 30s, 20s, 30s, 20s \right)$. 
+	\item[Split] (Or \textit{cycle}-split) is the green time to cycle time ratio for the phases of the intersection. For instance in a four-phase intersection with cycle time of $100s$ and phase splits $\left( 0.3, 0.2, 0.3, 0.2 \right)$ the actual green times will be $\left( 30s, 20s, 30s, 20s \right)$. 
 	
 	\item[Traffic assignment] also known as flow assignment, is the determination of vehicular flow along origin-destination (OD) paths and, consequently, along links in a traffic network. 
 
-\item[Artery] is a main-path through a traffic network. It will generally face higher demand than auxilliary paths.
+\item[An artery] is a main-path, the major road, through a traffic network. It will generally face higher demand than minor roads adjoining the artery.
 
-\item[Traffic network] is, in this context, thought of as a graph $G(V,E)$ where $V$ is a set of intersections controlled by a traffic signal and $E$ is the set of roads connecting the intersection. A path is thus a route through the network crossing a least one signalized intersection.
+\item[Traffic network] is a graph $G(V,E)$ where $V$ is a set of intersections controlled by a traffic signal and $E$ is the set of roads connecting the intersections. A path is thus a route through the network crossing a least one signalized intersection.
 
-	\item[A platoon] is group of vehicles travelling together. A platoon can be detected by observing the time between on vehicle and the next and applying the critical headway threshold, see \cite[sct. 2]{25}. 
+	\item[A platoon] is group of vehicles travelling together. A platoon can be detected by observing the time between a vehicle and the next and applying a threshold in time units known as the critical headway, see \cite[sct. 2]{25}. 
 Platoons are formed both as a consequence of car-following behaviour, which is used in simulation frameworks such as \cite{treiber-2000-62}, but also due to the batch-like nature which is imposed on the traffic by traffic signals.
 
-\item[Saturation flow rate] defines the number of vehicles that can free flow on a link during a period of time.
+\item[Saturation flow rate] defines the number of vehicles that can flow on a link at the maximum allowed speed (free-flow) during a period of time.
 
-\item[Queue spillback] occurs when a queue reaches from a downstream intersection all the way to the preceding intersection, effectively preventing traffic from leaving the upstream intersection.
+\item[Queue spillback] occurs when a queue reaches from a downstream intersection to the preceding intersection, effectively preventing traffic from leaving the upstream intersection.
 
-\item[Time horizon.] The amount of time into the future, which is taken into consideration while optimizing signal settings. Since predictions of the future traffic becomes more and more fuzzy the deeper one looks a paradox arises: using a short time horizon the optimizations might prove to be flawed when it fails to see a clever decisision, but with longer time horizons the predictions themselves become flawed and may mislead the optimization.
+\item[Time horizon.] The amount of time into the future, which is taken into consideration while optimizing signal settings or making predictions. Since predictions of the future traffic becomes more and more fuzzy the deeper one looks a paradox arises: using a short time horizon the optimizations might prove to be flawed when it fails to see a clever decisision, but with longer time horizons the predictions themselves become flawed and may mislead the optimization.
 
 \end{description}
