@@ -4,11 +4,11 @@ This section will touch briefly upon two results which have been used throughout
 The first result is the two equilibrium principles of traffic flow by Wardrop \cite{Wardrop} and the second result is by Webster, \cite{Webster}, who gives expressions for optimal cycle time and green splits.
 
 \subsection{Delay and Queue Models}
-An expression for estimation of the delays incurred at an intersection was given by Webster. Th estimate is an approximate formula for for isolated intersection with a fixed timing plan under steady state and undersaturated conditions ie. the flow cannot be dynamic and the inflow. 
+An expression for estimation of the delays incurred at an intersection was given by Webster. The estimate is an approximate formula for isolated intersections with a fixed timing plan under steady state and undersaturated conditions ie. the flow cannot be dynamic and the inflow must not exceed capacity. 
 Webster uses his delay formula to give expressions for the optimum cycle- and green times. 
 Websters results have been widely used in the litterature eg. in \cite{1} to generate initial solutions of cycle length and green splits for a metaheuristic search and in \cite{30} to calculate cycle lengths.
 
-Websters delay formula, along with other delay formulas developed from queuing theory, suffer because of the assumption of steady state conditions. As the load on the intersection increases it will take longer time to reach stochastic equilibrium \cite{traffictheory}. During the stabilization period the signal settings must remain fixed, which it will never be in adaptive systems. These types of models are still used see eg. \cite{38} where Mirchandani and Zou develops a FIFO single-server queueing model with Poisson arrivals.
+Websters formula, along with other delay formulas developed from queuing theory, suffer because of the assumption of steady state conditions. As the load on the intersection increases it will take longer time to reach stochastic equilibrium \cite{traffictheory}. During the stabilization period the signal settings must remain fixed, which it will never be in adaptive systems. These types of models are still used see eg. \cite{38} where Mirchandani and Zou develops a FIFO single-server queueing model with Poisson arrivals.
 
 Time series analysis and other \textit{moving average} techniques can be used to relax these assumptions. In \cite{shortpredict} an ARIMA process is used to make short term (1 minute) predictions of arrivals. The RHODES system \cite{44} makes short term predictions on multiple levels of resolution (single-vehicle and platoons). In \cite{1}                                                                                          a Poisson process is used to calculate the interarrival time, with the parameter being the mean arrival rate thus anticipating the dynamic nature of traffic.
 
@@ -25,17 +25,18 @@ Given the choice a user will select the route which he \textit{perceives} to be 
 
 The SUE is the most realistic model since 1) trafficants may not have perfect route information and may also choose a longer route on purpose (for the scenery, eg.) and 2) trafficants, at present, cannot communicate in order to obtain SE. In addition the SE entails that some trafficants may not have an optimal route, this kind of sacrifice will be difficult to accept.
 
+\subsubsection*{Bilevel formulation}
 In order to perform a traffic assignment for a network flow data is obtained from traffic counts or detector input over a time period. Auxilliary informations such as turning directions and vehicle types are collected as well, if possible. 
 
 This data is fitted by a stochastic process and the optimization is made on the assumption that the process can describe the actual arrivals.
 
 Thus there are two problems 1) determining demands and 2) optimizing the traffic signals accordingly.
 
-It is important to realize that changing the traffic signal settings will cause changes to the flow and that changing the flow should cause the signals settings to be recalculated. This has given rise to a number of papers considering the two problems at the same time in so-called bi-level formulations eg. 
+It is important to realize that changing the traffic signal settings will cause changes to the flow and that changing the flow should cause the signals settings to be recalculated. This has given rise to a number of papers considering the two problems at the same time in so-called bilevel formulations eg. 
 \begin{itemize}
 \item \textbf{\cite{mc}:} iterative procedure which optimizes traffic signals and then solves the traffic assignment problem until mutual consistency (convergence) is achieved
 \item \textbf{\cite{34}:} gradient projection method for finding local optima combined with a global heuristic search
 \item And in \textbf{\cite{2}} using a genetic algorithm approach.
 \end{itemize}
 
-A feature of adaptive systems is that they are less dependent on a large database of historical flow data since they use online data input from detectors, which they are, in turn, more dependent on. Thereby they do not have to consider the problem of mutual equilibrium between signal settings and user equilibrium.
+A feature of adaptive systems is that they are less dependent on a large database of historical flow data since they use online data input from detectors, which they are, in turn, more dependent on. Thereby they do not have to consider the problem of mutual equilibrium between signal settings and user equilibrium in the same degree as these \textit{offline} systems.

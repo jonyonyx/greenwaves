@@ -5,24 +5,24 @@ At present there are three major types of traffic signal systems. They are the r
 \begin{description}
 \item[Pretimed] signals uses static plans for phase sequences, cycle time and green splits according to the day of time. 
 \label{pretimed}
-They are based on the assumption that demand is fairly stable within certain division of time eg. morning, midday and evening or workday / weekend. For instance, in the morning (7am to 8.30am) and afternoon (15.30pm to 17.00pm) the traffic is usually heavier than during the day or night due to the workforce coming to and leaving from work. The exception is in the weekend, where increased demand scenarios occur before eg. a football game starts in the area.
+They are based on the assumption that demand is fairly stable within certain divisions of time eg. morning, midday and evening or workday / weekend. For instance, in the morning (7am to 8.30am) and afternoon (15.30pm to 17.00pm) the traffic is usually heavier than during the day or night due to the workforce coming to and leaving from work. The exception is in the weekend, where increased demand scenarios occur before eg. a football game starts.
 
 Traffic may prove to be more dynamic, though, and therefore the utilization of these signals must be monitored on a regular basis so proper adjustments can be made.
 
-In the municipality of Copenhagen, the Centre for Traffic has most of the signal lights under pre-timed control with four plans to choose between.
-\item[Actuated] signals function like pre-timed signals but with the ability to \textit{lengthen} the green period with a certain amount, if additional vehicles are observed. 
+In the municipality of Copenhagen, the Centre for Traffic has most of the signal lights under pretimed control with four plans to choose between.
+\item[Actuated] signals function like pretimed signals but with the ability to \textit{lengthen} the green period with a certain amount, if additional vehicles are observed. 
 \label{actuated}
 To achieve this the signal needs detector input about the demand it faces for each phase.
 
-A special type of actuated signal gives a red light to all phases when no detector input is received. This allows the signal to quickly give green light to a phase so vehicles may pass through unhindered. By placing the detectors close to the signal a traffic calming effect can be acheived in that vehicles must slow down slightly before the light starts to go green.
+A special type of actuated signal gives a red light to all phases when no detector input is received. This allows the signal to quickly give green light to a phase so vehicles may pass through unhindered. By placing the detectors close to the signal a traffic calming effect can be acheived in that vehicles must slow down slightly before the detection is made and the light starts to go green.
 
-In the area of Copenhagen this type of signal is popular because it is relatively good at adapting to traffic fluctuations and can function more autonomous than the pre-timed signal. But the signal only performs local optimization, rather than coordinating with other signals, and pedestrians must trigger the signal themselves by pushing a button rather than just waiting for the next green light, which they are not used to in Copenhagen.
+In the area of Copenhagen this type of signal is popular because it is relatively good at adapting to traffic fluctuations and can function more autonomous than the pretimed signal. But the signal only performs local optimization, rather than coordinating with other signals, and pedestrians must trigger the signal themselves by pushing a button rather than just waiting for the next green light, which they are not used to in Copenhagen.
 
 A major disadvantage due to the autonomous operation is that it becomes impossible to setup green waves since signals start their cycle at arbitrary offsets and are unlikely to share a common cycle time.
 
-\item[Adaptive signals] is a network of signals which attempts to optimize some MOE in an manner which is at least as intelligent as for actuated signals. 
+\item[Adaptive] signals is a network of signals which attempts to optimize some MOE in an manner which is at least as intelligent as for actuated signals. 
 
-The key to adaptive signals is reliable detection and short term prediction of traffic. Adaptive signals must be able to respond to the dynamic aspects of traffic, which are not captured in the design of pre-timed signal plans. Adaptive signals use historical input and current detector input to make short term predictions for what is going to happen eg. within the next minute, next 10 minutes and so forth. 
+The key to adaptive signals is reliable detection and short term prediction of traffic. Adaptive signals must be able to respond to the dynamic aspects of traffic, which are not captured in the design of pretimed signal plans. Adaptive signals use historical input and current detector input to make short term predictions for what is going to happen eg. within the next minute, next 10 minutes and so forth. 
 
 For this reason, and as stated in \cite{1}, adaptive systems are not truly adaptive because they rely on these short term predictions and thus will always lag behind the actual traffic. For short term prediction methods from time series analysis eg. ARIMA models (see eg. \cite{shortpredict}) can be used to get more accurate predictions.
 
