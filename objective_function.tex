@@ -14,13 +14,13 @@ Most authors who consider coordination of multiple signals use and optimize a cy
 
 The cycle time of an intersection is one of the most important parameters in a signal plan since it sets  lower and upper bounds on the green times for the phases. This relates to the MOE as well as the safety of a network since 1) if a red light is shown for too long some trafficants may start to ignore the signals and 2) if the signals cycle too frequently there is an increased risk of collisions.
 
-\item[Green split]  is the proportion of cycle time which is to be green in one direction and red in the opposing directions. 
+\item[Green split]  is the proportion of cycle time which is to be green in one phase and red in the opposing phases. 
 
 The green split should be considered as an indication of the amount of traffic expected from each road facing the intersection. Major roads will be given the larger split and minor roads a smaller split.
 
 \item[Offset] is the amount of time, relative to the common cycle time, for which an intersection should starts it's sequence. The offset for an intersection is used to accomodate green waves for traffic travelling from intersection to intersection at a specified pace.
 
-This parameter is mostly relevant when optimizing signal plans for major-minor types of arterials where platoons travel (mostly) along a path which traverse a string of intersections. Some of the most promising results for this specific type of optimization are from MAXBAND and MULTIBAND, described in \cite{37}.
+This parameter is mostly relevant when optimizing signal plans for major-minor types of arterials where platoons travel (mostly) along a path, which traverse a string of intersections. Some of the most promising results for this specific type of optimization are from MAXBAND and MULTIBAND, described in \cite{37}.
 
 \end{description}
 
@@ -29,12 +29,12 @@ Almost all methods optimize some or all of these parameters. A less commonly opt
 The problem of choosing a MOE is subtle in its own and depends on eg:
 
 \begin{itemize}
-\item The type of traffic which should gain benefits: private and commercial vehicles, public transportation, soft trafficants ie. pedestrians and bicyclists
+\item The type of traffic which should gain benefits: private and commercial vehicles, public transportation, soft trafficants
 \item The network: highway, rural, urban
-\item Political objectives: safety, priority to businesses, reduction of emmisions (combined with more public transportation and \textit{green} buses
+\item Political objectives: safety, priority to businesses, reduction of emmisions combined with more public transportation and \textit{green} buses, which run on alternative fuels
 \end{itemize}
 
-Clearly there are conflicts of interest among this selection of objectives. Some examples have already been mentioned, additional examples of objective conflicts are:
+Clearly there are conflicts of interest among this selection of objectives. One example has already been mentioned, additional examples of objective conflicts are:
 
 \begin{itemize}
 \item Minimizing delays for vehicles along an artery will cause longer waiting times for crossing pedestrians
@@ -56,7 +56,7 @@ traffic congestion associated with the traffic control plan.
 
 Thus TRANSYT faces the multiobjectivity but the weights must be defined and maintained by the traffic engineers supervising the system. This is no trivial task and requires intimate knowledge of the network as well as the optimization package. The TRANSYT manual and Danish Road Directorate agree that the weights should be set so that 1 stop $\simeq$ 20 seconds delay.
 
-In \cite{41} a true multiobjective optimization approach is tested. Sun et al. use a Non-dominated Sorting Genetic Algorithms (NSGA II) to find Pareto-optimal\footnote{No changes can be made which improves upon at least one objective while no objective values worsen} solutions for the minimization objectives \textit{average delay} and \textit{number of stops} per unit of time. 
+In \cite{41} a true multiobjective optimization approach is tested. Sun et al. use a Non-dominated Sorting Genetic Algorithm (NSGA II) to find Pareto-optimal\footnote{No changes can be made, which improves upon at least one objective while no objective values worsen} solutions for the minimization objectives \textit{average delay} and \textit{number of stops} per unit of time. 
 
 \subsection{Mathematical Model}
 \input{model}
