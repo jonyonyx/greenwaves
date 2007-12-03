@@ -1,5 +1,5 @@
 \label{evaluation}
-Until this point there has been no discussions of how solutions are evaluated. Fitness determination of a solutions is a major issue, especially in metaheuristic search, which put "blind faith" in the evaluation procedure. Furthermore the metaheuristic must evaluate a certain amount of solutions before confidence in the final solution is established, thus each evaluation must be fast, if the search is a part of an adaptive system rather than an offline optimizer.
+Until this point there has been no discussions of how solutions are evaluated. Fitness determination of a solution is a major issue, especially in metaheuristic search, which put "blind faith" in the evaluation procedure. Furthermore the metaheuristic must evaluate a certain amount of solutions before confidence in the final solution is established, thus each evaluation must be fast, if the search is a part of an adaptive system rather than an offline optimizer.
 
 There are two major methods for this evaluation. The first is based on the modelling of the complete system as a bilevel model (see section \ref{offline}) so that all necessary informations concerning signal states and traffic can be incorporated into the objective function. 
 
@@ -7,13 +7,13 @@ The second approach, simulation, handles the complexity issue of modelling the b
 
 Simulation is widely used in the articles of this survey and so this section will discuss this method of evaluation.
 
-There are a number of highly regarded simulations available. The primary use are for infrastructure expansions. In traffic signal optimization they are almost always used to establish confidence in performance for some signal optimization procedure. This confidence comes from observing the actions of the system during the simulation but also by comparing aggregated fitness values with those coming from some other, well-known approach. In this regard the TRANSYT offline traffic signal optimization package is often used as a baseline. 
+The primary use of simulators are for infrastructure expansions. In traffic signal optimization they are almost always used to establish confidence in performance for some signal optimization procedure. This confidence comes from observing the actions of the system during the simulation but also by comparing aggregated fitness values with those coming from some other, well-known approach. In this regard the TRANSYT offline traffic signal optimization package is often used as a baseline. 
 
 In this case the quality of the simulation is more important than execution speed. 
 In table \ref{tab:convergespeed} are the names of three major simulators, which are highly trusted to produce reliable traffic. 
-From the interviews it emerged that the Danish Road Directorate prefer VisSim for simulations of infrastructure expansions as well as testing of signal timing plans. In the latter case also TRANSYT is highly regarded and will also perform much faster.
+From the interviews it emerged that DRD prefer VisSim for simulations of infrastructure expansions as well as testing of signal timing plans. In the latter case again TRANSYT is highly regarded and will also perform much faster.
 
-There are three types of simulators, the main difference being the level of detail in the underlying model. They are micro-, meso- and macrosimulators. Microsimulators model the behaviour of each vehicle and driver, mesosimulators regard the movements of platoons of vehicles and macrosimulators search for a user equilibrium (see section \ref{usereq}), considering origins (input links) and destinations (output links).
+There are three types of simulators, the main difference being the level of detail in the underlying model. They are micro-, meso- and macrosimulators. Microsimulators model the behaviour of each vehicle and driver, mesosimulators regard the movements of platoons of vehicles and macrosimulators search for user equilibriums (see section \ref{usereq}), considering origins (input links) and destinations (output links).
 
 Independent on the detail level of the model a simulation must run until it is converged before the objective value can be extracted. 
 
@@ -39,8 +39,8 @@ In the last example Chiou \cite{34} generates solutions using a numerical search
 
 Other researchers implement simple, but fast, microsimulators, for instance \cite{12} and \cite{42}. They are tightly coupled to the test network and their reliability is questionable.
 
-In \cite{31} Taale and van Zuylen use a macroscopic simulator for evaluation solutions from their genetic algorithm, but recommend the use of a microsimulator for evaluation of the final solution. In spite of the macrosimulator they observe running times in excess of one hour for very small networks on current hardware. (This might also be due to poor tuning of the GA, but they do not mention this possibility.)
+In \cite{31} Taale and van Zuylen use a macroscopic simulator for evaluating solutions from their genetic algorithm, but recommend the use of a microsimulator for evaluation of the final solution. In spite of the macrosimulator they observe running times in excess of one hour for very small networks on current hardware. (This might also be due to poor tuning of the GA, but they do not mention this possibility.)
 
 For microsimulations most often CORSIM is used eg.  \cite{1} and \cite{35}. Perhaps this is due to the fact that CORSIM is made by the same company, which sells TRANSYT - McTrans. A single use an alternative microsimulater, Paramics Quadstone, is seen in article \cite{21}.
 
-The information that can be extracted from the simulators are plentyful for the purpose of comparing solutions to signal settings (delay, travel time, stops, queue lenghts). The articles presenting simulation results of seem to prefer microsimulations.
+The informations that can be extracted from the simulators are plentyful for the purpose of comparing solutions to signal settings (delay, travel time, stops, queue lenghts). And so it is possible to show which objectives can be reached - and additional benefits obtained - from an intelligent traffic system, if the intersections in the area subject to simulation were to be under control.
