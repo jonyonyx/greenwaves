@@ -5,7 +5,7 @@ DOGS is a criteria-based system which relies on a common cycle time for coordina
 The Danish Road Directorate (DRD) has implemented DOGS along several arterials in Denmark. 
 Among these are the Glostrup and Herlev implementations along the O3 ring-road. They see high increases in demand in the morning and afternoons when commuters come to and leave work places. Normally such fluctuations can be handled well by a small number of timing plans (see section \ref{pretimed}), which are changed according to the time of day, but the area also see more unpredictable types of fluctuations when accidents occur on the nearby highway, M3, or when M3 lanes are closed due to expansions. For these reasons DRD decided implement a system which could handle such situations.
 
-The purpose of DOGS is to increase the capacity of the arterial in these cases and rely on optimized, pretimed plans in low traffic situations. The capacity increase comes by increasing the common cycle time and allocate the extra green time per cycle to the phases along the arterial. This will cause increased delays for the minor roads, but may prevent queues from reaching the previous intersection - or even prevent queues in cases of light congestion.
+The purpose of DOGS is to increase the capacity of the arterial in these cases and revert to offline-optimized, pretimed plans in low traffic situations. The capacity increase comes by increasing the common cycle time and allocate the extra green time per cycle to the phases along the arterial. This will cause increased delays for the minor roads, but may prevent queues from reaching the previous intersection - or even prevent queues in cases of light congestion.
 DOGS is also capable of providing priority to buses by extending the green time when buses are near an intersection.
 
 At present the system must be tailored to the environment in which is must operate. For this reason the following sections will use the Herlev area as a reference area in order to explain certain concepts. In figure \ref{fig:dogs_herlev} is a layout of this network.
@@ -24,7 +24,7 @@ Loops are placed in the immediate downstream of intersections and connected to c
 The criteria, which DOGS use, are based on the total inflow and outflow per cycle as well as load percentage, which, in Herlev, is extracted from strategically placed detectors in the ends of the arterial. In figure \ref{fig:dogs_herlev} the inflow is thus measured at D3 and D14 while the outflow is measured at D15 and D18. 
 During an interview with DRD and TTS it was explained that the traffic from minor roads can be neglected in the load measurement, though both parties would be interested in seeing the effect of increasing the number of detectors used.
 
-In addition to vehicles per cycle and lead degrees the detectors are capable of measuring vehicle speeds, though this is not taken into consideration in any of the criteria. In the case of prediction such capabilities could be taken advantage off eg. by fitting the predicted speeds to observations.
+In addition to vehicles per cycle and load degrees the detectors are capable of measuring vehicle speeds, though this is not taken into consideration in any of the criteria. In the case of prediction such capabilities could be taken advantage off eg. by fitting the predicted speeds to observations.
 
 \subsubsection*{Prediction}
 DOGS is a purely traffic actuated system and no prediction is used when the system is activated due to heavy traffic conditions.
@@ -36,8 +36,8 @@ An alleviating point to the lack of prediction is the fact that 1) the current a
 \subsubsection*{Optimization}
 Since DOGS only kicks in under congested or near-congested conditions (for the Herlev area when the load exceeds 60\%) it is simple to optimize the throughput since any increase in green time will just allow more vehicles to pass (the phase is never emptied from vehicles).
 
-The objective is to keep the load degree (load / capacity) for the most heavily loaded intersection below 90\%.
-To do this the common cycle time and green times is set according to the load level. The adjustments are made within a few seconds per cycle to avoid sudden, major changes in cycle time and temporary loss of coordination.
+The objective is to keep the load degree (load/capacity) for the most heavily loaded intersection below 90\%.
+To do this the common cycle time and green times are set according to the load level. The adjustments are made with a few seconds per cycle to avoid sudden, major changes in cycle time and temporary loss of coordination.
 
 Coordination is achieved by running the signals on a common cycle time, but offsets are not adjusted when the common cycle time changes so this issue should receive further investigation.
 
@@ -91,4 +91,4 @@ To avoid hysteresis between programs the same constraints (equations \ref{eqn:hy
 \subsubsection*{Evaluation}
 Tests have shown that the system is indeed capable of increasing the capacity, with reduced queue lengths as a result. When the arterial in Herlev is at or above moderate load DOGS will increase the capacity by 15-25\% compared to the capacity if only the pretimed plans was in use.
 
-Due to its ad-hoc nature it is difficult to compare DOGS to other systems for arterial progression. In a future project by this author simulations of DOGS might allow further comparison studies.
+Due to its ad-hoc nature it is difficult to compare DOGS to other systems for arterial progression. In a future project by this author simulations of DOGS will allow further comparison studies.

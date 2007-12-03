@@ -5,14 +5,14 @@ They do this by dynamically adjusting cycle times, phase sequences and green spl
 
 It is evident that the cycle time is crucial in optimization because, for a congested network, increasing the cycle time will always cause a througput increase (there are always cars waiting to cross the intersection). In the litterature the cycle time is often common to all intersections under traffic control so that green waves (arterial progression) can be produced. For direct assignment systems the throughput is dependent on allocation to phases of consecute green time. Long cycle times lead to long phase durations, which allow a steady flow of vehicles to pass and minimizes lost and interphase time per time unit.
 
-For large networks the enforcement of a common cycle is inappropriate, however. Consider a network which is so large that two disjoint arterials exist. In this case it is unlikely that a common cycle time will allow green waves to exist for both arterials eg. when the intersections of one arterial are more tightly spaced than in the other.
+For large networks the enforcement of a common cycle time is inappropriate, however. Consider a network which is so large that two disjoint arterials exist. In this case it is unlikely that a common cycle time will allow green waves to exist for both arterials eg. when the intersections of one arterial are more tightly spaced than in the other. For networks of this type (size) a direct phase assignment model might provide the necessary flexibility.
 
 (Even though the arterials cannot be considered as a single arterial, they are not completely disjoint due to the effects of chaos theory. Otherwise it would make no sense to control the intersections in the area as  a single network.)
 
 Another feature of considering very large networks is the possibility of traffic redirection. If it is detected - or predicted - that an arterial is, or will be, congested under current flow conditions it is sensible to redirect some traffic onto alternative routes. 
 Redirecting traffic using traffic signals is a subtle technique which has not received much research yet though it could pose much more efficient than current traffic information systems, which inform road users of congestions and alternative routes, but allows them to ignore the advice.
 
-In this section some in-depth discussions are given for three adaptive systems, which do not rely on offline optimization. The systems are:
+In this section some in-depth discussions are given for three adaptive systems, which do not rely on offline optimization as it was sketched in section \ref{offline}. The systems are:
 
 \begin{enumerate}
 \item \textbf{RHODES} by Pitu Mirchandani and Larry Head presented in \cite{44} - a hierarchical system for network-wide optimization
@@ -20,7 +20,7 @@ In this section some in-depth discussions are given for three adaptive systems, 
 \item \textbf{DOGS} by danish Technical Traffic Solution (TTS) evaluated in the danish article \cite{dogs}, which provides criteria-based capacity increases along an arterial
 \end{enumerate}
 
-Comparisons will be made for the systems to highlight differences in areas such as \textit{detection}, \textit{prediction}, \textit{optimization strategy} and \textit{level of responsiveness}.
+Comparisons will be made for the systems to highlight differences in areas such as \textit{detection}, \textit{prediction} and \textit{optimization strategy}.
 
 \subsection{RHODES}
 \input{rhodes}
@@ -37,21 +37,21 @@ The three systems presented here have different scope and as such cannot be comp
 Some comparisons can be made in the three main topics covered for each system ie. \textit{detection}, \textit{prediction} and \textit{optimization}.
 
 \subsubsection*{Detection}
-DOGS is the system which is most specific about detection. This is natural since it was developed by a company, which implement solutions for traffic detection, but also because it is in operation and, to the knowledge of this author it was never simulated.
+DOGS is the system which is most specific about detection. This is natural since it was developed by a company, which implement solutions for traffic detection, but also because it is in operation and, to the knowledge of this author, it was never simulated.
 
 The Phase-by-Phase article has a lengthy discussion of detection technologies and placement but in fact does not make final decisions on the matter.
 
 RHODES only mention detection to say that any technology, which can provide accurate and timely data, will suffice for prediction.
 
 \subsubsection*{Prediction}
-In this area RHODES is by far the most advanced system. Building on existing work the system is used at the intersection and sector level control. Predictions are made from current data from upstream intersections. Predictions are made are made on the basis of turning probabilities and speeds, which can be extracted from historical data.
+In this area RHODES is by far the most advanced system. The systems used at the intersection and sector level control are similar but in the detail level and scope and build on existing work. Predictions are made from detector data from upstream intersections using turning probabilities and speeds, which can be extracted from historical data.
 
 The Phase-by-Phase system, in its current state during the writing of the article, had "perfect" prediction ie. the prediction process was directly linked to the traffic generation process of the simulator. The recommendation from Shenoda and Machemel is to further investigate the ARIMA time-series analysis framework to obtain accurate prediction for arrivals, which they argue is of dynamic nature.
 
 DOGS has no prediction capabilities. By studying the material on the Herlev implementation and through talks with TTS and DRD it has become clear that there is a general assumption that traffic, which enters the arterial in either end is assumed to pass through the arterial. Turn-in and turn-out movements are thus expected to cancel out. This assumption could prove to be cumbersome if DOGS was to operate longer arterials with differing traffic patterns in various regions.
 
 \subsubsection*{Optimization}
-DOGS has a clear advantage in optimization since, for each cycle, the only decision to be made is whether switch between traffic actuated control and pretimed signal plans or to change to a lower or higher capacity program. This can be done in constant time using constraints such as the one presented earlier. DOGS has no objective function, only a \textit{political} objective - capacity increase with reduced service for minor roads, which can be assessed in rough terms using video detectors.
+DOGS has a clear advantage in optimization since, for each cycle, the only decision to be made is whether to switch between traffic actuated control and pretimed signal plans or to change to a lower or higher capacity program. This can be done in constant time using constraints such as the one presented earlier. DOGS has no objective function, only a \textit{political} objective - capacity increase with reduced service for minor roads, which can be assessed in rough terms using video detectors.
 
 Phase-by-Phase minimizes delay using tabu search by adjusting green time proportions assigned to phases. The initial solution is obtained from a proportional heuristic, using Websters results, and the 1-bit neighborhood function redistributes the green time for a single phase to the next. 
 The running time of the search algorithm can be set to the maximum time before a decision must be implemented eg. until the end of the current phase.
@@ -64,7 +64,7 @@ The purpose of this section was to give some in-depth reviews of systems for ada
 
 The purpose was not to make a head-to-head comparison, in which case the RHODES system would probably prevail. The inclusion in evaluation for RT-TRACS is a testament to the completeness of RHODES and it is expected that it can easily be implemented for a real network. However, it is a complex system\footnote{This statement is backed up by the FHWA assessment of RHODES and other systems applying for RT-TRACS, see http://www.itsdocs.fhwa.dot.gov/edldocs/13480/ch3.pdf} involving many components and traffic engineers might be overwhelmed by this fact. 
 
-DOGS has been implemented on several arterials in Denmark. It relies on the site specific knowledge of traffic engineers for definition of criteria parameters, which is most likely available, if advanced traffic optimization system had not been employed previously. It is free from the trouble of designing sophisticated signal timing plans due to the lack of a true objective function and the fact that it only operates under medium to heavy traffic loads under which optimization reduce to the proper setting of capacity on the major road. If DOGS was to operate allowed under off-peak traffic volumes some prediction should probably be studied and a proper objective function formulated and optimized.
+DOGS has been implemented on several arterials in Denmark. It relies on the site specific knowledge of traffic engineers for definition of criteria parameters, which is most likely available, if advanced traffic optimization system had not been employed previously. It is free from the trouble of designing sophisticated signal timing plans due to the lack of a true objective function and the fact that it only operates under medium to heavy traffic loads under which optimization reduce to the proper setting of capacity on the major road. If DOGS was to operate under off-peak traffic volumes some prediction should probably be studied and a proper objective function formulated and optimized.
 
 The phase-by-phase system appears to have some way to go yet before becoming an option for implementation in real life intersections. Most critically is the lack of a prediction component, which, as tests show, is a determining factor for the performance of the system. 
 The solution for delay calculation is the highlight of the system, especially when the phase order constraint is removed.
