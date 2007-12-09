@@ -8,7 +8,7 @@ The phase-by-phase (PP) system was developed to overcome a number of deficiencie
 
 The proposed overall scheme to improve upon these issues are the isolated optimization of intersections and more fine-grained tracking of vehicles.
 
-The optimization process has been made independent from determination of the network state ie. detection and prediction and as such some these subjects are mostly discussions as proposals for improvements.
+The optimization process has been made independent from determination of the network state ie. detection and prediction and as such some of these subjects are mostly discussions and proposals for improvements.
 
 \subsubsection*{Detection}
 PP relies on individual tracking of vehicles to obtain an arrival based model. For networks this can be realized only with video detection with eg. license plate recognition; traditional loop detections cannot yet identify individual vehicles.
@@ -22,7 +22,7 @@ Alternatives are some form of time-series analysis or a Poisson process with var
 The performance of PP is highly dependent on the ability of the chosen prediction system to generate proper forecasts but, as will be seen in the test results, the potential benefits are great.
 
 \subsubsection*{Optimization}
-The optimization procedure of PP seeks to minimize the stopped delay using input from the prediction process. The most widely used measure of effectiveness is stopped delay but the authors show that there is also a linear relationship to total travel time.
+The optimization procedure of PP seeks to minimize the stopped delay using input from the prediction process. The most widely used measure of effectiveness is stopped delay (see eg. \cite{9}, \cite{38} and \cite{31}) but the authors show that there is also a linear relationship to total travel time.
 
 The following notation is used in the paper:
 
@@ -45,7 +45,7 @@ $t_{ij}$ & The arrival time for vehicle $j$ on approach $i$
 \caption{Notation}
 \end{table}
 
-$H$ should be in the order of the desired cycle time and $\lambda_k$ give the green splits and thus we have a full plan for the signal. Stopped delay can be calculated from this plan and the predicted arrivals. In figure \ref{fig:pp_delay} this idea is sketched.
+$H$ should be in the order of the desired cycle time and $\lambda_k$ give the green splits and thus we have a full plan for the signal. Stopped delay can be calculated from this plan and the predicted arrivals. In Figure \ref{fig:pp_delay} this idea is sketched.
 
 \begin{figure}[!ht]
 \begin{center}
@@ -71,13 +71,13 @@ In the second case of equation \ref{eqn:pp_delay} vehicles incur stopped delay s
 
 PP also takes into account queue startup delay and thus cover the most critical sources of delay. However PP makes the assumption that the granting of green time to a phase will cause the approaches to be cleared completely ie. no vehicles must experience more than one green phase before they can leave.
 
-The objective function is defined using these delay terms and thus optimization can be done by making changes in the $\lambda_k$-values within some critical points in horizon. Looking at figure \ref{fig:pp_delay} it is seen that approach 2 is served green time until $\lambda_1 H$, supressing green from approach 1 and 3, which both have arrivals. By switching phase immediately after $t_{21}$ (setting $\lambda_1 = (t_{21} - cs)/H$) approach 1 could receive green until immediately after $t_{12}$ and so on. This example involves switching of the phase order, which was turned off in the paper.
+The objective function is defined using these delay terms and thus optimization can be done by making changes in the $\lambda_k$-values within some critical points in horizon. Looking at Figure \ref{fig:pp_delay} it is seen that approach 2 is served green time until $\lambda_1 H$, supressing green from approach 1 and 3, which both have arrivals. By switching phase immediately after $t_{21}$ (setting $\lambda_1 = (t_{21} - cs)/H$) approach 1 could receive green until immediately after $t_{12}$ and so on. This example involves switching of the phase order, which was turned off in the paper.
 
-In the PP paper a solution method using the above scheme is sketched as a combinatorial problem. But the number of combinations increase exponentially with the number of arrivals and the number of phases. Instead a tabu search is employed. Websters formula for optimum green time splits is used in the Proportional Heuristic to obtain a good initial solution and a 1-bit neighborhood function is defined by making changes to a single value in $\lambda_k$ (a low influence move), preserving the phase order. Candidates for the step of these changes range from the transmission time of an electronic signal ($\approx 10^{-3}s$) to the minimum headway between two vehicles travelling in a platoon ($\approx 2s$ cf. Greenshields et al. 1947).
+In the PP paper \cite{1} a solution method using the above scheme is presented as a combinatorial problem. But the number of combinations increase exponentially with the number of arrivals and the number of phases. Therefore a tabu search is employed. Websters formula for optimum green time splits is used in the Proportional Heuristic to obtain a good initial solution and a 1-bit neighborhood function is defined by making changes to a single value in $\lambda_k$ (a low influence move), preserving the phase order. Candidates for the step of these changes range from the transmission time of an electronic signal ($\approx 10^{-3}s$) to the minimum headway between two vehicles travelling in a platoon ($\approx 2s$ cf. Greenshields et al. 1947).
 A high influence move, which reorders phases, is also described but is turned off, as mentioned.
 
 \subsubsection*{Evaluation}
-Shenoda and Machemel compares the results of their metaheuristic search to pretimed and actuated signal control settings obtained from the CORSIM microsimulator using the test intersection in figure \ref{fig:pp_intersection}.
+Shenoda and Machemel compares the results of their metaheuristic search to pretimed and actuated signal control settings obtained from the CORSIM microsimulator using the test intersection in Figure \ref{fig:pp_intersection}.
 
 \begin{figure}[!ht]
 \begin{center}
@@ -87,13 +87,13 @@ Shenoda and Machemel compares the results of their metaheuristic search to preti
 \label{fig:pp_intersection}
 \end{figure}
 
-The intersection was subjected to 8 different data sets of arrival times. In figure \ref{fig:pp_improvements} the stopped delays for the PP system is compared to the simulation results using pretimed plans and standard traffic actuated control.
+The intersection was subjected to 8 different data sets of arrival times. In Figure \ref{fig:pp_improvements} the stopped delays for the PP system is compared to the simulation results using pretimed plans and standard traffic actuated control.
 
 \begin{figure}[!ht]
 \begin{center}
 \includegraphics[scale=0.5]{phase-by-phase_improvement_ratios.png} 
 \end{center}
-\caption{Improvement factors of PP compared to pretimed and actuated control in the 4-phase intersection of figure \ref{fig:pp_intersection}}
+\caption{Improvement factors of PP compared to pretimed and actuated control in the 4-phase intersection of Figure \ref{fig:pp_intersection}}
 \label{fig:pp_improvements}
 \end{figure}
 
