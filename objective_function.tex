@@ -9,7 +9,7 @@ The amount of consecutive green time, which can be distributed to the phases of 
 
 The reason is that a long cycle length may stop many vehicles in a platoon and incur a large delay for them, but the platoon of vehicles only experience a single stop. With short cycle time the vehicles never have to wait long for a green light but are in average stopped more frequently.
 
-Most authors who consider coordination of multiple signals use and optimize a cycle time which is common for all traffic signals since it would otherwise become hard to coordinate signals in static schedules. In a small network, if each signal operates on its own cycle time, green waves would only work on a periodic basis when the cycle time and offset parameters of all signals eclipse otherwise the green wave would drift and either cut off platoons of vehicles or give too much green time.
+Most authors who consider coordination of multiple signals use and optimize a cycle time which is common for all traffic signals since it would otherwise become hard to coordinate signals in static schedules. In a small network, if each signal operates on its own cycle time, green waves would only work on a periodic basis when the cycle time and offset parameters of all signals eclipse. Otherwise the green wave would drift and either cut off platoons of vehicles or give too much green time.
 
 The cycle time of an intersection is one of the most important parameters in a signal plan since it sets  lower and upper bounds on the green times for the phases. This relates to the MOE as well as the safety of a network since 1) if a red light is shown for too long some trafficants may start to ignore the signals and 2) if the signals cycle too frequently there is an increased risk of collisions.
 
@@ -23,7 +23,7 @@ This parameter is mostly relevant when optimizing signal plans for major-minor t
 
 Almost all methods optimize some or all of these parameters. A less commonly optimized parameter is the \textit{phase sequence} ie. the order in which phases should be green during a cycle. This is mostly relevant when prioritizing certain types of traffic eg. public (see \cite{scoot2004}) or emergency vehicles but also when considering safety aspects.
 
-The problem of choosing a MOE is subtle in its own and depends among other things on:
+The problem of choosing a MOE depends among other things on:
 
 \begin{itemize}
 \item The type of traffic which should gain benefits: private and commercial vehicles, public transportation, soft trafficants.
@@ -34,11 +34,11 @@ The problem of choosing a MOE is subtle in its own and depends among other thing
 Clearly there are conflicts of interest among this selection of objectives. One example has already been mentioned. Other examples of objective conflicts are:
 
 \begin{itemize}
-\item Minimizing delays for vehicles along an artery will cause longer waiting times for crossing pedestrians
+\item Minimizing delays for vehicles along an artery will cause longer waiting times for crossing pedestrians.
 \item Prioritizing eg. public transport by skipping a phase will lower the performance for private transport. 
 
 In the SCOOT system (see \cite{scoot2004}) a phase skipping approach to bus prioritization was implemented and tested in a London intersection. The buses enjoyed 4$s$ less delay but the delay for non-bus vehicles increased by 1$s$ in total average. The vehicles on the roads with no bus traffic suffered up to 14$s$ delay on average, however.
-\item Finally, any optimization which improves the experience of traversing the network by vehicle will probably cause more traffic and thus increase emissions
+\item Finally, any optimization which improves the experience of traversing the network by vehicle will probably cause more traffic and thus increase emissions.
 \end{itemize}
 
 Most of the articles in the survey use the average delay as objective. The TRANSYT optimization package by Robertson (1969) uses the PI as explained in \cite{26}:
