@@ -1,5 +1,5 @@
 \label{model}
-In this section an example of a classical mathematical model for offline optimization will be presented along with a model, which allows for more dynamic systems. The objective function used in offline optimizer does not consider multiobjectivity but could be replaced by a more refined performance measure.
+In this section an example of a classical mathematical model for offline optimization will be presented along with a model, which allows for more dynamic systems. The objective function used in an offline optimizer does not consider multiobjectivity but could be replaced by a more refined performance measure.
 
 The following notation is used:
 
@@ -55,11 +55,11 @@ The sum of green- and lost time for all phases of an intersection must equal the
 
 Equation \ref{eqn:offset} adjusts the offsets so as to create green waves but is only relevant in the common cycle time model, which is a special case of the presented model when $\forall n : C_n = C$. Offset is always considered as a modulus of a \textit{common} cycle time and thus no coordination can be made (in this model) if all intersections run on their own clock.
 
-In addition to this deficiency this model does not consider phase sequences. Phases are simply enumerated and allocated green time - the order is assumed given. The restrictive periodicity of the model can be seen clearly since $\phi$ cannot change as a function of time although, at least the order could actually be changed behind the scenes. Periodicity also makes it difficult to allow individual cycle times since the offset concept would no longer be applicable.
+In addition to this deficiency this model does not consider phase sequences. Phases are simply enumerated and allocated green time - the order is assumed given. The restrictive periodicity of the model can be seen clearly since $\phi$ cannot change as a function of time although the order could actually be changed behind the scenes. Periodicity also makes it difficult to allow individual cycle times since the offset concept would no longer be applicable.
 
 \subsubsection*{A dynamic model}
 \label{dynamicmodel}
-In a general, discrete time, model\footnote{In article \cite{36} is an example of a general continuous model, with has similarities to the presented model} time is indexed by $t \in H = \lbrace t_{min},...,t_{max} \rbrace$ and thus $H$ indicates the horizon of the optimization. Each signal is designated a phase for each time unit. Thus the concept of a cycle becomes virtual as they are no longer mandatory for calculating eg. the length of phases given the green splits.
+In a general discrete time model\footnote{In article \cite{36} is an example of a general continuous model, with has similarities to the presented model} time is indexed by $t \in H = \lbrace t_{min},...,t_{max} \rbrace$ and thus $H$ indicates the horizon of the optimization. Each signal is designated a phase for each time unit. Thus the concept of a cycle becomes virtual as they are no longer mandatory for calculating eg. the length of phases given the green splits.
 
 Without a common cycle time - or individual cycle time, even - the offset parameter also disappears. However they can be introduced virtually, in terms of a virtual cycle, and can thus be manipulated to excert the same behaviour. 
 The main problem is during initialization when the system has just started. In this case it is possible to synchronize intersections by delaying startup for those that would otherwise have a positive offset. The same strategy can be used when changing the (virtual) cycle time for the arterial. As discussed in the previous chapter, the common cycle time and offsets requires a periodicity, which is restrictive, and thus the inclusion of these concepts into a dynamic model will not be discussed further.
@@ -122,6 +122,6 @@ These specifications result in a model which is relatively easy to represent but
 
 SPP is a MIP scheme, which differentiates itself from traditional mathematical models by allowing columns to be produced a priori - or online with column generation - by a \textit{black box} that is not bound by a mathematical description. Such code can easily be made to only generate columns, which satisfy the constraints of the dynamic model.
 
-With SPP each column represents a possible assignment of phases for an intersection. The rows correspond to time indices within the horizon. In addition rows must be added to ensure that only one plan is selected by the MIP solver.
+With SPP each column represents a possible assignment of phases for an intersection. The rows correspond to time indices within the horizon. In addition rows must be added to ensure that only one timing plan per intersection is selected by the MIP solver.
 
 The main issue, however, will always be the evaluation of the solutions. This topic is discussed further in section \ref{evaluation}.

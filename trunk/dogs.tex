@@ -4,12 +4,12 @@ DOGS is an extension of the DOG system. The first 3 letters can be directly tran
 DOGS is a criteria-based system which relies on a common cycle time for coordination. The intended area of application is traffic signals along arterials, which see a high fluctuation in demand. 
 
 The DRD has implemented DOGS along several arterials in Denmark. 
-Among these are the Glostrup and Herlev implementations along the important O3 ring-road. They see high increases in demand in the morning and afternoons when commuters come to and leave work places. Normally such fluctuations can be handled well by a small number of timing plans (see section \ref{pretimed}), which are changed according to the time of day, but the area also see more unpredictable types of fluctuations when accidents occur on the nearby highway, M3, or when M3 lanes are closed due to expansions. For these reasons DRD decided implement a system which could handle such situations.
+Among these are the Glostrup and Herlev implementations along the important O3 ring-road. They see high increases in demand in the morning and afternoons with commuters. Normally such fluctuations can be handled well by a small number of timing plans (see section \ref{pretimed}), which are changed according to the time of day, but the area also see more unpredictable types of fluctuations when accidents occur on the nearby highway, M3, or when M3 lanes are closed due to expansions. For these reasons DRD decided implement a system which could handle such situations.
 
-The purpose of DOGS is to increase the capacity of the arterial in these cases and revert to offline-optimized, pretimed plans in low traffic situations. The capacity increase comes by increasing the common cycle time and allocate the extra green time per cycle to the phases along the arterial. This will cause increased delays for the minor roads, but may prevent queues from reaching the previous intersection - or even prevent queues in cases of light congestion.
+The purpose of DOGS is to increase the capacity of the arterial in the above mentioned cases and revert to offline-optimized, pretimed plans in low traffic situations. The capacity increase comes by increasing the common cycle time and allocate the extra green time per cycle to the phases along the arterial. This will cause increased delays for the minor roads, but may prevent queues from reaching the previous intersection - or even prevent queues in cases of light congestion.
 DOGS is also capable of providing priority to buses by extending the green time when buses are near an intersection.
 
-At present the system must be tailored to the environment in which is must operate. For this reason the following sections will use the Herlev area as a reference area in order to explain certain concepts. In Figure \ref{fig:dogs_herlev} is a layout of this network.
+At present the system must be tailored to the environment in which it operates. For this reason the following sections will use the Herlev area as a reference area in order to explain certain concepts. In Figure \ref{fig:dogs_herlev} is a layout of this network.
 
 \begin{figure}[!ht]
 \begin{center}
@@ -38,7 +38,7 @@ An alleviating point to the lack of prediction is the fact that the current arte
 \subsubsection*{Optimization}
 Since DOGS only kicks in under congested or near-congested conditions (for the Herlev area when the load exceeds 60\%) it is simple to optimize the throughput since any increase in green time will just allow more vehicles to pass (the phase is never emptied from vehicles).
 
-That DOGS only operates during high-congestion levels is an unusual trait of adaptive system since they excel in the optimization under \textit{normal} ie. uncongested load conditions (see the comparison of RHODES and a semi-actuated system in section \ref{rhodes}). This can be explained from the lack of an explicitly defined objective function and optimization routine.
+That DOGS only operates during high-congestion levels is an unusual trait for an adaptive system since they usually excel in optimization under \textit{normal} ie. uncongested load conditions (see the comparison of RHODES and a semi-actuated system in section \ref{rhodes}). This can be explained from the lack of an explicitly defined objective function and optimization routine.
 
 The objective is to keep the load degree (load/capacity) for the most heavily loaded intersection below 90\%.
 To do this the common cycle time and green times are set according to the load level. The adjustments are made with a few seconds per cycle to avoid sudden, major changes in cycle time and temporary loss of coordination.

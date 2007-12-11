@@ -1,5 +1,5 @@
 \label{rhodes}
-RHODES approach to traffic signal optimization is a hierarchical one with 3 layers of detail, see Figure \ref{fig:rhodes_hierarchi}. They can be roughly be summarized accordingly:
+RHODES approach to traffic signal optimization is a hierarchical one with 3 layers of detail, see Figure \ref{fig:rhodes_hierarchi}. They can be roughly summarized accordingly:
 
 \begin{enumerate}
 \item The macroscopic layer performs \textit{dynamic network loading}, which involves observing changes in the aggregated flow data of the entire network due to variations in the OD matrices. This layer supplies estimates of link flows to the middle level in rough numbers eg. vehicles per hour.
@@ -66,7 +66,7 @@ At the lower level a dynamic programming approach, COP, takes the results from R
 \subsubsection*{Evaluation}
 RHODES has been implemented and evaluated in CORSIM as part of the evaluation for Federal Highway Administration (FHWA) inclusion in RT-TRACS. RT-TRACS is an effort to choose and standardize a peak performance traffic signal optimization system for American traffic networks.
 
-The simulation is done for an arterial of 9 intersections with steady increase and then decrease of traffic over a 2 hour period. This is a FHWA test case and the baseline traffic control system is semi-actuated control based on the results of offline tools including TRANSYT and PASSER, which represents the best-can-do from an offline approach and can be considered as a hard competitor. 
+The simulation is done for an arterial of 9 intersections with steady increase and then decrease of traffic over a 2 hour period. This is a FHWA test case and the baseline traffic control system is semi-actuated control based on the results of offline tools including TRANSYT and PASSER, which represents the best-can-do from an offline approach and can be considered a hard competitor. 
 
 Testing shows that RHODES is more capable of exploiting the capacity of the arterial. As long as there is no congestion the throughput will match the demand and in the comparison RHODES can simply take more load before experiencing congestion.
 
