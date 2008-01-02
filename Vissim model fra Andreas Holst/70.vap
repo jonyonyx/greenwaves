@@ -1,0 +1,82 @@
+PROGRAM SG70_vap; 
+
+/* VAP_FREQUENCY 1; */
+
+
+
+/*CONST
+	Offset = 0;*/
+            
+
+/* EXPRESSIONS */ 
+
+
+          GreenA := T_green( A )=9;
+          GreenB := T_green( B )=15;
+          GreenTurn := T_green( Bh )=2;
+	    GreenAUdv := T_green(AUdv)=40;
+	    GreenAvUdv := T_Green(AvUdv)=18;
+	    GreenBUdv := T_Green(BUdv)=23;
+		KaldAUdv := Detection(71) > 0;
+		KaldAvUdv := Occupancy(72) = 5; /* her må der måske laves en kombination*/
+
+/* MAIN PROGRAM */ 
+
+S00Z001:    IF Stage_active( 1 ) THEN
+S01Z001:	  IF GreenA THEN
+S02Z001:	    IF KaldAvUdv THEN
+S03Z001:		interstage (1 , 5)
+		    ELSE 
+S04Z001:		interstage (1 , 2)
+		    END
+		  END
+		End;
+
+
+
+S00Z002:    IF Stage_active( 2 ) THEN
+S01Z002:	   IF GreenTurn THEN
+S02Z002:		interstage (2 , 3)
+		   End
+		end;
+
+
+S00Z003:    IF Stage_active( 3 ) THEN
+S01Z003:	  IF GreenB THEN
+S02Z003: 		IF KaldAUdv THEN
+S03Z003:		interstage(3,4)
+		      ELSE
+S04Z003:		interstage(3,1)
+			END
+		  END
+		END;
+
+S00Z004:    IF Stage_active( 4 ) THEN
+S01Z004:	   IF GreenAUdv THEN
+S02Z004:	      IF KaldAvUdv THEN
+S03Z004:		  interstage (4 , 5)
+			ELSE
+S04Z004:		  interstage (4 , 2)
+			END
+		   END
+		END;
+
+S00Z005:    IF Stage_active( 5 ) THEN
+S01Z005:	   IF GreenAvUdv THEN
+S02Z005:		interstage (5 , 6)
+		   End
+		end;
+
+
+S00Z006:    IF Stage_active( 6 ) THEN
+S01Z006:	  IF GreenBUdv THEN
+S02Z006: 		IF KaldAUdv THEN
+S03Z006:		interstage(6,4)
+		      ELSE
+S04Z006:		interstage(6,1)
+			END
+		  END
+		END
+
+
+PROG_ENDE:   .    
