@@ -1,0 +1,24 @@
+PROGRAM fabriksparken; /* D:\greenwaves\Vissim\o3_roskildevej-fabriksparken\fabriksparken.vv */
+
+
+/* ARRAYS */ 
+
+/* SUBROUTINES */ 
+
+/* PARAMETERS DEPENDENT ON SCJ-PROGRAM */ 
+            
+/* EXPRESSIONS */ 
+
+/* MAIN PROGRAM */ 
+
+S01Z002:    IF T/2 THEN
+S02Z002:      SetG(1); SetR(2);
+S02Z003:      IF T<10 THEN
+                GOTO S01Z002
+              END
+            ELSE
+S01Z003:      SetG(2); SetR(1);
+              GOTO S02Z003
+            END
+PROG_ENDE:    .
+/*----------------------------------------------------------------------------*/
