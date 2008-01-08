@@ -1,0 +1,350 @@
+1                                                          T R A N S Y T
+                                                           ~~~~~~~~~~~~~
+                                                     TRAffic Network StudY Tool
+ 
+ 
+ (C) COPYRIGHT 1996,2001 - TRL Limited, Crowthorne, Berkshire, RG45 6AU, UK
+0Implementation for IBM-PC or compatible
+0Program TRANSYT 11, Analysis Program Version 1.3
+0Run with file:- "RING3_3M.DAT"   at 14:41   on 10/12/01
+0Ring 3 - 3m
+ 
+ 
+ 
+  PARAMETERS CONTROLLING DIMENSIONS OF PROBLEM :
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 
+  NUMBER OF NODES                    =    3
+  NUMBER OF LINKS                    =   25
+  NUMBER OF OPTIMISED NODES          =    3
+  MAXIMUM NUMBER OF GRAPHIC PLOTS    =    0
+  NUMBER OF STEPS IN CYCLE           =   40
+  MAXIMUM NUMBER OF SHARED STOPLINES =    0
+  MAXIMUM NUMBER OF TIMING POINTS    =    3
+  MAXIMUM LINKS AT ANY NODE          =   11
+ 
+ 
+  CORE REQUESTED =   5802 WORDS
+  CORE AVAILABLE =  72000 WORDS
+.
+0          DATA INPUT :-
+           ~~~~ ~~~~~
+0CARD   CARD
+  NO.   TYPE
+ (  1)= TITLE:- Ring 3 - 3m
+0CARD   CARD   CYCLE  NO. OF   TIME EFFECTIVE-GREEN  EQUISAT 0=UNEQUAL FLOW   CRUISE-SPEEDS   OPTIMISE  EXTRA  HILL-   DELAY   STOP
+  NO.   TYPE   TIME    STEPS  PERIOD DISPLACEMENTS  SETTINGS  CYCLE   SCALE   SCALE  CARD32   0=NONE   COPIES  CLIMB   VALUE   VALUE
+                        PER   1-1200  START    END     0=NO  1=EQUAL  10-200  50-200 0=TIMES  1=O/SET   FINAL  OUTPUT  P PER   P PER
+               (SEC)   CYCLE   MINS.  (SEC)   (SEC)    1=YES  CYCLE      %       %   1=SPEEDS 2=FULL   OUTPUT  1=FULL  PCU-H    100
+   2)=   1      90      40      60       2       3       0       0       0       0       1       2       0       0      36      20
+0CARD   CARD                                      LIST  OF  NODES  TO  BE  OPTIMISED
+  NO.   TYPE
+   3)=   2      10      11      12       0       0       0       0       0       0       0       0       0       0       0       0
+0                                  NODE  CARDS:   STAGE  CHANGE  TIMES  AND  MINIMUM  STAGE  TIMES
+ CARD   CARD   NODE        STAGE 1         STAGE 2         STAGE 3         STAGE 4         STAGE 5         STAGE 6         STAGE 7
+  NO.   TYPE    NO.   CHANGE    MIN   CHANGE    MIN   CHANGE    MIN   CHANGE    MIN   CHANGE    MIN   CHANGE    MIN   CHANGE    MIN
+   4)=  13      10      71      28      21      15      39      25       0       0       0       0       0       0       0       0
+   5)=  12      11      55      20      33      19       0       0       0       0       0       0       0       0       0       0
+   6)=  13      12       8      20      48      10      64      20       0       0       0       0       0       0       0       0
+0                                                    LINK CARDS:   GIVEWAY DATA
+                     PRIORITY LINKS   LINK1 GIVEWAY COEFFS.
+ CARD   CARD   LINK    LINK1   LINK2    ONLY     A1      A2                                    LINK    STOP     MAX   DELAY  DISPSN
+ NO.   TYPE    NO.      NO.     NO.  % FLOW    X100    X100                                  LENGTH WT.X100   FLOW  WT.X100    X100
+   7)=  30    1035    1011    1013       0      22      19       0       0       0       0    1240       0    1600       0       0
+   8)=  30    1135    1111       0       0      22      19       0       0       0       0     230       0    1600       0       0
+   9)=  30    1215    1231    1233       0      22      19       0       0       0       0     830       0    1602       0       0
+  10)=  30    1225    1241    1243       0      22      19       0       0       0       0     200       0    1600       0       0
+  11)=  30    1235    1211    1213       0      22      19       0       0       0       0     720       0    1600       0       0
+  12)=  30    1245    1221       0       0      22      19       0       0       0       0     200       0    1600       0       0
+0                                                    LINK  CARDS:   FIXED  DATA
+                                        FIRST   GREEN                   SECOND  GREEN
+ CARD   CARD   LINK     EXIT        START            END            START            END       LINK    STOP     SAT   DELAY   DISPSN
+  NO.   TYPE    NO.     NODE    STAGE    LAG    STAGE    LAG    STAGE    LAG    STAGE    LAG  LENGTH  WT.X100  FLOW  WT.X100    X100
+  13)=  31    1011      10       1       7       2       4       0       0       0       0     230       0    4500       0       0
+  14)=  31    1013      10       1       7       3       7       0       0       0       0     230       0    1600       0       0
+  15)=  31    1021      10       3       7       1       5       0       0       0       0     200       0    4500       0       0
+  16)=  31    1023      10       3       7       1       0       0       0       0       0     200       0    1600       0       0
+  17)=  31    1025      10       2       8       3       5       0       0       0       0     200       0    2000       0       0
+  18)=  31    1031      10       1       7       2       1       0       0       0       0    1240       0    4500       0       0
+  19)=  31    1033      10       1       7       3       3       0       0       0       0    1240       0    1600       0       0
+  20)=  31    1035      10       1       7       2       7       0       0       0       0    1240       0    2000       0       0
+  21)=  31    1041      10       3      11       1       0       0       0       0       0     200       0    4500       0       0
+  22)=  31    1045      10       2       8       3       3       0       0       0       0     200       0    4000       0       0
+  23)=  31    1111      11       1       8       2       0       0       0       0       0     720       0    4000       0       0
+  24)=  31    1121      11       2       7       1       0       0       0       0       0     200       0    2000       0       0
+  25)=  31    1131      11       1       8       2       0       0       0       0       0     230       0    4000       0       0
+  26)=  31    1135      11       1       8       2       0       0       0       0       0     230       0    1601       0       0
+  27)=  31    1211      12       1      10       3       0       0       0       0       0     830       0    4000       0       0
+  28)=  31    1213      12       1      10       3       0       0       0       0       0     830       0    1600       0       0
+  29)=  31    1215      12       1      10       3       0       0       0       0       0     830       0    1602       0       0
+  30)=  31    1221      12       3       6       1       0       0       0       0       0     200       0    2000       0       0
+  31)=  31    1225      12       3       6       1       0       0       0       0       0     200       0    1601       0       0
+  32)=  31    1231      12       1      10       2       3       0       0       0       0     720       0    4500       0       0
+  33)=  31    1233      12       1      10       2       0       0       0       0       0     720       0    1600       0       0
+  34)=  31    1235      12       1      10       2       0       0       0       0       0     720       0    1601       0       0
+  35)=  31    1241      12       3       6       1       0       0       0       0       0     200       0    2000       0       0
+  36)=  31    1243      12       3       6       1       0       0       0       0       0     200       0    1600       0       0
+  37)=  31    1245      12       3       6       1       0       0       0       0       0     200       0    1600       0       0
+0                                                    LINK CARDS:    FLOW DATA
+                                       ENTRY 1 ............    ENTRY 2 ............    ENTRY 3 ............    ENTRY 4 ............
+ CARD   CARD   LINK   TOTAL  UNIFORM   LINK          CRUISE    LINK          CRUISE    LINK          CRUISE    LINK          CRUISE
+  NO.   TYPE    NO.    FLOW    FLOW     NO.    FLOW   SPEED     NO.    FLOW   SPEED     NO.    FLOW   SPEED     NO.    FLOW   SPEED
+  38)=  32    1011    1530       0    1111    1650      70    1121      50      61       0       0       0       0       0       0
+  39)=  32    1013     500       0    1111     500      70       0       0       0       0       0       0       0       0       0
+  40)=  32    1021    1570       0       0       0      50       0       0       0       0       0       0       0       0       0
+  41)=  32    1023     360       0       0       0      50       0       0       0       0       0       0       0       0       0
+  42)=  32    1025     380       0       0       0      50       0       0       0       0       0       0       0       0       0
+  43)=  32    1031    1370       0       0       0      70       0       0       0       0       0       0       0       0       0
+  44)=  32    1033     660       0       0       0      70       0       0       0       0       0       0       0       0       0
+  45)=  32    1035     200       0       0       0      70       0       0       0       0       0       0       0       0       0
+  46)=  32    1041    1200       0       0       0      50       0       0       0       0       0       0       0       0       0
+  47)=  32    1045     640       0       0       0      50       0       0       0       0       0       0       0       0       0
+  48)=  32    1111    1950       0    1211    1850      70    1221     160      61    1245      50      61       0       0       0
+  49)=  32    1121     100       0       0       0      50       0       0       0       0       0       0       0       0       0
+  50)=  32    1131    1600       0    1031    1250      70    1025     350      61       0       0       0       0       0       0
+  51)=  32    1135     150       0    1031     100      70    1025      50      61       0       0       0       0       0       0
+  52)=  32    1211    2070       0       0       0      70       0       0       0       0       0       0       0       0       0
+  53)=  32    1213      50       0       0       0      70       0       0       0       0       0       0       0       0       0
+  54)=  32    1215     400       0       0       0      70       0       0       0       0       0       0       0       0       0
+  55)=  32    1221     380       0       0       0      50       0       0       0       0       0       0       0       0       0
+  56)=  32    1225     180       0       0       0      50       0       0       0       0       0       0       0       0       0
+  57)=  32    1231    1760       0    1131    1450      70    1121     150      61       0       0       0       0       0       0
+  58)=  32    1233     230       0    1131     250      70       0       0       0       0       0       0       0       0       0
+  59)=  32    1235      40       0    1131      50      70       0       0       0       0       0       0       0       0       0
+  60)=  32    1241      40       0       0       0      50       0       0       0       0       0       0       0       0       0
+  61)=  32    1243     340       0       0       0      50       0       0       0       0       0       0       0       0       0
+  62)=  32    1245      40       0       0       0      50       0       0       0       0       0       0       0       0       0
+0                                                               FUEL CARD
+                    CRUISE CONSTANTS   DELAY    STOP
+                   A       B       C   CONST.  CONST.
+ ( 63)=   37     145    -375     405     115     635       0       0       0       0       0       0       0       0       0       0
+0*****END OF SUBROUTINE TINPUT*****
+.
+0     90 SECOND CYCLE  40 STEPS
+0INITIAL SETTINGS
+  - (SECONDS)
+0  NODE   NUMBER   STAGE   STAGE   STAGE   STAGE   STAGE  STAGE   STAGE
+    NO   OF STAGES   1       2       3       4       5       6       7
+ 
+    10       3      71      21      39
+    11       2      55      33
+    12       3       8      48      64
+0 LINK    FLOW   SAT   DEGREE  MEAN TIMES  -------DELAY--------   ----STOPS----   ----QUEUE----  PERFORMANCE   EXIT   GREEN TIMES
+ NUMBER   INTO   FLOW    OF     PER PCU    UNIFORM RANDOM+ COST    MEAN   COST    MEAN             INDEX.      NODE   START  START
+          LINK          SAT    CRUISE              OVERSAT  OF    STOPS    OF     MAX.  AVERAGE  WEIGHTED SUM            END     END
+                                    DELAY  (U+R+O=MEAN Q) DELAY    /PCU   STOPS          EXCESS  OF ( ) VALUES         1ST     2ND
+        (PCU/H) (PCU/H)  (%)  (SEC) (SEC)    (PCU-H/H)    ($/H)    (%)    ($/H)    (PCU)  (PCU)     ($/H)               (SECONDS)
+ 
+  1011    1531   4500     81    12    14    3.8 +  2.0  (  2.1)     55  (  4.4)      27                6.5     10     78  25
+  1013     499   1600     48    12     4    0.1 +  0.5  (  0.2)     13  (  0.3)       3                0.5     10     78  46
+  1021    1570   4500    101    14    88   13.0 + 25.4  ( 13.8)    150  (  6.3)      66               20.1     10     46  76
+  1023     360   1600     78    14    46    2.9 +  1.7  (  1.7)    105  (  1.0)      10                2.7     10     46  71
+  1025     380   2000    107    14   207    4.3 + 17.6  (  7.9)    213  (  2.2)      27               10.0     10     29  44
+  1031    1370   4500     78    64    29    9.2 +  1.8  (  4.0)     88  (  6.3)      32               10.3     10     78  22
+  1033     660   1600     68    64    17    2.1 +  1.0  (  1.1)     66  (  2.3)      12                3.4     10     78  42
+  1035     200   2000     64    64    40    1.4 +  0.9  (  0.8)    101  (  1.1)       5                1.9     10     78  28
+  1041    1200   4500    109    14   203   12.1 + 55.4  ( 24.3)    211  (  6.8)      85     +         31.1     10     50  71
+  1045     640   4000    103    14   140    7.0 + 17.9  (  9.0)    180  (  3.1)      34               12.0     10     29  42
+  1111    1950   4000     72    38     8    3.2 +  1.3  (  1.6)     67  (  6.9)      42                8.5     11     63  33
+  1121     100   2000     28    14    39    0.9 +  0.2  (  0.4)     91  (  0.2)       2                0.6     11     40  55
+  1131    1577<  4000     58    12     5    1.6 +  0.7  (  0.8)     24  (  2.0)      10                2.8     11     63  33
+  1135     146   1601     22    12     9    0.2 +  0.1  (  0.1)     35  (  0.3)       1                0.4     11     63  33
+  1211    2070   4000     99    43    53   12.2 + 18.5  ( 11.1)    124  ( 13.5)      71               24.5     12     18  64
+  1213      50   1600      6    43    13    0.1 +  0.0  (  0.1)     48  (  0.1)       1                0.2     12     18  64
+  1215     400   1602     95    43    84    3.1 +  6.3  (  3.4)    147  (  3.1)      16                6.5     12     18  64
+  1221     380   2000     59    14    32    2.7 +  0.7  (  1.2)     87  (  0.9)       9                2.1     12     70   8
+  1225     180   1601     41    14    31    1.2 +  0.3  (  0.6)     82  (  0.4)       4                1.0     12     70   8
+  1231    1736<  4500    102    38    92   12.8 + 31.7  ( 16.0)    143  ( 13.3)      75               29.3     12     18  51
+  1233     227   1600     41    37    30    1.5 +  0.3  (  0.7)     67  (  0.8)       4                1.5     12     18  48
+  1235      41   1601     17    37    32    0.3 +  0.1  (  0.1)     71  (  0.1)       1                0.3     12     18  48
+  1241      40   2000      6    14    24    0.2 +  0.0  (  0.1)     68  (  0.1)       1                0.2     12     70   8
+  1243     340   1600     66    14    36    2.5 +  1.0  (  1.2)     92  (  0.8)       8                2.1     12     70   8
+  1245      40   1600      9    14    26    0.2 +  0.1  (  0.1)     70  (  0.1)       1                0.2     12     70   8
+0  TOTAL          TOTAL       MEAN         TOTAL    TOTAL    TOTAL       TOTAL        PENALTY       TOTAL
+  DISTANCE         TIME    JOURNEY       UNIFORM   RANDOM+    COST        COST          FOR       PERFORMANCE
+ TRAVELLED        SPENT      SPEED         DELAY   OVERSAT     OF          OF          EXCESS       INDEX
+                                                    DELAY    DELAY       STOPS         QUEUES
+ (PCU-KM/H)     (PCU-H/H)    (KM/H)     (PCU-H/H)(PCU-H/H)   ($/H)       ($/H)         ($/H)        ($/H)
+0  9637.8         428.7       22.5         98.7    185.6    ( 102.4) + (   76.3)  +  (   0.0)   =     178.7      TOTALS
+0************************************************************************************************************************************
+0                                  CRUISE               DELAY               STOPS              TOTALS
+                               LITRES PER HOUR     LITRES PER HOUR     LITRES PER HOUR     LITRES PER HOUR
+0FUEL CONSUMPTION PREDICTIONS       757.0         +     327.0         +     452.1         =    1536.0
+0
+ NO. OF ENTRIES TO SUBPT  =    1
+ NO. OF LINKS RECALCULATED=   25
+.
+0     90 SECOND CYCLE  40 STEPS
+0INTERMEDIATE SETTINGS - INCREMENTS SO FAR :-   13
+  - (SECONDS)
+ 
+    10       3      58       8      26
+    11       2      42      20
+    12       3       8      48      64
+0  TOTAL          TOTAL       MEAN         TOTAL    TOTAL    TOTAL       TOTAL        PENALTY       TOTAL
+  DISTANCE         TIME    JOURNEY       UNIFORM   RANDOM+    COST        COST          FOR       PERFORMANCE
+ TRAVELLED        SPENT      SPEED         DELAY   OVERSAT     OF          OF          EXCESS       INDEX
+                                                    DELAY    DELAY       STOPS         QUEUES
+ (PCU-KM/H)     (PCU-H/H)    (KM/H)     (PCU-H/H)(PCU-H/H)   ($/H)       ($/H)         ($/H)        ($/H)
+0  9637.8         425.6       22.6         95.7    185.5    ( 101.2) + (   72.3)  +  (   0.0)   =     173.5      TOTALS
+0
+ NO. OF ENTRIES TO SUBPT  =    9
+ NO. OF LINKS RECALCULATED=  139
+.
+0     90 SECOND CYCLE  40 STEPS
+0INTERMEDIATE SETTINGS - INCREMENTS SO FAR :-   13  36
+  - (SECONDS)
+ 
+    10       3      58       8      26
+    11       2      42      20
+    12       3       8      48      64
+0  TOTAL          TOTAL       MEAN         TOTAL    TOTAL    TOTAL       TOTAL        PENALTY       TOTAL
+  DISTANCE         TIME    JOURNEY       UNIFORM   RANDOM+    COST        COST          FOR       PERFORMANCE
+ TRAVELLED        SPENT      SPEED         DELAY   OVERSAT     OF          OF          EXCESS       INDEX
+                                                    DELAY    DELAY       STOPS         QUEUES
+ (PCU-KM/H)     (PCU-H/H)    (KM/H)     (PCU-H/H)(PCU-H/H)   ($/H)       ($/H)         ($/H)        ($/H)
+0  9637.8         425.6       22.6         95.7    185.5    ( 101.2) + (   72.3)  +  (   0.0)   =     173.5      TOTALS
+0
+ NO. OF ENTRIES TO SUBPT  =    7
+ NO. OF LINKS RECALCULATED=  115
+.
+0     90 SECOND CYCLE  40 STEPS
+0INTERMEDIATE SETTINGS - INCREMENTS SO FAR :-   13  36  -1
+  - (SECONDS)
+ 
+    10       3      62       7      27
+    11       2      40      20
+    12       3       1      53      64
+0  TOTAL          TOTAL       MEAN         TOTAL    TOTAL    TOTAL       TOTAL        PENALTY       TOTAL
+  DISTANCE         TIME    JOURNEY       UNIFORM   RANDOM+    COST        COST          FOR       PERFORMANCE
+ TRAVELLED        SPENT      SPEED         DELAY   OVERSAT     OF          OF          EXCESS       INDEX
+                                                    DELAY    DELAY       STOPS         QUEUES
+ (PCU-KM/H)     (PCU-H/H)    (KM/H)     (PCU-H/H)(PCU-H/H)   ($/H)       ($/H)         ($/H)        ($/H)
+0  9637.8         287.0       33.6         87.5     55.1    (  51.3) + (   57.8)  +  (   0.0)   =     109.2      TOTALS
+0
+ NO. OF ENTRIES TO SUBPT  =   30
+ NO. OF LINKS RECALCULATED=  408
+.
+0     90 SECOND CYCLE  40 STEPS
+0INTERMEDIATE SETTINGS - INCREMENTS SO FAR :-   13  36  -1  13
+  - (SECONDS)
+ 
+    10       3      62       7      27
+    11       2      40      20
+    12       3       1      53      64
+0  TOTAL          TOTAL       MEAN         TOTAL    TOTAL    TOTAL       TOTAL        PENALTY       TOTAL
+  DISTANCE         TIME    JOURNEY       UNIFORM   RANDOM+    COST        COST          FOR       PERFORMANCE
+ TRAVELLED        SPENT      SPEED         DELAY   OVERSAT     OF          OF          EXCESS       INDEX
+                                                    DELAY    DELAY       STOPS         QUEUES
+ (PCU-KM/H)     (PCU-H/H)    (KM/H)     (PCU-H/H)(PCU-H/H)   ($/H)       ($/H)         ($/H)        ($/H)
+0  9637.8         287.0       33.6         87.5     55.1    (  51.3) + (   57.8)  +  (   0.0)   =     109.2      TOTALS
+0
+ NO. OF ENTRIES TO SUBPT  =    7
+ NO. OF LINKS RECALCULATED=  120
+.
+0     90 SECOND CYCLE  40 STEPS
+0INTERMEDIATE SETTINGS - INCREMENTS SO FAR :-   13  36  -1  13  36
+  - (SECONDS)
+ 
+    10       3      62       7      27
+    11       2      40      20
+    12       3       1      53      64
+0  TOTAL          TOTAL       MEAN         TOTAL    TOTAL    TOTAL       TOTAL        PENALTY       TOTAL
+  DISTANCE         TIME    JOURNEY       UNIFORM   RANDOM+    COST        COST          FOR       PERFORMANCE
+ TRAVELLED        SPENT      SPEED         DELAY   OVERSAT     OF          OF          EXCESS       INDEX
+                                                    DELAY    DELAY       STOPS         QUEUES
+ (PCU-KM/H)     (PCU-H/H)    (KM/H)     (PCU-H/H)(PCU-H/H)   ($/H)       ($/H)         ($/H)        ($/H)
+0  9637.8         287.0       33.6         87.5     55.1    (  51.3) + (   57.8)  +  (   0.0)   =     109.2      TOTALS
+0
+ NO. OF ENTRIES TO SUBPT  =    7
+ NO. OF LINKS RECALCULATED=  120
+.
+0     90 SECOND CYCLE  40 STEPS
+0INTERMEDIATE SETTINGS - INCREMENTS SO FAR :-   13  36  -1  13  36   1
+  - (SECONDS)
+ 
+    10       3      58       3      23
+    11       2      37      17
+    12       3       3      55      66
+0  TOTAL          TOTAL       MEAN         TOTAL    TOTAL    TOTAL       TOTAL        PENALTY       TOTAL
+  DISTANCE         TIME    JOURNEY       UNIFORM   RANDOM+    COST        COST          FOR       PERFORMANCE
+ TRAVELLED        SPENT      SPEED         DELAY   OVERSAT     OF          OF          EXCESS       INDEX
+                                                    DELAY    DELAY       STOPS         QUEUES
+ (PCU-KM/H)     (PCU-H/H)    (KM/H)     (PCU-H/H)(PCU-H/H)   ($/H)       ($/H)         ($/H)        ($/H)
+0  9637.8         287.4       33.5         88.1     54.9    (  51.5) + (   56.7)  +  (   0.0)   =     108.2      TOTALS
+0
+ NO. OF ENTRIES TO SUBPT  =   15
+ NO. OF LINKS RECALCULATED=  233
+.
+0     90 SECOND CYCLE  40 STEPS
+0INTERMEDIATE SETTINGS - INCREMENTS SO FAR :-   13  36  -1  13  36   1  -1
+  - (SECONDS)
+ 
+    10       3      58       3      23
+    11       2      37      17
+    12       3       2      55      66
+0  TOTAL          TOTAL       MEAN         TOTAL    TOTAL    TOTAL       TOTAL        PENALTY       TOTAL
+  DISTANCE         TIME    JOURNEY       UNIFORM   RANDOM+    COST        COST          FOR       PERFORMANCE
+ TRAVELLED        SPENT      SPEED         DELAY   OVERSAT     OF          OF          EXCESS       INDEX
+                                                    DELAY    DELAY       STOPS         QUEUES
+ (PCU-KM/H)     (PCU-H/H)    (KM/H)     (PCU-H/H)(PCU-H/H)   ($/H)       ($/H)         ($/H)        ($/H)
+0  9637.8         287.7       33.5         87.4     55.9    (  51.6) + (   56.5)  +  (   0.0)   =     108.1      TOTALS
+0
+ NO. OF ENTRIES TO SUBPT  =   13
+ NO. OF LINKS RECALCULATED=  215
+.
+0     90 SECOND CYCLE  40 STEPS
+0FINAL SETTINGS OBTAINED WITH INCREMENTS :-   13  36  -1  13  36   1  -1   1
+  - (SECONDS)
+0  NODE   NUMBER   STAGE   STAGE   STAGE   STAGE   STAGE  STAGE   STAGE
+    NO   OF STAGES   1       2       3       4       5       6       7
+ 
+    10       3      58       3      23
+    11       2      37      17
+    12       3       4      57      68
+0 LINK    FLOW   SAT   DEGREE  MEAN TIMES  -------DELAY--------   ----STOPS----   ----QUEUE----  PERFORMANCE   EXIT   GREEN TIMES
+ NUMBER   INTO   FLOW    OF     PER PCU    UNIFORM RANDOM+ COST    MEAN   COST    MEAN             INDEX.      NODE   START  START
+          LINK          SAT    CRUISE              OVERSAT  OF    STOPS    OF     MAX.  AVERAGE  WEIGHTED SUM            END     END
+                                    DELAY  (U+R+O=MEAN Q) DELAY    /PCU   STOPS          EXCESS  OF ( ) VALUES         1ST     2ND
+        (PCU/H) (PCU/H)  (%)  (SEC) (SEC)    (PCU-H/H)    ($/H)    (%)    ($/H)    (PCU)  (PCU)     ($/H)               (SECONDS)
+ 
+  1011    1531   4500     93    12    32    7.9 +  5.8  (  5.0)     95  (  7.6)      41               12.6     10     65   7
+  1013     499   1600     50    12     6    0.3 +  0.5  (  0.3)     31  (  0.8)       5                1.1     10     65  30
+  1021    1570   4500     92    14    40   11.7 +  5.6  (  6.2)    104  (  4.4)      43               10.6     10     30  63
+  1023     360   1600     70    14    38    2.7 +  1.1  (  1.4)     95  (  0.9)       9                2.3     10     30  58
+  1025     380   2000     95    14    92    3.8 +  6.0  (  3.5)    148  (  1.5)      15                5.0     10     11  28
+  1031    1370   4500     91    64    42   10.9 +  4.9  (  5.7)    104  (  7.5)      37               13.2     10     65   4
+  1033     660   1600     71    64    20    2.5 +  1.2  (  1.3)     73  (  2.5)      13                3.9     10     65  26
+  1035     200   2000     86    64    79    1.7 +  2.7  (  1.6)    140  (  1.5)       7                3.1     10     65  10
+  1041    1200   4500     96    14    59   10.7 +  8.9  (  7.0)    121  (  3.9)      38               10.9     10     34  58
+  1045     640   4000     90    14    59    6.4 +  4.0  (  3.8)    117  (  2.0)      20                5.8     10     11  26
+  1111    1950   4000     70    38     5    1.4 +  1.1  (  0.9)     21  (  2.1)      12                3.0     11     45  17
+  1121     100   2000     32    14    42    0.9 +  0.2  (  0.4)     95  (  0.3)       2                0.7     11     24  37
+  1131    1600   4000     57    12     5    1.7 +  0.7  (  0.9)     25  (  2.1)      10                3.0     11     45  17
+  1135     149   1601     22    12     8    0.2 +  0.1  (  0.1)     36  (  0.3)       1                0.4     11     45  17
+  1211    2070   4000     85    43    19    8.1 +  2.7  (  3.9)     78  (  8.5)      43               12.4     12     14  68
+  1213      50   1600      5    43     9    0.1 +  0.0  (  0.0)     38  (  0.1)       1                0.1     12     14  68
+  1215     400   1602     73    43    31    2.1 +  1.3  (  1.2)     94  (  2.0)      10                3.2     12     14  68
+  1221     380   2000     81    14    52    3.4 +  2.1  (  2.0)    110  (  1.1)      11                3.1     12     74   4
+  1225     180   1601     60    14    46    1.6 +  0.7  (  0.8)    100  (  0.5)       5                1.3     12     74   4
+  1231    1758   4500     75    38    14    5.2 +  1.5  (  2.4)     54  (  5.0)      30                7.4     12     14  60
+  1233     230   1600     29    37    10    0.5 +  0.2  (  0.2)     33  (  0.4)       2                0.6     12     14  57
+  1235      42   1601     11    37    12    0.1 +  0.1  (  0.1)     36  (  0.1)       0                0.1     12     14  57
+  1241      40   2000      9    14    31    0.3 +  0.0  (  0.1)     79  (  0.1)       1                0.2     12     74   4
+  1243     340   1600     91    14    77    3.2 +  4.1  (  2.6)    135  (  1.2)      12                3.8     12     74   4
+  1245      40   1600     14    14    35    0.3 +  0.1  (  0.1)     82  (  0.1)       1                0.2     12     74   4
+0  TOTAL          TOTAL       MEAN         TOTAL    TOTAL    TOTAL       TOTAL        PENALTY       TOTAL
+  DISTANCE         TIME    JOURNEY       UNIFORM   RANDOM+    COST        COST          FOR       PERFORMANCE
+ TRAVELLED        SPENT      SPEED         DELAY   OVERSAT     OF          OF          EXCESS       INDEX
+                                                    DELAY    DELAY       STOPS         QUEUES
+ (PCU-KM/H)     (PCU-H/H)    (KM/H)     (PCU-H/H)(PCU-H/H)   ($/H)       ($/H)         ($/H)        ($/H)
+0  9637.8         287.9       33.5         87.6     55.8    (  51.6) + (   56.4)  +  (   0.0)   =     108.0      TOTALS
+0************************************************************************************************************************************
+0                                  CRUISE               DELAY               STOPS              TOTALS
+                               LITRES PER HOUR     LITRES PER HOUR     LITRES PER HOUR     LITRES PER HOUR
+0FUEL CONSUMPTION PREDICTIONS       757.0         +     165.0         +     334.0         =    1255.9
+0
+ NO. OF ENTRIES TO SUBPT  =    8
+ NO. OF LINKS RECALCULATED=  136
+ 
+ PROGRAM TRANSYT FINISHED
