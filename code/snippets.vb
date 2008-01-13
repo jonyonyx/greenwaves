@@ -1,3 +1,26 @@
+Sub exporttocsv(ds As Worksheet)
+    sheetname = ds.Name
+    With ds
+        .Activate
+        .UsedRange.Select
+    End With
+    Selection.Copy
+    Workbooks.Add
+    ActiveSheet.Paste
+    Application.CutCopyMode = False
+    Application.DisplayAlerts = False
+    ActiveWorkbook.SaveAs Filename:= _
+        "D:\greenwaves\data\DOGS Glostrup 2007\" & sheetname & ".csv", FileFormat:=xlCSV, _
+        CreateBackup:=False
+    ActiveWindow.Close
+    Application.DisplayAlerts = True
+End Sub
+Sub exportall()
+    Dim ds As Worksheet
+    For Each ds In ActiveWorkbook.Sheets
+        exporttocsv ds
+    Next
+End Sub
 Sub FormatSheet(sheetname)
     
     Dim ds As Worksheet
