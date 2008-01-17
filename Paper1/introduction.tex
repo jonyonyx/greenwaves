@@ -1,25 +1,47 @@
 \section{Introduction}
-Road traffic has become an essential part of modern society and has put a high demand on road networks supplied by municipalities. 
 
-Traffic network congestion causes delays which adds substantial costs to the society and businesses on a daily basis and also increases emissions and the risk of accidents.
+Road traffic is an essential part of modern society and has put a high
+demand on road networks. Figures from a recent study from the Danish
+ministry of transport \cite{47} shows traffic has increased by 50\%
+since the 80's and that cars and busses are responsible for more than
+90\% of all person transport in Denmark (totalling 68 milliom
+kilometers).
 
-To alleviate congestion, public transport can be improved or the infrastructure can be expanded. In urban areas, the latter is often infeasible due to residential areas adjacent to the existing roads. 
-A more subtle way to improve the network performance is to make better use of the existing roads, which can be done by proper setting of traffic signal parameters. 
+Traffic network congestion causes delays which adds substantial costs
+to the society and businesses on a daily basis and also increases
+emissions and the risk of accidents. In the beforementioned study it
+is reported that in 2002 people where spending 100,000 hours in total
+in queue in the Greather Copenhagen road infrastructure, this
+corresponds to an economic loss of more than 750 million Euros.  
 
-Traffic signals are employed in urban areas in order to control traffic flows and avoid collisions by fairly distributing the right-of-way for adjoining road segments and to ensure a smooth flow of traffic.
+To alleviate congestion, public transport can be improved or the
+infrastructure can be expanded. In urban areas, the latter is often
+impossible due to residential areas adjacent to the existing roads.
+A more subtle way to improve the network performance is to make better
+use of the existing roads, which can be done by proper setting of
+traffic signal parameters.
 
-If not set appropriately traffic signals may seriously hinder the traffic flow through the road network and so great care should be taken when choosing the parameters for an intersection. 
+It is estimated that the proper use of intelligent traffic systems
+including intelligent traffic signals can increase the capacity of the
+road network in the Greater Copenhagen area by 5 to 10\%.
 
-The literature has many suggestions for the intelligent setting of traffic signals, ranging from purely statistically based methods developed in the early 60's over actuated traffic signals to highly adaptive and cooperative methods, which can be realized using actual flow information supplied by traffic detectors. 
+Traffic signals are employed in urban areas in order to control
+traffic flows and avoid collisions by fairly distributing the
+right-of-way for adjoining road segments and to ensure a smooth flow
+of traffic. If not set appropriately traffic signals may seriously
+affect the traffic flow through the road network and so great care
+should be taken when choosing the parameters for an intersection.
 
-This report gives a survey of the literature with special emphasis on adaptive methods, which attempts to coordinate traffic signals in larger networks so as to optimize some network-wide performance index such as number of stops or delay. 
+The literature has many suggestions for the intelligent setting of
+traffic signals, ranging from purely statistically based methods
+developed in the early 60's over actuated traffic signals to highly
+adaptive and cooperative methods, which can be realized using actual
+flow information supplied by traffic detectors. This paper gives a
+survey of the literature with special emphasis on adaptive methods,
+which attempts to coordinate traffic signals in larger networks so as
+to optimize some network-wide performance index such as number of
+stops or delay.
 
-The report is structured as follows. In section \ref{vocabulary} the basic vocabulary of traffic control is summarized. Then the objective and scope of the report is stated in section \ref{scope}. 
-The optimization problem and the traffic lights being optimized are described in sections \ref{theproblem} and \ref{signal_types}.
-Section \ref{history} gives an outline of some important research results in the field. 
-The classic traffic optimization paradigm for offline optimization is described in section \ref{offline}.
-Then in section \ref{adaptive_cooperation} the attention is turned to adaptive systems and three systems for intersection, arterial and network optimization are described. 
-
-Simulation is an essential component for establishing confidence in adaptive traffic control systems and is also widely used to assess the performance of a proposed signal plan. In  section \ref{evaluation} simulation for these purposes is discussed.
-
-Finally in section \ref{conclusion} the work in this report is summarized with recommendations for future works.
+The paper is structured as follows. XXX Oversigt skal skrive naar
+resten er paa plads XXX. Finally in section \ref{sec:conclusion} we
+summarize the findings and come with recommendations for future works.
