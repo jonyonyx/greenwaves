@@ -28,6 +28,8 @@ def create_aggr csvfile
 	
 	reader = FasterCSV.open(csvfile,'r',:col_sep=>';')
 	header = reader.shift # skip past the header
+	
+	det_names = header[2..-1]
 			
 	# pre-loop initialization	
 	row = reader.shift	
@@ -40,10 +42,9 @@ def create_aggr csvfile
 	num_det = row.length-2 # number of detectors
 	acc = [0]*num_det # fill array with zeros
 	
-	FasterCSV.open("aggr_#{Res}min_#{csvfile}",'w',:col_sep=>';') do |csv|	
-		csv << ['Date','Time','Day of Week'] + header[2..-1]
+	#FasterCSV.open("aggr_#{Res}min_#{csvfile}",'w',:col_sep=>';') do |csv|	
+	#	csv << ['Date','Time','Day of Week'] + det_names
 		offset = Res
-		do_continue = true
 		while row
 			cutoff = first_row_time + offset * 60
 			
@@ -58,22 +59,31 @@ def create_aggr csvfile
 			end
 			
 			# empty the acc buffer
-			puts "accumulating at row #{row_num}"
-			csv << [cutoff.strftime(EU_date_fmt),
-					cutoff.strftime('%H:%M'),
-					cutoff.strftime('%a')] + acc
+			puts "#{csvfile}: accumulating at row #{row_num}"
+			#csv << [cutoff.strftime(EU_date_fmt),
+			#		cutoff.strftime('%H:%M'),
+			#		cutoff.strftime('%a')] + acc
+			h = {}
+			(0..num_det-1).map{|i| h[det_names[i]] = acc[i]}
+			yield [cutoff] + h.to_a
+			
 			acc = [0]*num_det
 			offset += Res
 		end
-	end
+	#end
 	
 	reader.close
 	puts "Completed processing of '" + csvfile + "'"
 end
 
 Dir.chdir Data_dir
+
+time_det_map = {}
+
 for csvfile in Dir['taelling1.csv']
-	create_aggr csvfile	
+	create_aggr(csvfile) do |entry|
+		puts entry.inspect
+	end	
 end
 
 puts "end"
