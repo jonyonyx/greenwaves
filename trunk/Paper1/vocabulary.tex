@@ -1,38 +1,46 @@
-\label{vocabulary}
-When this literature study was initiated it quickly became evident there was a great deal of terminology specific to this field and that most articles assumed the author to be familiar with it. 
+\label{sec:vocabulary}
 
-Fortunately the terms of traffic signal optimization seems to be fairly standardized and most articles will share terminology.
+Fortunately the terms of traffic signal optimization seems to be
+fairly standardized and most articles will share terminology.
 
-This section attempts to extract the most important terms and give solid descriptions, so that the field can be adopted by newcomers more quickly.
+The traffic network is modelled as a directed graph $G(V,E)$ where $V$
+is the set of intersections controlled by a traffic signal and $E$ is
+the set of roads connecting the intersections. A path is thus a route
+through the network.
 
-\begin{description}
+In the context of adaptive traffic control an {\em artery} defines a
+main-path, the major road, through a traffic network. Such an artery will
+generally face higher demand than minor roads adjoining the
+artery. The time is takes got a traffic signal to get from the start
+of the green light through the yellow and read and until it again
+becomes green is denoted the {\em cycle time}. The cycle time is one
+of the most important variables in setting up the traffic signal.
 
-\item[Artery] A main-path, the major road, through a traffic network. It will generally face higher demand than minor roads adjoining the artery.
-			
-	\item[Cycle time] The turnaround time for all phases of a traffic signal to complete ie. the time it takes from the start of green time for a phase until it becomes green again.
+A phase (or stage) corresponds to a particular state of the red and
+green lights of the traffic lights in an intersection. For instance
+there may be a green phase in the north and south direction for a
+two-way intersection (which implies red phase in the east-west
+direction). Usually when \textit{a phase} is mentioned it is implicit
+that it is the green phase.
 
-\item[Interphase green] Also known as lost time, is a small amount of time inserted as a buffer between two phases. During the lost time the lights can be either red in all directions or, as in Denmark, amber lights can be used to introduce a buffer. The purpose of the buffer is to allow vehicles, which entered during the last phase, to exit the intersection before it is flooded by vehicles from the next phase.
-
-	\item[MOE] An abbreviation for Measure Of Effectiveness and also referred to as the performance index (PI). MOE is some metric on which the performance of a traffic signal network is assessed .
-	Most often used is the average delay, also common is the travel time through the network and number of stops or some combination.
-	
-	\item[Phase] Also referred to as \textit{stage}, corresponds to a particular state of the red and green lights of the traffic lights in an intersection. 
-	For instance there may be a green phase in the north and south direction for a two-way intersection (which implies red phase in the east-west direction). Usually when \textit{a phase} is mentioned it is implicit that it is the green phase.
-	
-	\item[Platoon] A group of vehicles travelling together. A platoon can be detected by observing the time between a vehicle and the next and applying a threshold in time units known as the critical headway, see \cite[sct. 2]{25}. 
-Platoons are formed both as a consequence of car-following behaviour, which is used in simulation frameworks such as \cite{treiber-2000-62}, but also due to the batch-like nature which is imposed on the traffic by traffic signals.
-
-\item[Queue spillback] This phenomenon occurs when a queue reaches from a downstream intersection to the preceding intersection, effectively preventing traffic from leaving the upstream intersection.
-
-\item[Saturation flow rate] The number of vehicles that can flow on a link at the maximum allowed speed (free-flow) during a period of time.
-
-	\item[Cycle-split] The green- time to cycle-time ratio for the phases of the intersection. For instance in a four-phase intersection with cycle time of $100s$ and cycle splits $\left( 0.3, 0.2, 0.3, 0.2 \right)$ the actual green times will be $\left( 30s, 20s, 30s, 20s \right)$.	
-
-\item[Time horizon] The amount of time, which is taken into consideration while optimizing signal settings or making predictions. Since predictions of the future traffic becomes more and more fuzzy the deeper one looks a paradox arises: using a short time horizon the optimizations might prove to be flawed when it fails to see a clever decision, but with longer time horizons the predictions themselves become flawed and may mislead the optimization.
-
-	\item[Traffic assignment] Also known as flow assignment, is the determination of vehicular flow along origin-destination (OD) paths and, consequently, along links in a traffic network. 
-
-\item[Traffic network] A graph $G(V,E)$ where $V$ is a set of intersections controlled by a traffic signal and $E$ is the set of roads connecting the intersections. A path is thus a route through the network crossing a least one signalized intersection.
+The performance is evaluated by considering the {\em Measure Of
+Effectiveness} (MOE). Most often used is the average delay, also
+common is the travel time through the network and number of stops or
+some combination.
 
 
-\end{description}
+%% \item[Interphase green] Also known as lost time, is a small amount
+%% of time inserted as a buffer between two phases. During the lost
+%% time the lights can be either red in all directions or, as in
+%% Denmark, amber lights can be used to introduce a buffer. The
+%% purpose of the buffer is to allow vehicles, which entered during
+%% the last phase, to exit the intersection before it is flooded by
+%% vehicles from the next phase.
+
+%% \item[Queue spillback] This phenomenon occurs when a queue reaches from a downstream intersection to the preceding intersection, effectively preventing traffic from leaving the upstream intersection.
+
+%% \item[Saturation flow rate] The number of vehicles that can flow on a link at the maximum allowed speed (free-flow) during a period of time.
+
+%% 	\item[Cycle-split]  For instance in a four-phase intersection with cycle time of $100s$ and cycle splits $\left( 0.3, 0.2, 0.3, 0.2 \right)$ the actual green times will be $\left( 30s, 20s, 30s, 20s \right)$.	
+
+%% \item[Time horizon] The amount of time, which is taken into consideration while optimizing signal settings or making predictions. Since predictions of the future traffic becomes more and more fuzzy the deeper one looks a paradox arises: using a short time horizon the optimizations might prove to be flawed when it fails to see a clever decision, but with longer time horizons the predictions themselves become flawed and may mislead the optimization.

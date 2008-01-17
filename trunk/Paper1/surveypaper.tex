@@ -1,4 +1,4 @@
-\documentclass [a4paper, 11pt, titlepage] {article}
+\documentclass [a4paper, 10pt]{article}
 
 \usepackage[ansinew]{inputenc}
 \usepackage[danish,english]{babel}
@@ -17,50 +17,46 @@
 \setlength{\parindent}{0pt} % for adjusting indentation
 
 \hyphenation{desirable finally sta-ti-sti-cal-ly basic tailored}
-%\date{A date}
-
-%BEGIN Changing sizes of captions:
-
-% Different font in captions
-%\newcommand{\captionfonts}{\footnotesize}
-%\newcommand{\mycomment}[1]{
-%\begin{center}
-%\fbox{
-%\begin{minipage}{0.8\textwidth}
-%\it
-%#1
-%\end{minipage}
-%}
-%\end{center}
-%}
 
 \title{Green Wave Traffic Optimization -- A Survey}
-\author{Andreas Warberg, Department of Transport, Technical University of Denmark \and
-Jesper Larsen, Department of Management Engineering, Technical University of Denmark \and Rene Munk J{\o}rgensen, Department of Transport, Technical University of Denmark}
+\author{Andreas Warberg,\\ Department of Transport, Technical University of Denmark\\ ~ \\ 
+Jesper Larsen,\\ Department of Management Engineering, Technical University of Denmark\\ ~ \\ Rene Munk J{\o}rgensen,\\ Department of Transport, Technical University of Denmark}
 \date{\today}
 
 \begin{document}
 
 \setlength{\parindent}{4mm}
 
-\titlepage
+\maketitle
+
+\begin{abstract}
+The objective of this survey is to cover the research in the area of
+adaptive traffic control with emphasis on the applied optimization
+methods.
+
+XXX Der mangler abstract XXX
+
+\end{abstract}
 
 \input{introduction}
 
-\section{Vocabulary}
+\section{Definitions and setup}
 \input{vocabulary}
 
-\section{Survey Objective \& Scope}
-\input{objective}
+%\section{Survey Objective \& Scope}
+%\input{objective}
+
+\section{Defining Performance}
+\input{objective_function}
 
 \section{The Optimization Problem}
-\input{objective_function}
+\input{model}
 
 \section{Types of Traffic Signals}
 \input{signals}
 
-\section{Traffic Detection}
-\input{detection}
+%\section{Traffic Detection}
+%\input{detection}
 
 \section{Milestones of Traffic Signal Optimization}
 \input{history}
