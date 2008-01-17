@@ -78,52 +78,54 @@ To do this the common cycle time and green times are set according to the load l
 
 Coordination is achieved by running the signals on a common cycle time, but offsets are not adjusted when the common cycle time changes so this issue should receive further investigation.
 
-When naming the inflow detectors in the north- and south ends $DN$ and $DS$, respectively, the transition from pretimed control to adaptive control is decided by the constraint:
-\begin{eqnarray*}
-Intensity(DN) > I_{enable} & \vee & Intensity(DS) > I_{enable} \\
-& or & \\
-Load(DN) > L_{enable} & \vee & Load(DS) > L_{enable}
-\end{eqnarray*}
+A set of non-overlapping criteria are used to select a program with the appropiate capacity for the detected inflow. For a technical description of these criteria cf. \cite{forprojekt}
 
-For switching back to pretimed control this constraint must hold:
-\begin{eqnarray*}
-Intensity(DN) < I_{disable} & \wedge & Intensity(DS) < I_{disable} \\
-& and & \\
-Load(DN) < L_{disable} & \wedge & Load(DS) < L_{disable}
-\end{eqnarray*}
+%% When naming the inflow detectors in the north- and south ends $DN$ and $DS$, respectively, the transition from pretimed control to adaptive control is decided by the constraint:
+%% \begin{eqnarray*}
+%% Intensity(DN) > I_{enable} & \vee & Intensity(DS) > I_{enable} \\
+%% & or & \\
+%% Load(DN) > L_{enable} & \vee & Load(DS) > L_{enable}
+%% \end{eqnarray*}
 
-To avoid hysteresis ie. constant enabling and disabling of dynamic control:
-\begin{eqnarray}
-I_{enable} - I_{disable} & \geq & I_{\varepsilon} \label{eqn:hysteresis_intensity} \\ 
-L_{enable} - L_{disable} & \geq & L_{\varepsilon} \label{eqn:hysteresis_load} \\
-I_{\varepsilon},L_{\varepsilon} & > & 0 \label{eqn:hysteresis_limits}
-\label{eqn:hysteresis}
-\end{eqnarray}
+%% For switching back to pretimed control this constraint must hold:
+%% \begin{eqnarray*}
+%% Intensity(DN) < I_{disable} & \wedge & Intensity(DS) < I_{disable} \\
+%% & and & \\
+%% Load(DN) < L_{disable} & \wedge & Load(DS) < L_{disable}
+%% \end{eqnarray*}
 
-DOGS exhibits a dynamic behaviour because the permitted cycle time extensions are divided into \textit{programs} according to the intensity and load levels in the ends of the artery. These program constraints take a form which is similar to the enable- and disable constraints.
+%% To avoid hysteresis ie. constant enabling and disabling of dynamic control:
+%% \begin{eqnarray}
+%% I_{enable} - I_{disable} & \geq & I_{\varepsilon} \label{eqn:hysteresis_intensity} \\ 
+%% L_{enable} - L_{disable} & \geq & L_{\varepsilon} \label{eqn:hysteresis_load} \\
+%% I_{\varepsilon},L_{\varepsilon} & > & 0 \label{eqn:hysteresis_limits}
+%% \label{eqn:hysteresis}
+%% \end{eqnarray}
 
-When deciding whether to remain in the current program, $i-1$, or switch to a program for higher demand, $i$, the following relation must be satisfied:
+%% DOGS exhibits a dynamic behaviour because the permitted cycle time extensions are divided into \textit{programs} according to the intensity and load levels in the ends of the artery. These program constraints take a form which is similar to the enable- and disable constraints.
 
-\begin{eqnarray*}
-I_{enable,i+1} \geq & \max(Intensity(DN),Intensity(DS)) & > I_{enable,i} \\
-& \vee & \\
-L_{enable,i+1} \geq & \max(Load(DN),Load(DS))  & > L_{enable,i}
-\end{eqnarray*}
+%% When deciding whether to remain in the current program, $i-1$, or switch to a program for higher demand, $i$, the following relation must be satisfied:
 
-The decision of switching from program $i$ to the program for lower demand, $i-1$, is determined by this relation:
+%% \begin{eqnarray*}
+%% I_{enable,i+1} \geq & \max(Intensity(DN),Intensity(DS)) & > I_{enable,i} \\
+%% & \vee & \\
+%% L_{enable,i+1} \geq & \max(Load(DN),Load(DS))  & > L_{enable,i}
+%% \end{eqnarray*}
 
-\begin{eqnarray*}
-I_{disable,i-1} \leq & \max(Intensity(DN),Intensity(DS)) & < I_{disable,i} \\
-& \wedge & \\
-L_{disable,i-1} \leq & \max(Load(DN),Load(DS))  & < L_{disable,i}
-\end{eqnarray*}
+%% The decision of switching from program $i$ to the program for lower demand, $i-1$, is determined by this relation:
 
-In the DOGS controlled area in Herlev there are 8 different programs to choose from and the enable and disable thresholds for programs respect the ordering implicit in the above equations:
+%% \begin{eqnarray*}
+%% I_{disable,i-1} \leq & \max(Intensity(DN),Intensity(DS)) & < I_{disable,i} \\
+%% & \wedge & \\
+%% L_{disable,i-1} \leq & \max(Load(DN),Load(DS))  & < L_{disable,i}
+%% \end{eqnarray*}
 
-$$\lbrace I,L \rbrace_{enable,i+1} > \lbrace I,L \rbrace_{enable,i}$$
-$$\lbrace I,L \rbrace_{disable,i-1} < \lbrace I,L \rbrace_{disable,i}$$
+%% In the DOGS controlled area in Herlev there are 8 different programs to choose from and the enable and disable thresholds for programs respect the ordering implicit in the above equations:
 
-To avoid hysteresis between programs the same constraints (equations \ref{eqn:hysteresis_intensity}-\ref{eqn:hysteresis_limits}) as for switching between pretimed and dynamic control applies.
+%% $$\lbrace I,L \rbrace_{enable,i+1} > \lbrace I,L \rbrace_{enable,i}$$
+%% $$\lbrace I,L \rbrace_{disable,i-1} < \lbrace I,L \rbrace_{disable,i}$$
+
+%% To avoid hysteresis between programs the same constraints (equations \ref{eqn:hysteresis_intensity}-\ref{eqn:hysteresis_limits}) as for switching between pretimed and dynamic control applies.
 
 \subsubsection*{Evaluation}
 
