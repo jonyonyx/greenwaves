@@ -39,12 +39,6 @@ response to signal changes. TRANSYT is used to obtain a fitness (MOE)
 value and the Path Flow Estimator for determination of the stochastic
 user equilibrium.
 
-The inherent bilevel nature of the problem requires either a single,
-complex, optimization routine which considers the signal setting and
-equilibrium problem at once or an overall routine which performs
-iterations of signal setting optimization and equilibrium
-determination until some threshold for agreement is reached.
-
 Considering a typical optimization formulation involving a common
 cycle time, green splits and offsets it is clear that - even with some
 dicretization of time - the search space is vast, especially when
@@ -61,8 +55,15 @@ swarm optimization) and genetic algorithms, which are the most popular
 metaheuristics, by far see \cite{13}, \cite{33}, \cite{43}, \cite{7},
 \cite{41}, \cite{31}, \cite{27}, \cite{2} and \cite{26}.
 
-Systems which operate in this manner are mostly suited for offline use considering that some reported running times are as high as several hours even for small sized networks.
-Some authors eg. \cite{16} turn such a system into an adaptive system by re-running the optimization procedure every $K$ cycle but clearly this strategy is not possible for systems with long run time requirements. Furthermore the next set of signal timing settings may be quite different from the current one and changing plans in an instant will cause transient sideeffects such as malfunctioning green waves.
+Systems which operate in this manner are mostly suited for offline use
+considering that some reported running times are as high as several
+hours even for small sized networks.  Some authors eg. \cite{16} turn
+such a system into an adaptive system by re-running the optimization
+procedure every $K$ cycle but clearly this strategy is not possible
+for systems with long run time requirements. Furthermore the next set
+of signal timing settings may be quite different from the current one
+and changing plans in an instant will cause transient sideeffects such
+as malfunctioning green waves.
 
 Much work focus on optimizations for single intersections or
 coordination of signals along an arterial. Gartner et al. \cite{9}

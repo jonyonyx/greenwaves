@@ -15,13 +15,6 @@ The optimization process has been made independent from determination
 of the network state ie. detection and prediction and as such some of
 these subjects are mostly discussions and proposals for improvements.
 
-\subsubsection*{Detection}
-
-PP relies on individual tracking of vehicles to obtain an arrival
-based model. For networks this can be realized only with video
-detection with eg. license plate recognition; traditional loop
-detections cannot yet identify individual vehicles.
-
 \subsubsection*{Prediction}
 
 In the proposed form the PP system uses a Poisson process to generate
@@ -67,7 +60,7 @@ outlined.
 
 \begin{figure}[!ht]
 \begin{center}
-\includegraphics[scale=0.5]{phase-by-phase_delay-model.png} 
+\includegraphics[scale=0.35]{phase-by-phase_delay-model.png} 
 \end{center}
 \caption{Calculation of stopped delay in the Phase-by-Phase system for an intersection with 3 approaches and 1 exit (no turning movements).}
 \label{fig:pp_delay}
@@ -127,16 +120,15 @@ described but is not included, as mentioned.
 
 Shenoda and Machemel compares the results of their metaheuristic
 search to pretimed and actuated signal control settings obtained from
-the CORSIM microsimulator using the test intersection in Figure
-\ref{fig:pp_intersection}.
+the CORSIM microsimulator using a 4-phase cross intersection.
 
-\begin{figure}[!ht]
-\begin{center}
-\includegraphics[scale=0.35]{phase-by-phase_testing-intersection.png} 
-\end{center}
-\caption{4-phase intersection from experiment \#2}
-\label{fig:pp_intersection}
-\end{figure}
+%% \begin{figure}[!ht]
+%% \begin{center}
+%% \includegraphics[scale=0.35]{phase-by-phase_testing-intersection.png} 
+%% \end{center}
+%% \caption{4-phase intersection from experiment \#2}
+%% \label{fig:pp_intersection}
+%% \end{figure}
 
 The intersection was subjected to 8 different data sets of arrival
 times. In Figure \ref{fig:pp_improvements} the stopped delays for the
@@ -147,7 +139,7 @@ and standard traffic actuated control.
 \begin{center}
 \includegraphics[scale=0.35]{phase-by-phase_improvement_ratios.png} 
 \end{center}
-\caption{Improvement factors of PP compared to pretimed and actuated control in the 4-phase intersection of Figure \ref{fig:pp_intersection}}
+\caption{Improvement factors of PP compared to pretimed and actuated control in the 4-phase intersection}
 \label{fig:pp_improvements}
 \end{figure}
 
