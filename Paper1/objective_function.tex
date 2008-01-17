@@ -1,0 +1,59 @@
+\label{theproblem}
+Essential parameters to the performance of a signalized intersection - or network of intersections - are cycle time, green split and the offset related to the common cycle time.
+
+\subsection*{Cycle time}
+The amount of consecutive green time, which can be distributed to the phases of an intersection depends on the cycle time. This is why the cycle time is very important to the chosen MOE. In \cite{41} Sun et al. explain that 
+
+\begin{quote}[...] minimizing delay leads to short cycle length while minimizing stops indicates long cycle length.
+\end{quote}
+
+The reason is that a long cycle length may stop many vehicles in a platoon and incur a large delay for them, but the platoon of vehicles only experience a single stop. With short cycle time the vehicles never have to wait long for a green light but are in average stopped more frequently.
+
+Most authors who consider coordination of multiple signals use and optimize a cycle time which is common for all traffic signals since it would otherwise become hard to coordinate signals in static schedules. In a small network, if each signal operates on its own cycle time, green waves would only work on a periodic basis when the cycle time and offset parameters of all signals eclipse. Otherwise the green wave would drift and either cut off platoons of vehicles or give too much green time.
+
+The cycle time of an intersection is one of the most important parameters in a signal plan since it sets  lower and upper bounds on the green times for the phases. This relates to the MOE as well as the safety of a network since 1) if a red light is shown for too long some trafficants may start to ignore the signals and 2) if the signals cycle too frequently there is an increased risk of collisions.
+
+\subsection*{Green split}
+The green split should be considered as an indication of the amount of traffic expected from each road facing the intersection. Major roads will be given the larger split and minor roads a smaller split.
+
+\subsection*{Offset}
+The offset for an intersection is used to accommodate green waves for traffic travelling from intersection to intersection at a specified pace.
+
+This parameter is mostly relevant when optimizing signal plans for major-minor types of arterials where platoons travel (mostly) along a path, which traverse a string of intersections. Some of the most promising results for this specific type of optimization are from MAXBAND and MULTIBAND, described in \cite{37}.
+
+Almost all methods optimize some or all of these parameters. A less commonly optimized parameter is the \textit{phase sequence} ie. the order in which phases should be green during a cycle. This is mostly relevant when prioritizing certain types of traffic eg. public (see \cite{scoot2004}) or emergency vehicles but also when considering safety aspects.
+
+The problem of choosing a MOE depends among other things on:
+
+\begin{itemize}
+\item The type of traffic which should gain benefits: private and commercial vehicles, public transportation, soft trafficants.
+\item The network: highway, rural, urban.
+\item Political objectives: safety, priority to businesses, reduction of emmisions combined with more public transportation and \textit{green} buses, which run on alternative fuels.
+\end{itemize}
+
+Clearly there are conflicts of interest among this selection of objectives. One example has already been mentioned. Other examples of objective conflicts are:
+
+\begin{itemize}
+\item Minimizing delays for vehicles along an artery will cause longer waiting times for crossing pedestrians.
+\item Prioritizing eg. public transport by skipping a phase will lower the performance for private transport. 
+
+In the SCOOT system (see \cite{scoot2004}) a phase skipping approach to bus prioritization was implemented and tested in a London intersection. The buses enjoyed 4$s$ less delay but the delay for non-bus vehicles increased by 1$s$ in total average. The vehicles on the roads with no bus traffic suffered up to 14$s$ delay on average, however.
+\item Finally, any optimization which improves the experience of traversing the network by vehicle will probably cause more traffic and thus increase emissions.
+\end{itemize}
+
+Most of the articles in the survey use the average delay as objective. The TRANSYT optimization package by Robertson (1969) uses the PI as explained in \cite{26}:
+
+\begin{quote}
+The performance index
+is defined as the sum for all signal-controlled traffic streams of a
+weighted linear combination of estimated delay and number
+of stops per unit time and is used to measure the overall cost of
+traffic congestion associated with the traffic control plan.
+\end{quote}
+
+Thus TRANSYT faces the multiobjectivity but the weights must be defined and maintained by the traffic engineers supervising the system. This is no trivial task and requires intimate knowledge of the network as well as the optimization package. The TRANSYT manual and DRD agree that the weights should be set so that 1 stop $\simeq$ 20 seconds delay.
+
+In \cite{41} a true multiobjective optimization approach is tested. Sun et al. use a Non-dominated Sorting Genetic Algorithm (NSGA II) to find Pareto-optimal\footnote{No changes can be made, which improves upon at least one objective while no objective values worsen} solutions for the minimization objectives \textit{average delay} and \textit{number of stops} per unit of time. 
+
+\subsection{Mathematical Model}
+\input{model}
