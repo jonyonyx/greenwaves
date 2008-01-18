@@ -74,30 +74,27 @@ will be difficult to accept.
 \subsubsection*{Bilevel formulation}
 \label{sec:bilevel}
 
-In order to perform a traffic assignment for a network flow data is
+In order to perform a traffic assignment for a network, flow data is
 obtained from traffic counts or detector input over a time
 period. Auxilliary informations such as turning directions and vehicle
-types are collected as well, if possible.
-
-This data is fitted by a stochastic process and the optimization is
-made on the assumption that the process can describe the actual
-arrivals.
-
-Thus there are two problems 1) determining demands and 2) optimizing
-the traffic signals accordingly.
+types are collected as well, if possible. This data is fitted by a
+stochastic process and the optimization is made on the assumption that
+the process can describe the actual arrivals. Thus there are two
+problems 1) determining demands and 2) optimizing the traffic signals
+accordingly.
 
 It is important to realize that changing the traffic signal settings
 will cause changes to the flow and that changing the flow should cause
 the signals settings to be recalculated. This has given rise to a
 number of papers considering the two problems at the same time in
 so-called bilevel formulations (also known as the Network Design
-Problem) eg.
-\begin{itemize}
-\item \textbf{\cite{mc}:} iterative procedure which optimizes traffic signals and then solves the traffic assignment problem until mutual consistency (convergence) is achieved.
-\item \textbf{\cite{34}:} gradient projection method for finding local optima combined with a global heuristic search.
-\item \textbf{\cite{20}:} sensitivity analysis.
-\item And in \textbf{\cite{2}} and \textbf{\cite{27}} using a genetic algorithm approach.
-\end{itemize}
+Problem). \cite{mc} presents an iterative procedure which optimizes
+traffic signals and then solves the traffic assignment problem until
+mutual consistency (convergence) is achieved, and \cite{34} uses a
+gradient projection method for finding local optima combined with a
+global heuristic search. The work presented in \cite{20} is based on
+sensitivity analysis, and in \cite{2,27} the problem is solved using a
+genetic algorithm approach.
 
 A feature of adaptive systems is that they are less dependent on a
 large database of historical flow data since they use online data

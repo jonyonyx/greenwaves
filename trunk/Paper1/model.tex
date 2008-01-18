@@ -20,22 +20,13 @@ $\theta_n$ & Offset of intersection $n$ \\
 $\phi_{np}$ & Phase $p$ green time for intersection $n$  \\
 $I_{np}$ & Interstage (lost) time from the end of phase $p$ until the next  \\
 \hline
-\end{tabular}
-\end{center}
-\caption{Notation for the traffic signal model part}
-\end{table}
-
-\begin{table}[!ht]
-\begin{center}
-\begin{tabular}{ll}
-\hline
 $l \in \lbrace 1,...,L \rbrace$ & Link indexes \\
 $q_l \in \textbf{q*}(\Psi)$ & User equilibrium link flows given signal timing parameters  \\
 $t_l(\Psi,\textbf{q*}(\Psi))$ & Travel time on link $l$ considering signal timings and user response \\
 \hline
 \end{tabular}
 \end{center}
-\caption{Notation for the traffic network model part}
+\caption{Notation for the traffic signal and network model part}
 \end{table}
 
 \subsubsection*{A classical model}
@@ -57,8 +48,8 @@ Teklu \cite{2} presents a model which is typical for offline optimizers, which i
 \label{eqn:commoncycledef} C_n = \sum_{p=1}^{P_n} ( \phi_{np} + I_{np} ) & \forall n
 \end{eqnarray}
 
-In the article the chosen MOE is the travel time defined as the sum of
-flow multiplied by travel time on each link and $\Psi = \lbrace
+In \cite{2} the chosen MOE is the travel time defined as the sum of flow
+multiplied by travel time on each link and $\Psi = \lbrace
 C,\theta,\phi \rbrace$. The user equilibrium flows are calculated
 using a variational inequality, which is not reprinted here
 considering the scope of the survey.
@@ -125,7 +116,10 @@ T_{pn} = \bigcup_{T = \lbrace t_1,...,t_2 \rbrace} \; st. \; p \not \in \lbrace 
 
 Thus $T_{pn}$ is a set of sets and each containing a consecutive number of time units which bounds the extend of a particular phase.
 
-Satisfaction of minimum and maximum green times is the most common constraint, usually defined within a cycle. In the dynamic model this constraint is formulated so that the minimum and maximum green times must be respected over the entire horizon in the following equation:
+Satisfaction of minimum and maximum green times is the most common
+constraint, usually defined within a cycle. In the dynamic model this
+constraint is formulated so that the minimum and maximum green times
+must be respected over the entire horizon in the following equation:
 
 \begin{equation}
 \label{eqn:minmaxtimes}
