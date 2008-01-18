@@ -19,14 +19,14 @@ but the platoon of vehicles only experience a single stop. With short
 cycle time the vehicles never have to wait long for a green light but
 are in average stopped more frequently.
 
-Most authors who consider coordination of multiple signals use and
-optimize a cycle time which is common for all traffic signals since it
-would otherwise become hard to coordinate signals in static
-schedules. In a small network, if each signal operates on its own
-cycle time, green waves would only work on a periodic basis when the
-cycle time and offset parameters of all signals eclipse. Otherwise the
-green wave would drift and either cut off platoons of vehicles or give
-too much green time.
+%% Most authors who consider coordination of multiple signals use and
+%% optimize a cycle time which is common for all traffic signals since it
+%% would otherwise become hard to coordinate signals in static
+%% schedules. In a small network, if each signal operates on its own
+%% cycle time, green waves would only work on a periodic basis when the
+%% cycle time and offset parameters of all signals eclipse. Otherwise the
+%% green wave would drift and either cut off platoons of vehicles or give
+%% too much green time.
 
 The cycle time of an intersection is one of the most important
 parameters in a signal plan since it sets  lower and upper bounds on
@@ -78,7 +78,9 @@ intersection. The buses enjoyed 4$s$ less delay but the delay for
 non-bus vehicles increased by 1$s$ in total average. The vehicles on
 the roads with no bus traffic suffered up to 14$s$ delay on average,
 however.
-\item Finally, any optimization which improves the experience of traversing the network by vehicle will probably cause more traffic and thus increase emissions.
+
+\item Any optimization which improves the experience of traversing the network by vehicle will probably cause more traffic and thus increase emissions.
+
 \end{itemize}
 
 Most of the articles in the survey use the average delay as
@@ -86,11 +88,10 @@ objective. The TRANSYT optimization package by Robertson (1969) uses
 the performance index (same as MOE) as explained in \cite{26}:
 
 \begin{quote}
-The performance index
-is defined as the sum for all signal-controlled traffic streams of a
-weighted linear combination of estimated delay and number
-of stops per unit time and is used to measure the overall cost of
-traffic congestion associated with the traffic control plan.
+The performance index is defined as the sum for all signal-controlled
+traffic streams of a weighted linear combination of estimated delay
+and number of stops per unit time and is used to measure the overall
+cost of traffic congestion associated with the traffic control plan.
 \end{quote}
 
 Thus TRANSYT faces the multiobjectivity but the weights must be
