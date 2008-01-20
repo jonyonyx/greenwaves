@@ -1,8 +1,8 @@
 require 'csv'
 require 'time'
 
-#Data_dir,Namefilter = 'D:\greenwaves\data\DOGS Glostrup 2007','tael*.csv'
-Data_dir,Namefilter,S_going = 'D:\greenwaves\data\DOGS Herlev 2007','taelling*.csv', ['D3','D4','D6','D8','D15']
+Data_dir,Namefilter,S_going = 'D:\greenwaves\data\DOGS Glostrup 2007','tael*.csv',['D02','D08','D010','D012','D014']
+#Data_dir,Namefilter,S_going = 'D:\greenwaves\data\DOGS Herlev 2007','taelling*.csv', ['D3','D4','D6','D8','D15']
 
 Res = 15 # resolution for aggr in minutes
 
@@ -13,7 +13,6 @@ Time_fmt = '%H:%M:%S'
 # returns a Time object given
 # an tuple with the date (eu fmt) and time (24h) resp.
 def parse_time eu_datetime_tuple
-
   Time.parse eu_datetime_tuple.join(' ')
 end
 
