@@ -2,7 +2,7 @@ require 'csv'
 require 'time'
 
 #Data_dir,Namefilter = 'D:\greenwaves\data\DOGS Glostrup 2007','tael*.csv'
-Data_dir,Namefilter = 'D:\greenwaves\data\DOGS Herlev 2007','taelling*.csv'
+Data_dir,Namefilter,S_going = 'D:\greenwaves\data\DOGS Herlev 2007','taelling*.csv', ['D3','D4','D6','D8','D15']
 
 Res = 15 # resolution for aggr in minutes
 
@@ -110,7 +110,7 @@ CSV.open('aggr.csv','w',';') do |csv|
   det_names = Time_det_map.values.max {|dets1, dets2| dets1.length <=> dets2.length}.keys
   
   # make a header
-  csv << ['Date','Time'] + det_names
+  csv << ['Date','Time','DoW','Detector','Direction','Detected']
   for t in Time_det_map.keys.sort
     #puts "#{get_date_time(t)}: #{Time_det_map[t].inspect}"  
     map_t = Time_det_map[t]
@@ -118,7 +118,10 @@ CSV.open('aggr.csv','w',';') do |csv|
     # skip entries, which do not have data for all detectors
     next if map_t.length < det_names.length
     
-    csv << [get_date(t),get_time(t)] + det_names.collect{|d| map_t[d]}
+    date,time,dow = get_date(t),get_time(t),t.strftime('%a')
+    for dn in det_names
+      csv << [date,time,dow,dn,S_going.include?(dn) ? 'S' : 'N',map_t[dn]]
+    end
   end
 end
 
