@@ -21,7 +21,6 @@ def clean_n_conv csvfile
       csv << [date] + row[1..-1]
     end	
   end
-  #newfile.write contents.gsub(",",";").gsub(/OFF|END/,'').gsub('/','-')
   FileUtils.remove tmpfile
 end
 puts "begin"

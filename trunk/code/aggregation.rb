@@ -1,8 +1,8 @@
 require 'csv'
 require 'time'
 
-Data_dir,Namefilter = 'D:\greenwaves\data\DOGS Glostrup 2007','tael*.csv'
-#Data_dir,Namefilter = 'D:\greenwaves\data\DOGS Herlev 2007','taelling*.csv'
+#Data_dir,Namefilter = 'D:\greenwaves\data\DOGS Glostrup 2007','tael*.csv'
+Data_dir,Namefilter = 'D:\greenwaves\data\DOGS Herlev 2007','taelling*.csv'
 
 Res = 15 # resolution for aggr in minutes
 
@@ -14,7 +14,7 @@ Time_fmt = '%H:%M:%S'
 # an tuple with the date (eu fmt) and time (24h) resp.
 def parse_time eu_datetime_tuple
 
-  Time.parse date + ' ' + eu_datetime_tuple[1]
+  Time.parse eu_datetime_tuple.join(' ')
 end
 
 def get_date time_obj
@@ -99,7 +99,7 @@ for csvfile in Dir[Namefilter]
       prev_date = cur_date
     end
     
-    break if cur_date == '14-11-2007'
+    #break if cur_date == '14-11-2007'
   end	
   puts "Completed processing of '" + csvfile + "'"
 end
