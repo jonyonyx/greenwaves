@@ -13,8 +13,7 @@ Time_fmt = '%H:%M:%S'
 # returns a Time object given
 # an tuple with the date (eu fmt) and time (24h) resp.
 def parse_time eu_datetime_tuple
-  date = eu_datetime_tuple[0]
-  if /(\d{2}-){2}\d{4}/.match(date)
+
   Time.parse date + ' ' + eu_datetime_tuple[1]
 end
 
@@ -100,7 +99,7 @@ for csvfile in Dir[Namefilter]
       prev_date = cur_date
     end
     
-    #break if cur_date == '14-11-2007'
+    break if cur_date == '14-11-2007'
   end	
   puts "Completed processing of '" + csvfile + "'"
 end
