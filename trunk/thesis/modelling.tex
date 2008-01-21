@@ -1,0 +1,26 @@
+\section{Modelling Decisions}
+\subsection{Link Inputs}
+
+Due to the arterial nature of the Herlev area there is a natural distinction between major and minut link inputs. The major inputs are positioned in the ends and minor inputs are placed for each minor road.
+
+In the southgoing direction vehicles entering the arterial from highway 3 and the northern extension of O3 are represented by a single input positioned before the intersection at Herlev Sygehus and would be detected by D3.
+
+Northgoing traffic input is defined on the link leading to the Mileparken intersection and is detected by D14. 
+
+The relative size of the major inputs are set according to the relative directional distribution seen in Figure \ref{fig:herlev_props} ie. 45\% northgoing and 55\% southgoing. XXX Insert more specific figure XXX
+
+As the available dataset does not include detectors on the minor sideroads - from either side of the arterial - it is difficult to assess the relative size of the inputs from them. Thus for the remaining roads adjacent to the arterial are defined minor input links of identical size with the exception of the Herlev Sygehus link, which is set to be double the size to match the observations made above.
+It is arguable that much traffic enters at the Herlev Hovedgade intersection, but the detected traffic does not indicate that this is significant.
+
+The combined traffic input is set so that in total 20\% arise from the minor roads and the remainder enters from the ends of the arterial. 
+
+XXX Try to find something to back this up eg. from Steen Lauritzens report XXX.
+
+\subsection{Routes}
+At every intersection it is possible to follow each adjacent link (ie. turn left, right or go straight through). The lack of a full detector dataset from the area prevents determination of the exact distribution of input on the possible routes. In addition, since it is possible to reach almost every output link from an input link, some simplifying conditions were selected to solve the problem with lack of data and the large number of routes.
+
+It was decided that input from minor roads should turn onto the arterial and choose a north- or southgoing route to the respective end of the arterial with equal probability ie. turn-in traffic does not turn out again but continue along the arterial. In Vissim this effect is accomplished by simply omitting route assignment for vehicles entering on minor links.
+
+To represent turn-out traffic routes choices are inserted for the major inputs only. Thus, from either end of the arterial, there is a route, which turns out, at each intersection in addition to a route going straight-through. 
+
+The proportions for turn-out routes are choosen identical to those of the relative input size for the minor links, which are chosen after the arterial. This coincides with the total traffic input so that 80\% of the traffic goes straight through and 20\% turns out.
