@@ -1,6 +1,6 @@
 \label{sec:rhodes}
 
-RHODES approach to traffic signal optimization is a hierarchical one
+RHODES' approach to traffic signal optimization is a hierarchical one
 with 3 layers of detail, see Figure \ref{fig:rhodes_hierarchi}.
 
 The macroscopic layer performs \textit{dynamic network loading}, which
@@ -10,7 +10,7 @@ estimates of link flows to the middle level in rough numbers
 eg. vehicles per hour.
 
 The mesoscopic middle layer considers sectors of the network eg. an
-arterial. This \textit{network flow control} layer work in the detail
+arterial. This \textit{network flow control} layer works in the detail
 level of platoons and average speeds. Green time is allocated to
 phases to accommodate the movements of the platoons and so
 coordination of intersections is done at this level.
@@ -53,17 +53,17 @@ detected at $d_a$ is the sum of right-turning traffic at detector
 $d_r$, left turning traffic at $d_l$ and through-going traffic at
 $d_t$.
 
-Thus given flow estimates for the links facing intersection B and
-turning probabilities for each link an estimate can be given for the
+Thus, given flow estimates for the links facing intersection B, and
+turning probabilities for each link, an estimate can be given for the
 inflow to intersection A from east. On the link between the two
 intersections there will be traffic entering and exiting the system,
 but these contributions - and losses - to the traffic, which can be
 measured at $d_a$, are expected to be very small.
 
-Prediction of arrival times of the vehicles which has passed detectors
+Prediction of arrival times of the vehicles which have passed detectors
 $d_{\lbrace r,t,l \rbrace}$ depend on the current phase at
-intersection B and queue conditions. Mirchandani and Head has
-identified four cases, which cover arrivals to an intersection, which
+intersection B and queue conditions. Mirchandani and Head have
+identified four cases, which cover arrivals at an intersection, which
 are summarized in table \ref{tbl:delaycases}.
 
 \begin{table}[!ht]
@@ -81,22 +81,22 @@ are summarized in table \ref{tbl:delaycases}.
 In the cases involving queue there is, of course, a possibility that
 the vehicle will not be able to cross the intersection before several
 green phases have occurred. This is likely to happen under high
-congestion when intersections are placed closely.
+congestion when intersections are placed close together.
 
 At the mesoscopic level, network flow control, the APRES-NET
-prediction method is used. It is based on simulation and has
+prediction method, is used. It is based on simulation and has
 similarities to PREDICT, though it works in the detail level of
 platoons and encompasses several intersections, not just the upstream
 ones but also those upstream of the upstream intersections and so
 on. Since the 2nd level must deliver complete suggestions for timing
 plans for each intersection (to be fine tuned by intersection control)
 it must run quickly. Performance is dependent on the number of
-intersections in the monitored sector and sector sizes can thus be
+intersections in the monitored sector, and sector sizes can thus be
 scaled to match the speed requirements depending on hardware.
 
 The prediction horizon for network flow control is 200-300
 seconds. Cycle times for simple intersections with just a couple of
-phases vary between 60 and 150 seconds so this horizon is plenty to
+phases vary between 60 and 150 seconds so this horizon is adequate to
 predict and respond to most types of fluctuations by performing phase
 skipping, phase reordering and assignment of phase durations. The
 intersection level control operates with a prediction horizon of 20-40
@@ -104,10 +104,10 @@ seconds and thus can only make decisions on whether to lengthen or
 decrease the green time of phases within that horizon.
 
 \subsubsection*{Optimization}
-As in the dynamic model of section \ref{sec:dynamicmodel} timing plans are
-described by phase ordering and duration independent of cycle time,
-splits and offsets.  Optimization is performed on each level using
-prediction results for that level.
+As in the dynamic model of section \ref{sec:dynamicmodel}, timing
+plans are described by phase ordering and duration independent of
+cycle time, splits and offsets.  Optimization is performed on each
+level using prediction results for that level.
 
 At the network flow control level the REALBAND algorithm forms
 progression bands (ie. \textit{green waves}) for platoons traversing
@@ -123,24 +123,24 @@ green times for each intersection.
 At the lower level a dynamic programming approach, COP, takes the
 results from REALBAND and distributes green time for some horizon to
 the phases received from the above level. The phases and their
-ordering must be respected so as to not introduce conflicts, which
+ordering must be respected so as to not introduce conflicts which
 have been resolved by REALBAND. For the same reason there are
 restrictions for the maximum change in either direction of the given
 green times, but COP is allowed to use its more detailed predictions
-to perform the mentioned fine-tuning of green times.
+to perform the above fine-tuning of green times.
 
 \subsubsection*{Evaluation}
 RHODES has been implemented and evaluated in CORSIM as part of the
-evaluation for Federal Highway Administration (FHWA) inclusion in
+evaluation for the Federal Highway Administration (FHWA) inclusion in
 RT-TRACS. RT-TRACS is an effort to choose and standardize a peak
 performance traffic signal optimization system for American traffic
 networks.
 
 The simulation is done for an arterial of 9 intersections with steady
-increase and then decrease of traffic over a 2 hour period. This is a
+increase and then decrease of traffic over a 2-hour period. This is a
 FHWA test case and the baseline traffic control system is
 semi-actuated control based on the results of offline tools including
-TRANSYT and PASSER, which represents the best-can-do from an offline
+TRANSYT and PASSER, which represent the best-can-do from an offline
 approach and can be considered a hard competitor.
 
 Testing shows that RHODES is more capable of exploiting the capacity
@@ -154,7 +154,7 @@ each vehicle. The effect, compared to the semi-actuated control, is
 convincing with 50\% reduction in delays for low demand and 30\%
 reduction for high demand. This effect is expected to disappear when
 demand reaches the capacity of the arterial in which case, for both
-systems in the comparison, only throughput can be improved by
+systems in the comparison, throughput can only be improved by
 increasing the green time along the arterial and maintaining proper
 coordination.
 

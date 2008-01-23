@@ -1,11 +1,11 @@
 \label{sec:dogs}
 
 DOGS is an extension of the DOG system. The first 3 letters can be
-directly translated from danish to \textit{dynamic optimization of
-greens} and the appended S of the herein regarded system means
-\textit{coordination}. Thus DOG is an traffic actuated optimizer for
+directly translated from Danish to \textit{dynamic optimization of
+greens} and the appended S means
+\textit{coordination}. Thus DOG is a traffic-actuated optimizer for
 single intersections, as described in section \ref{insec:actuated},
-and DOGS add coordination. The DRD has implemented DOGS along several
+and DOGS adds coordination. The DRD has implemented DOGS along several
 arterials in Denmark.
 
 DOGS is a criteria-based system which relies on a common cycle time
@@ -15,39 +15,40 @@ along arterials, which see a high fluctuation in demand.
 The purpose of DOGS is to increase the capacity of the arterial in
 high demand periods and revert to offline-optimized, pretimed plans in
 low traffic situations. The capacity increase is realized by
-increasing the common cycle time and allocate the extra green time per
+increasing the common cycle time and allocating the extra green time per
 cycle to the phases along the arterial. This will cause increased
 delays for the minor roads, but may prevent queues from reaching the
-previous intersection - or even prevent queues in cases of light
+previous intersection, or even prevent queues in cases of light
 congestion.  DOGS is also capable of providing priority to buses by
 extending the green time when buses are near an intersection.
 
 At present the system must be tailored to the environment in which it
 operates. For this reason the following sections will use the Herlev
 area in Denmark as a reference area in order to explain certain
-concepts. In Figure \ref{fig:dogs_herlev} is a layout of this network.
+concepts. Figure \ref{fig:dogs_herlev} shows the layout of this
+network.
 
 \begin{figure}[!ht]
 \begin{center}
 \includegraphics[scale=0.5,angle=90]{dogs_herlev.png} 
 \end{center}
-\caption{Layout of the partial O3 arterial in Herlev, which is under DOGS control. The arrows and numbers indicate flow direction and examples of typical vehicle count.}
+\caption{Layout of the part of the O3 arterial in Herlev which is under DOGS control. The arrows and numbers indicate flow direction and examples of typical vehicle count.}
 \label{fig:dogs_herlev}
 \end{figure}
 
 \subsubsection*{Prediction}
 
-DOGS is a purely traffic actuated system and no prediction is used
-when the system is activated due to heavy traffic conditions.
-In spite of the intended flexibility of the system this is a point
-which puts high demand on the implementing traffic engineers since
-traffic through the arterial must be assessed manually when the system
-is put into production as well as during maintenance.
+DOGS is a purely traffic-actuated system and no prediction is used
+when the system is activated due to heavy traffic conditions.  In
+spite of the intended flexibility of the system this is a point which
+puts high demand on the implementing traffic engineers since traffic
+through the arterial must be assessed manually when the system is put
+into production as well as during maintenance.
 
 An alleviating point to the lack of prediction is the fact that the
-current arterials under DOGS control are relatively small and static
+current arterials under DOGS control are relatively small, and static
 predictions can be made by an experienced traffic
-engineer. Furthermore, since DOGS only operate under high load
+engineer. Furthermore, since DOGS only operates under high load
 conditions, predictions become less valuable - or superfluous, even -
 because all that can be said about the arterial in this case is that
 it is heavily loaded with traffic.
@@ -57,17 +58,28 @@ it is heavily loaded with traffic.
 Since DOGS only kicks in under congested or near-congested conditions
 (for the Herlev area when the load exceeds 60\%) it is simple to
 optimize the throughput since any increase in green time will just
-allow more vehicles to pass (the phase is never emptied from
-vehicles).
+allow more vehicles to pass (the phase is never emptied of vehicles).
 
-That DOGS only operates during high-congestion levels is an unusual trait for an adaptive system since they usually excel in optimization under \textit{normal} ie. uncongested load conditions (see the comparison of RHODES and a semi-actuated system in section \ref{sec:rhodes}). This can be explained from the lack of an explicitly defined objective function and optimization routine.
+That DOGS only operates during high-congestion levels is an unusual
+trait for an adaptive system since they usually excel in optimization
+under \textit{normal} ie. uncongested load conditions (see the
+comparison of RHODES and a semi-actuated system in section
+\ref{sec:rhodes}). This can be explained by the lack of an
+explicitly defined objective function and optimization routine.
 
-The objective is to keep the load degree (load/capacity) for the most heavily loaded intersection below 90\%.
-To do this the common cycle time and green times are set according to the load level. The adjustments are made with a few seconds per cycle to avoid sudden, major changes in cycle time and temporary loss of coordination.
+The objective is to keep the load degree (load/capacity) for the most
+heavily loaded intersection below 90\%.  To do this the common cycle
+time and green times are set according to the load level. The
+adjustments are made with a few seconds per cycle to avoid sudden,
+major changes in cycle time and temporary loss of coordination.
 
-Coordination is achieved by running the signals on a common cycle time, but offsets are not adjusted when the common cycle time changes so this issue should receive further investigation.
+Coordination is achieved by running the signals on a common cycle
+time, but offsets are not adjusted when the common cycle time changes,
+so this issue should receive further investigation.
 
-A set of non-overlapping criteria are used to select a program with the appropiate capacity for the detected inflow. For a technical description of these criteria cf. \cite{forprojekt}
+A set of non-overlapping criteria are used to select a program with
+the appropriate capacity for the detected inflow. For a technical
+description of these criteria cf. \cite{forprojekt}
 
 %% When naming the inflow detectors in the north- and south ends $DN$ and $DS$, respectively, the transition from pretimed control to adaptive control is decided by the constraint:
 %% \begin{eqnarray*}
@@ -120,6 +132,6 @@ A set of non-overlapping criteria are used to select a program with the appropia
 
 Tests have shown that the system is indeed capable of increasing the
 capacity, with reduced queue lengths as a result. When the arterial in
-Herlev is at or above moderate load DOGS will increase the capacity by
-15-25\% compared to the capacity if only the pretimed plans was in
+Herlev is at or above moderate load, DOGS will increase the capacity by
+15-25\% compared to the capacity if only the pretimed plans were in
 use.

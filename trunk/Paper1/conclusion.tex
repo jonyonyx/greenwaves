@@ -2,15 +2,15 @@
 
 The emphasis of this survey has been on adaptive systems, which can
 accommodate for the fluctuations in traffic.  The flexibility of the
-model (or lack of) underlying the optimization is a determining factor
-to the level of adaptiveness that is achievable. The offline
+model (or lack of it) underlying the optimization is a determining factor
+regarding the level of adaptiveness that is achievable. The offline
 optimization systems (section \ref{sec:offline}) all operate with the
 common cycle time concept, which allows coordination to be set up by
 offsetting downstream intersections. The common cycle time is
 prohibitive when adaptive systems try to react to (predicted) arrival
 of single vehicles or platoons of vehicles, even.
 
-There exists several models for traffic networks, which are not based
+There are several models for traffic networks, which are not based
 on the periodic behaviour of offline systems to perform
 coordination. Instead they assign green time to phases in some order,
 which is optimal given the detected and predicted traffic.  In section
@@ -19,14 +19,14 @@ detail. They were selected to give examples of adaptive control at
 different levels (network, arterial and intersection). Two of them
 (network and intersection control) use the direct assignment / phase
 assignment methodology and the last (DOGS for arterial control)
-operate with a classical model, but is designed so that the mentioned
-problems are neglible.
+operates with a classical model, but is designed so that the mentioned
+problems are negligible.
 
 DOGS is an example of a simple, but efficient, solution to dynamic
 capacity adjustment for an arterial. It has been implemented for
 multiple highway arterials and has thus proven that it can supply
-capacity increases when needed as well as readjust priority to minor
-roads once the traffic flow on the arterial diminish.  DOGS has little
+capacity increases when needed as well as adjust priority to minor
+roads once the traffic flow on the arterial diminishes.  DOGS has little
 mathematical background, however, and has not been simulated prior to
 implementation.  In a future project it would be interesting to
 introduce a mathematical foundation for DOGS, preferably on the basis

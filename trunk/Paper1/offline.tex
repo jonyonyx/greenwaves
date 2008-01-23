@@ -7,16 +7,16 @@ surveyed.
 Most authors choose to present a mathematical model of the problem, in
 the spirit of the one presented in section \ref{sec:model}, which
 optimizes for one or more of the parameters mentioned in section
-\ref{sec:theproblem}. Attempts to produce a closed form solution for the
-problem is seen often eg. \cite{36}, which presents a general model
-that has resemblences with the model in section \ref{sec:dynamicmodel}.
+\ref{sec:theproblem}. Attempts to produce a closed-form solution for the
+problem are seen often eg. \cite{36}, which presents a general model
+that has resemblances with the model in section \ref{sec:dynamicmodel}.
 
-For representation of network layout the models are based on either
+For representation of network layout, the models are based on either
 graph theory or some kind of cell transmission scheme or petri net
 system. The petri net representation is very popular and some examples
 of its use are \cite{12}, \cite{16} and \cite{petri}.
 
-In a petri representation of a traffic network spaces on links are
+In a petri representation of a traffic network, spaces on links are
 represented by cells, which can fit a single vehicle. When a cell is
 occupied no other vehicle may enter. Vehicles progress through the
 network by making transitions to adjacent cells. The stop-bars of
@@ -28,11 +28,11 @@ its representation of concurrency (spaces in a lane) and triggered
 actions (cross on green light).
 
 For the model to be solvable without an external evaluation tool, such
-as TRANSYT, it must contain functional constraints which relates
-eg. the proper offset for signals along an arterial to flow specific
+as TRANSYT, it must contain functional constraints which relate
+eg. the proper offset for signals along an arterial to flow-specific
 parameters such as saturation flow rate and the platoon dispersion
 factor.  The model must also adjust link flows according to the signal
-settings that is, the model must be bilevel, as introduced in section
+settings, that is, the model must be bilevel, as introduced in section
 \ref{sec:bilevel}. An example of such a model is seen in \cite{33} where a
 genetic algorithm finds optimal signal timing plans, considering user
 response to signal changes. TRANSYT is used to obtain a fitness (MOE)
@@ -40,14 +40,14 @@ value and the Path Flow Estimator for determination of the stochastic
 user equilibrium.
 
 Considering a typical optimization formulation involving a common
-cycle time, green splits and offsets it is clear that - even with some
-dicretization of time - the search space is vast, especially when
+cycle time, green splits and offsets, it is clear that - even with some
+discretization of time - the search space is vast, especially when
 considering some form of simulation for obtaining the objective
-value. An example of a heuristic designed to cut down on the search
+value. An example of a heuristic designed to cut down the search
 space is ADESS (see \cite{26}). Most often the heuristics are embedded
 into the search routines and operate, for instance, by using "common
-sense" rules such as pruning of short cycle lengths under high
-saturation or by exploting sensitivity knowledge of the problem
+sense" rules such as pruning short cycle lengths under high
+saturation or by exploiting sensitivity knowledge of the problem
 \cite{40}.  Another way to deal with this issue is to employ a
 metaheuristic search, which is simply run until a result is
 needed. Some examples are: \cite{1} (tabu search), \cite{42} (particle
@@ -55,9 +55,9 @@ swarm optimization) and genetic algorithms, which are the most popular
 metaheuristics, by far see \cite{13}, \cite{33}, \cite{43}, \cite{7},
 \cite{41}, \cite{31}, \cite{27}, \cite{2} and \cite{26}.
 
-Systems which operate in this manner are mostly suited for offline use
+Systems which operate in this manner are mostly suited to offline use
 considering that some reported running times are as high as several
-hours even for small sized networks.  Some authors eg. \cite{16} turn
+hours, even for small networks.  Some authors eg. \cite{16} turn
 such a system into an adaptive system by re-running the optimization
 procedure every $K$ cycle but clearly this strategy is not possible
 for systems with long run time requirements. Furthermore the next set
@@ -65,14 +65,14 @@ of signal timing settings may be quite different from the current one
 and changing plans in an instant will cause transient sideeffects such
 as malfunctioning green waves.
 
-Much work focus on optimizations for single intersections or
+Much work focuses on optimizations for single intersections or
 coordination of signals along an arterial. Gartner et al. \cite{9}
 gives a walkthrough of the most promising progression schemes at the
-time (PASSER-II, NO-STOP-1) and extend the MAXBAND approach from a
+time (PASSER-II, NO-STOP-1) and extends the MAXBAND approach from a
 single-arterial bandwidth optimization into MULTIBAND, which optimizes
 bandwidth along multiple, possibly intersecting, arterials. \cite{6}
 is an example of the selection and optimization of an arterial - or
-priority route - with subsequent network wide optimization, taking the
+priority route - with subsequent network-wide optimization, taking the
 arterial optimization as a constraint.  In the article \cite{24}
 Heydecker propose how to use existing optimization methods for single
 intersections in combination to achieve a network optimization. Though
