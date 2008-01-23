@@ -5,37 +5,37 @@ called {\em pretimed signals, actuated signals} and {\em adaptive
 signals}. They are the result of incremental improvements described in
 chronological order below:
 
-Pretimed signals uses static plans for phase sequences, cycle time and
+Pretimed signals use static plans for phase sequences, cycle time and
 green splits according to the day of time.
 \label{insec:pretimed}
 They are based on the assumption that demand is fairly stable within
 certain divisions of time eg. morning, midday and evening or
 workday/weekend. For instance, in the morning (7am to 8.30am) and
 afternoon (15.30pm to 17.00pm) the traffic is usually heavier than
-during the day or night due to the commuters.
+during the day or night due to commuters.
 
 Traffic may prove to be more dynamic, though, and therefore the
 utilization of these signals must be monitored on a regular basis so
 proper adjustments can be made.
 
 Actuated signals function like pretimed signals but with the ability
-to \textit{lengthen} the green period with a certain amount, if
+to \textit{lengthen} the green period by a certain amount, if
 additional vehicles are observed.
 \label{insec:actuated}
-To achieve this the signal needs detector input about the demand it
+To achieve this, the signal needs detector input about the demand it
 faces for each phase.  A major disadvantage due to the autonomous
 operation is that it becomes impossible to setup green waves since
 signals start their cycle at arbitrary offsets and are unlikely to
 share a common cycle time.
 
-Adaptive signals is a network of signals which attempts to
-optimize some MOE in an manner which is at least as intelligent as for
+Adaptive signals are a network of signals which attempts to
+optimize some MOE in a manner which is at least as intelligent as for
 actuated signals.
 
 The key to adaptive signals is reliable detection and short term
 prediction of traffic. Adaptive signals must be able to respond to the
 dynamic aspects of traffic, which are not captured in the design of
-pretimed signal plans. Adaptive signals use historical input and
+pre-timed signal plans. Adaptive signals use historical input and
 current detector input to make short term predictions for what is
 going to happen eg. within the next minute, next 10 minutes and so
 forth. For this reason, and as stated in \cite{1}, adaptive systems
@@ -48,6 +48,6 @@ predictions.
 An isolated adaptive signalized intersection has advantages over
 actuated signals because it can skip a phase to give priority to a
 bus, for instance. The main attraction with adaptive signals is when
-they can be set to work together. A good system will naturally cause
+they are set to work together. A good system will naturally cause
 green waves to appear and move the direction of the green waves along
 with changes in flow.

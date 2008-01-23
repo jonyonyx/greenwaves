@@ -17,7 +17,7 @@ The reason is that a long cycle length may stop a whole group of
 vehicles (also known as a platoon) and incur a large delay for them,
 but the platoon of vehicles only experience a single stop. With short
 cycle time the vehicles never have to wait long for a green light but
-are in average stopped more frequently.
+are on average stopped more frequently.
 
 %% Most authors who consider coordination of multiple signals use and
 %% optimize a cycle time which is common for all traffic signals since it
@@ -45,18 +45,18 @@ The offset for an intersection is used to accommodate green waves for
 traffic travelling from intersection to intersection at a specified
 pace. This parameter is mostly relevant when optimizing signal plans
 for major-minor types of arterials where platoons travel (mostly)
-along a path, which traverse a string of intersections. Some of the
+along a path, which traverses a string of intersections. Some of the
 most promising results for this specific type of optimization are from
 MAXBAND and MULTIBAND, described in \cite{37}.
 
 Almost all methods optimize some or all of these three parameters. A
 less commonly optimized parameter is the \textit{phase sequence}
 ie. the order in which phases should be green during a cycle. This is
-mostly relevant when prioritizing certain types of traffic eg. public
-(see \cite{scoot2004}) or emergency vehicles but also when considering
-safety aspects.
+mostly relevant when prioritizing certain types of traffic, eg. public
+transport (see \cite{scoot2004}) or emergency vehicles, but also when
+considering safety aspects.
 
-The problem of choosing a MOE depends among other things on:
+The problem of choosing an MOE depends on, among other things:
 
 \begin{itemize}
 \item The type of traffic which should gain benefits: private and commercial vehicles, public transportation, soft trafficants.
@@ -74,36 +74,35 @@ objective conflicts are:
 
 In the SCOOT system (see \cite{scoot2004}) a phase skipping approach
 to bus prioritization was implemented and tested in a London
-intersection. The buses enjoyed 4$s$ less delay but the delay for
-non-bus vehicles increased by 1$s$ in total average. The vehicles on
-the roads with no bus traffic suffered up to 14$s$ delay on average,
-however.
+intersection. The buses enjoyed 4 sec less delay but the delay for
+non-bus vehicles increased by 1 sec in total on average. The vehicles
+on the roads with no bus traffic suffered up to 14 sec delay on
+average, however.
 
 \item Any optimization which improves the experience of traversing the network by vehicle will probably cause more traffic and thus increase emissions.
 
 \end{itemize}
 
-Most of the articles in the survey use the average delay as
+Most of the articles in the survey use the average delay as an
 objective. The TRANSYT optimization package by Robertson (1969) uses
 the performance index (same as MOE) as explained in \cite{26}:
 
 \begin{quote}
 The performance index is defined as the sum for all signal-controlled
 traffic streams of a weighted linear combination of estimated delay
-and number of stops per unit time and is used to measure the overall
+and number of stops per unit of time and is used to measure the overall
 cost of traffic congestion associated with the traffic control plan.
 \end{quote}
 
-Thus TRANSYT faces the multiobjectivity but the weights must be
+Thus TRANSYT faces the multi-objectivity but the weights must be
 defined and maintained by the traffic engineers supervising the
 system. This is not a trivial task and requires intimate knowledge of
 the network as well as the optimization package. The TRANSYT manual
-suggests the weights should be set so that 1 stop $\simeq$ 20 seconds
+suggests that weights should be set so that 1 stop $\simeq$ 20 sec
 delay. This is in line with the guidelines used by the Danish Road
 Directorate (DRD).
 
-In \cite{41} a true multiobjective optimization approach is
+In \cite{41} a true multi-objective optimization approach is
 tested. Sun et al. use a Non-dominated Sorting Genetic Algorithm (NSGA
 II) to find Pareto-optimal solutions for the minimization objectives
 \textit{average delay} and \textit{number of stops} per unit of time.
-

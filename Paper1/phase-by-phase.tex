@@ -4,15 +4,15 @@ deficiencies, which seemed widespread in adaptive systems:
 \begin{itemize}
 \item Fixed cycle length and/or fixed step for variation of cycle length
 \item Utilization of aggregated demand data only
-\item Fixed coordination of signals along an arterial og through a network
+\item Fixed coordination of signals along an arterial and through a network
 \end{itemize}
 
-The proposed overall scheme to improve upon these issues are the
+The proposed overall scheme to improve upon these issues is the
 isolated optimization of intersections and more fine-grained tracking
 of vehicles.
 
 The optimization process has been made independent from determination
-of the network state ie. detection and prediction and as such some of
+of the network state, ie. detection and prediction, and as such some of
 these subjects are mostly discussions and proposals for improvements.
 
 \subsubsection*{Prediction}
@@ -79,22 +79,22 @@ cs + H - t_{ij} & when \; t_{ij} \geq cs + H \cdot \lambda_{k_i} \; \mbox{(after
 \label{eqn:pp_delay}
 \end{equation}
 
-In the second case of equation \ref{eqn:pp_delay} vehicles incur
+In the second case of equation \ref{eqn:pp_delay}, vehicles incur
 stopped delay since they arrive after their approach has been served
 green time in the planning horizon. Thus they will not be served
 before the next green, which has not yet been planned, and stopped
 delay is accumulated until then. This is called carryover since
 vehicles are carried over into the next cycle.
 
-PP also takes into account queue startup delay and thus cover the most
-critical sources of delay. However PP makes the assumption that the
-granting of green time to a phase will cause the approaches to be
+PP also takes into account queue start-up delay and thus covers the
+most critical sources of delay. However PP makes the assumption that
+granting green time to a phase will cause the approaches to be
 cleared completely ie. no vehicles must experience more than one green
 phase before they can leave.
 
 The objective function is defined using these delay terms and thus
 optimization can be done by making changes in the $\lambda_k$-values
-within some critical points in horizon. Looking at Figure
+within some critical points in the horizon. Looking at Figure
 \ref{fig:pp_delay} it is seen that approach 2 is served green time
 until $\lambda_1 H$, supressing green from approach 1 and 3, which
 both have arrivals. By switching phase immediately after $t_{21}$
@@ -104,21 +104,21 @@ switching of the phase order, which was not considered in the paper.
 
 In the PP paper \cite{1} a solution method using the above scheme is
 presented as a combinatorial problem. But the number of combinations
-increase exponentially with the number of arrivals and the number of
+increases exponentially with the number of arrivals and the number of
 phases. Therefore a tabu search is employed. Websters formula for
 optimum green time splits is used in the Proportional Heuristic to
-obtain a good initial solution and a 1-bit neighborhood function is
+obtain a good initial solution and a 1-bit neighbourhood function is
 defined by making changes to a single value in $\lambda_k$ (a low
 influence move), preserving the phase order. Candidates for the step
 of these changes range from the transmission time of an electronic
-signal ($\approx 10^{-3}s$) to the minimum headway between two
-vehicles travelling in a platoon ($\approx 2s$ cf. Greenshields et
+signal ($\approx 10^{-3}$ sec) to the minimum headway between two
+vehicles travelling in a platoon ($\approx$ 2 sec cf. Greenshields et
 al. 1947).  A high influence move, which reorders phases, is also
 described but is not included, as mentioned.
 
 \subsubsection*{Evaluation}
 
-Shenoda and Machemel compares the results of their metaheuristic
+Shenoda and Machemel compare the results of their metaheuristic
 search to pretimed and actuated signal control settings obtained from
 the CORSIM microsimulator using a 4-phase cross intersection.
 
@@ -132,7 +132,7 @@ the CORSIM microsimulator using a 4-phase cross intersection.
 
 The intersection was subjected to 8 different data sets of arrival
 times. In Figure \ref{fig:pp_improvements} the stopped delays for the
-PP system is compared to the simulation results using pretimed plans
+PP system are compared to the simulation results using pretimed plans
 and standard traffic actuated control.
 
 \begin{figure}[!ht]
@@ -148,7 +148,7 @@ assumptions were made for PP that the prediction algorithm supplied
 perfect information. In addition the actuated control was only
 semi-actuated since detectors were only used in one direction, the
 other being timed as in the pretimed case, which was optimized using
-Websters formulas.
+Webster's formulas.
 
 In spite of these issues it is interesting to observe that the
 (semi-)actuated control strategy is not always superior to pretimed

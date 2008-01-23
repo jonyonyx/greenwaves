@@ -1,15 +1,16 @@
 \label{sec:adaptive_cooperation}
 
-Adaptive traffic control systems aims to coordinate signal controlled
+Adaptive traffic control systems aim to coordinate signal controlled
 intersections so as to optimize some performance index eg. average
 delay or number of stops (or a combination) but also to reduce the
 need for constant supervision and tuning of intersections.
 
 They do this by dynamically adjusting cycle times, phase sequences and
-green splits according to detected as well as predicted traffic and
-thereby reacting to those dynamic aspects of traffic, which cannot be
-captured by the static optimization routines used to generate
-time-of-day plans. Some authors (\cite{1}, \cite{44}, \cite{46},
+green splits according to traffic detected as well as the predicted
+traffic, thereby reacting to those dynamic aspects of traffic,
+which cannot be captured by the static optimization routines used to
+generate time-of-day plans. Some authors (\cite{1}, \cite{44},
+\cite{46},
 \cite{scoot2004}) even skip or work around the conventional periodic
 scheme based on a common cycle time and make direct assignments of
 phases and allow phases to be skipped, as presented in section
@@ -18,12 +19,12 @@ phases and allow phases to be skipped, as presented in section
 It is evident that the cycle time is crucial in optimization because,
 for a congested network, increasing the cycle time will always cause a
 throughput increase (there are always cars waiting to cross the
-intersection). In the litterature the cycle time is often common to
+intersection). In the literature the cycle time is often common to
 all intersections under traffic control so that green waves (arterial
 progression) can be produced. For direct assignment systems the
 throughput is dependent on allocation to phases of consecutive green
 time. Long cycle times lead to long phase durations, which allow a
-steady flow of vehicles to pass and minimizes lost and interphase time
+steady flow of vehicles to pass and minimize lost and interphase time
 per time unit.
 
 For large networks the enforcement of a common cycle time is
@@ -51,7 +52,7 @@ metaheuristic tabu search for determining greens for isolated
 intersections in a phase-by-phase manner.
 
 \item \textbf{DOGS} by Danish Technical Traffic Solution (TTS)
-evaluated in the danish article \cite{dogs}, which provides
+evaluated in the Danish article \cite{dogs}, which provides
 criteria-based capacity increases along an arterial.
 
 \end{enumerate}
@@ -72,14 +73,13 @@ The systems will be compared in the areas of \textit{prediction} and
 
 The three systems presented here have different scope and as such
 cannot be compared directly. The RHODES system is the most general,
-being prepared for network wide optimization, though it will perform
+being prepared for network-wide optimization, though it will perform
 well along an arterial, as shown in the FHWA test case. The DOGS
 system is specifically designed to increase capacity along an
 arterial. It is very flexible but requires many input parameters, for
 which there is no clear selection strategy. Finally the phase-by-phase
-system performs advanced intersection control but has no inherent
-strategy for coordination, in the current state when the article was
-written.
+system performs advanced intersection control but had no inherent
+strategy for coordination at the time this article was written.
 
 Some comparisons can be made in the two main topics covered for each
 system ie. \textit{prediction} and \textit{optimization}.
@@ -87,30 +87,29 @@ system ie. \textit{prediction} and \textit{optimization}.
 \subsubsection*{Prediction}
 
 In this area RHODES is by far the most advanced system. The systems
-used at the intersection and sector level control are similar but in
-the detail level and scope and build on existing work. Predictions are
-made from detector data from upstream intersections using turning
+used at intersection and sector level control and in the detailed
+level and scope are similar and build on existing work. Predictions
+are made from detector data from upstream intersections using turning
 probabilities and speeds, which can be extracted from historical data.
 
-The Phase-by-Phase system, in its current state during the writing of
-the article, had "perfect" prediction ie. the prediction process was
-directly linked to the traffic generation process of the
-simulator. The recommendation from Shenoda and Machemel is to further
-investigate the ARIMA time-series analysis framework to obtain
-accurate prediction for arrivals, which they argue is of dynamic
-nature.
+At the time of writing, the Phase-by-Phase system had "perfect"
+prediction ie. the prediction process was directly linked to the
+traffic generation process of the simulator. The recommendation from
+Shenoda and Machemel is to further investigate the ARIMA time-series
+analysis framework to obtain accurate prediction for arrivals, which
+they argue is of dynamic nature.
 
 DOGS has no prediction capabilities. On the Herlev implementation
-there is a general assumption that traffic, which enters the arterial
-in either end is assumed to pass through the arterial. Turn-in and
+there is a general assumption that traffic which enters the arterial
+at either end is assumed to pass through the arterial. Turn-in and
 turn-out movements are thus expected to cancel out. This assumption
-could prove to be cumbersome if DOGS was to operate longer arterials
-with differing traffic patterns in various regions.
+could prove to be cumbersome if DOGS was to operate on longer arterials
+with differing traffic patterns in different regions.
 
 \subsubsection*{Optimization}
 
 DOGS has a clear advantage in optimization since, for each cycle, the
-only decision to be made is whether to switch between traffic actuated
+only decision to be made is whether to switch between traffic-actuated
 control and pretimed signal plans or to change to a lower or higher
 capacity program. This can be done in constant time using constraints
 such as the one presented earlier. DOGS has no explicitly stated
@@ -121,10 +120,10 @@ in rough terms using video detectors.
 Phase-by-Phase minimizes delay using tabu search by adjusting green
 time proportions assigned to phases. The initial solution is obtained
 from a proportional heuristic, using Websters results, and the 1-bit
-neighborhood function redistributes the green time for a single phase
-to the next.  The running time of the search algorithm can be set to
-the maximum time before a decision must be implemented eg. until the
-end of the current phase.
+neighbourhood function redistributes the green time for one single
+phase to the next.  The running time of the search algorithm can be
+set to the maximum time before a decision must be implemented
+eg. until the end of the current phase.
 
 RHODES optimization in the middle level involves generation and
 traversal of a conflict resolution tree in order to find the best path
