@@ -1,8 +1,8 @@
 require 'csv'
 require 'time'
 
-Data_dir,Namefilter,S_going = 'D:\greenwaves\data\DOGS Glostrup 2007','tael*.csv',['D02','D08','D010','D012','D014']
-#Data_dir,Namefilter,S_going = 'D:\greenwaves\data\DOGS Herlev 2007','taelling*.csv', ['D3','D4','D6','D8','D15']
+#Data_dir,Namefilter,S_going = 'D:\greenwaves\data\DOGS Glostrup 2007','tael*.csv',['D02','D08','D010','D012','D014']
+Data_dir,Namefilter,S_going = 'D:\greenwaves\data\DOGS Herlev 2007','taelling*.csv', ['D3','D4','D6','D8','D15']
 
 Res = 15 # resolution for aggr in minutes
 
@@ -104,7 +104,7 @@ for csvfile in Dir[Namefilter]
 end
 
 # Now put the combined results into a csv-file for processing in excel
-CSV.open('aggr.csv','w',';') do |csv|
+CSV.open("acc_#{Res}m.csv",'w',';') do |csv|
   # find the entry with the most detector names
   det_names = Time_det_map.values.max {|dets1, dets2| dets1.length <=> dets2.length}.keys
   
