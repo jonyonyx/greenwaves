@@ -18,9 +18,8 @@ puts "BEGIN"
 
 DBI.connect(CS) do |dbh|
   sth = dbh.execute(
-        "SELECT HOUR(Time),AVG(Detected) FROM [data] 
-         WHERE Detected>=200 AND
-               DoW IN ('Mon','Tue','Wed','Thu','Fri')
+        "SELECT Time,AVG(Detected) FROM [data] 
+         WHERE DoW IN ('Mon','Tue','Wed','Thu','Fri')
          GROUP BY Time")
   sth.each do |row|
     puts row.inspect
