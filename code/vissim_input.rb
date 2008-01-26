@@ -86,7 +86,7 @@ Input_rows[1..-1].each_with_index do |row,n|
     link_contrib = flow * link.percentage * Input_factor
     
     output_string = output_string +  "\nINPUT #{input_num}\n" +
-      "      NAME \"From #{input_begin_time} to #{input_end_time}\" LABEL  0.00 0.00\n" +
+      "      NAME \"#{link.name} direction #{link.direction} (#{input_begin_time}-#{input_end_time})\" LABEL  0.00 0.00\n" +
       "      LINK #{link.number} Q #{link_contrib} COMPOSITION 1001\n" +
       "      TIME FROM #{elapsed} UNTIL #{elapsed+step}"
     input_num = input_num + 1
@@ -96,6 +96,6 @@ end
 
 Clipboard.set_data output_string
 
-puts "Link Input Data has been placed on the clipboard"
+puts "Link Input Data has been placed on your clipboard."
 
 puts "END"
