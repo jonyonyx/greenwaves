@@ -56,7 +56,4 @@ E71F47CEB965}\1.0\0\win32]
 @="0" 
  
 [HKEY_CLASSES_ROOT\TypeLib\{0D0E66EE-B1F7-473B-A0B7-E71F47CEB965}\1.0\HELPDIR] 
-@="C:\\Programmer\\PTV_Vision\\VISSIM400\\Exe\\" 
- 
- 
- 
+@="C:\\Programmer\\PTV_Vision\\VISSIM400\\Exe\\"
