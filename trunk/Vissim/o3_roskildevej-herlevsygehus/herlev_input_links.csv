@@ -1,0 +1,12 @@
+NUMBER;NAME;TRAFFIC_DIRECTION;REL_FLOW
+48131169;O3 Herlev;N;100
+48130426;O3 Herlev;S;100
+47131394;Herlev sygehus;E;20
+47131392;Herlev sygehus;W;5
+48131222;Hjortespringvej;E;5
+47131607;Hjortespringvej;W;5
+48131198;Herlev Hovedgade;E;15
+48131190;Herlev Hovedgade;W;10
+47131390;Herlev Bygade;E;10
+48131164;Mileparken;E;5
+47131603;Mileparken;W;5
