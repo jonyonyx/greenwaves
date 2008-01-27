@@ -24,7 +24,7 @@ class Csvtable < Array
   end
   def Csvtable.enumerate csvfile
     reader = CSV.open(csvfile,'r',';')
-    header = reader.shift.map{|title| title.downcase}
+    header = reader.shift.map{|col_name| col_name.downcase}
     
     reader.each do |row|
       row_map = {}
