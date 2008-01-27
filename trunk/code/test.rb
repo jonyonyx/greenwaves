@@ -8,6 +8,8 @@ require 'const'
 
 puts "BEGIN"
 
-puts CSV.readlines("#{Vissim_dir}compositions.csv",';').inspect
+h = Hash.new{String.new('hejsa')}
+
+puts h[1234]
 
 puts "END"

@@ -15,59 +15,8 @@ CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{Acc_xls};Extended P
 Input_factor = 5 # factor used to boost all input sizes
 
 puts "BEGIN"
-  
-# Load the file containing input link definitions
     
-class VissimElem
-  attr_reader :type,:number,:name
-  
-  # total proportion request by all elems of each type
-  @@total_prop = Hash.new(0.0) 
-  def initialize type,number,name,prop
-    @type,@number,@name,@prop = type,number,name,prop
-    @@total_prop[@type] = @@total_prop[@type] + prop
-  end
-  def proportion
-    @prop / @@total_prop[@type]
-  end
-  def to_s
-    "#{@type} #{@number} #{format('%f', proportion)} '#{@name}'"
-  end
-end
-
-class Link < VissimElem
-  attr_reader :direction,:has_buses
-  def initialize number,name,rel_proportion,direction,bus_input
-    super 'LINK',number,name,rel_proportion
-    @direction = direction
-    @has_buses = bus_input == 'Y' # are buses inserted on this link?
-  end
-  def to_s
-    "#{super.to_s} #{@direction}"
-  end
-end
-  
-Links = []
-  
-Csvtable.enumerate("#{Vissim_dir}herlev_input_links.csv") do |row|
-  Links << Link.new(
-    row['number'].to_i, 
-    row['name'], 
-    row['rel_flow'].to_f, 
-    row['direction'], 
-    row['bus_input'])
-end
-
-# print the links ordered by direction
-#for link in Links.sort{|l1,l2| l1.direction <=> l2.direction}
-#  puts link
-#end
-
-class Composition < VissimElem
-  def initialize number,name,rel_proportion
-    super 'COMPOSITION',number,name,rel_proportion
-  end
-end
+Links = VissimFun.get_links('herlev')
 
 Compositions = []
 
