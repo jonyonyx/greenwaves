@@ -1,12 +1,12 @@
-NUMBER;NAME;DIRECTION;REL_FLOW
-48131169;O3 Herlev;N;100
-48130426;O3 Herlev;S;90
-47131394;Herlev sygehus;E;20
-47131392;Herlev sygehus;W;5
-48131222;Hjortespringvej;E;5
-47131607;Hjortespringvej;W;5
-48131198;Herlev Hovedgade;E;15
-48131190;Herlev Hovedgade;W;10
-47131390;Herlev Bygade;E;10
-48131164;Mileparken;E;5
-47131603;Mileparken;W;5
+NUMBER;NAME;DIRECTION;REL_FLOW;BUS_INPUT
+48131169;O3 Herlev;N;100;Y
+48130426;O3 Herlev;S;90;Y
+47131394;Herlev sygehus;E;20;N
+47131392;Herlev sygehus;W;5;N
+48131222;Hjortespringvej;E;5;N
+47131607;Hjortespringvej;W;5;N
+48131198;Herlev Hovedgade;E;15;Y
+48131190;Herlev Hovedgade;W;10;Y
+47131390;Herlev Bygade;E;10;N
+48131164;Mileparken;E;5;N
+47131603;Mileparken;W;5;N

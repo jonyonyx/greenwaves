@@ -36,10 +36,11 @@ class VissimElem
 end
 
 class Link < VissimElem
-  attr_reader :direction
-  def initialize number,name,rel_proportion,direction
+  attr_reader :direction,:has_buses
+  def initialize number,name,rel_proportion,direction,bus_input
     super 'LINK',number,name,rel_proportion
     @direction = direction
+    @has_buses = bus_input == 'Y' # are buses inserted on this link?
   end
   def to_s
     "#{super.to_s} #{@direction}"
@@ -49,7 +50,12 @@ end
 Links = []
   
 Csvtable.enumerate("#{Vissim_dir}herlev_input_links.csv") do |row|
-  Links << Link.new(row['number'].to_i, row['name'], row['rel_flow'].to_f, row['direction'])
+  Links << Link.new(
+    row['number'].to_i, 
+    row['name'], 
+    row['rel_flow'].to_f, 
+    row['direction'], 
+    row['bus_input'])
 end
 
 # print the links ordered by direction
@@ -100,7 +106,8 @@ Input_rows[1..-1].each_with_index do |row,n|
   for link in Links
     
     # finally for each composition
-    for comp in Compositions    
+    for comp in Compositions   
+      next if comp.name == 'Bus' and not link.has_buses
       flow = row['Q']    
       # link inputs in Vissim is defined in veh/h
       link_contrib = flow * (60/Res) * link.proportion * comp.proportion * Input_factor
