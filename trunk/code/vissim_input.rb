@@ -12,44 +12,61 @@ include Win32
 Acc_xls = "#{Herlev_dir}aggr.xls"
 CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{Acc_xls};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
 
-Input_factor = 5
+Input_factor = 5 # factor used to boost all input sizes
 
 puts "BEGIN"
   
 # Load the file containing input link definitions
+    
+class VissimElem
+  attr_reader :type,:number,:name
   
-reader = CSV.open("#{Vissim_dir}herlev_input_links.csv",'r',';')
-header = reader.shift
-  
-class Link
-  attr_reader :number,:name,:direction
-  @@total_flow = 0.0
-  def initialize number,name,direction,rel_flow
-    @number,@name,@direction,@rel_flow = number,name,direction,rel_flow
-    @@total_flow = @@total_flow + rel_flow
+  # total proportion request by all elems of each type
+  @@total_prop = Hash.new(0.0) 
+  def initialize type,number,name,prop
+    @type,@number,@name,@prop = type,number,name,prop
+    @@total_prop[@type] = @@total_prop[@type] + prop
   end
-  def is_major?
-    # for both herlev and glostrup the major road
-    # has traffic in north- and southgoing directions
-    ['N','S'].include? @direction
-  end
-  def percentage
-    @rel_flow / @@total_flow
+  def proportion
+    @prop / @@total_prop[@type]
   end
   def to_s
-    "#{@number} #{@direction} #{format('%f', percentage)} #{@name}"
+    "#{@type} #{@number} #{format('%f', proportion)} '#{@name}'"
+  end
+end
+
+class Link < VissimElem
+  attr_reader :direction
+  def initialize number,name,rel_proportion,direction
+    super 'LINK',number,name,rel_proportion
+    @direction = direction
+  end
+  def to_s
+    "#{super.to_s} #{@direction}"
   end
 end
   
 Links = []
   
-for row in reader
-  Links << Link.new(row[0].to_i,row[1],row[2],row[3].to_f)
+Csvtable.enumerate("#{Vissim_dir}herlev_input_links.csv") do |row|
+  Links << Link.new(row['number'].to_i, row['name'], row['rel_flow'].to_f, row['direction'])
 end
- 
+
 # print the links ordered by direction
-for link in Links.sort{|l1,l2| l1.direction <=> l2.direction}
-  puts link
+#for link in Links.sort{|l1,l2| l1.direction <=> l2.direction}
+#  puts link
+#end
+
+class Composition < VissimElem
+  def initialize number,name,rel_proportion
+    super 'COMPOSITION',number,name,rel_proportion
+  end
+end
+
+Compositions = []
+
+Csvtable.enumerate("#{Vissim_dir}compositions.csv") do |row|
+  Compositions << Composition.new(row['number'].to_i, row['name'], row['rel_contrib'].to_f)
 end
 
 # fetch historical traffic input data in 15m granularity
@@ -82,20 +99,24 @@ Input_rows[1..-1].each_with_index do |row,n|
   #... for each link generate input in this period
   for link in Links
     
-    flow = row['Q']    
-    link_contrib = flow * link.percentage * Input_factor
+    # finally for each composition
+    for comp in Compositions    
+      flow = row['Q']    
+      # link inputs in Vissim is defined in veh/h
+      link_contrib = flow * (60/Res) * link.proportion * comp.proportion * Input_factor
     
-    output_string = output_string +  "\nINPUT #{input_num}\n" +
-      "      NAME \"#{link.name} direction #{link.direction} (#{input_begin_time}-#{input_end_time})\" LABEL  0.00 0.00\n" +
-      "      LINK #{link.number} Q #{link_contrib} COMPOSITION 1001\n" +
-      "      TIME FROM #{elapsed} UNTIL #{elapsed+step}"
-    input_num = input_num + 1
+      output_string = output_string +  "\nINPUT #{input_num}\n" +
+        "      NAME \"#{comp.name} direction #{link.direction} on #{link.name} (#{input_begin_time}-#{input_end_time})\" LABEL  0.00 0.00\n" +
+        "      LINK #{link.number} Q #{link_contrib} COMPOSITION #{comp.number}\n" +
+        "      TIME FROM #{elapsed} UNTIL #{elapsed+step}"
+      input_num = input_num + 1
+    end
   end
   elapsed = elapsed + step
 end
 
 Clipboard.set_data output_string
 
-puts "Link Input Data has been placed on your clipboard."
+puts output_string, "Link Input Data has been placed on your clipboard."
 
 puts "END"
