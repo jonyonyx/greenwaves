@@ -8,8 +8,14 @@ require 'const'
 
 puts "BEGIN"
 
-h = Hash.new{String.new('hejsa')}
+test = "123"
 
-puts h[1234]
+if test.instance_of?(String)
+  puts "a string"
+elsif test.instance_of?(Fixnum)
+  puts "an int"
+else
+  puts "#{test.class}"
+end
 
 puts "END"
