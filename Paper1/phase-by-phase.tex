@@ -29,28 +29,13 @@ the test results, the potential benefits are great.
 
 The optimization procedure of PP seeks to minimize the stopped delay
 using input from the prediction process. The most widely used measure
-of effectiveness is stopped delay (see eg. \cite{9}, \cite{38} and
-\cite{31}) but the authors show that there is also a linear
+of effectiveness is stopped delay (see eg. \citet{9}, \citet{38} and
+\citet{31}) but the authors show that there is also a linear
 relationship to total travel time.
 
-\begin{table}[!ht]
 \begin{center}
-\begin{tabular}{ll}
-\hline
-$H$ & Horizon of optimization \\
-$cs$ & Cycle start time \\
-$ce = cs+H$ & Cycle end time \\
-$i = 1,...,N$ & Approach indexes \\
-$k = 1,...,M$ & Phase indexes \\
-$\lambda_k$ &  Is a partitioning of $H$ into phases and $0 = \lambda_{0} <  \lambda_{k-1} \leq \lambda_k \leq 1$ \\
-$\lambda_{k_i}$ & The time into $H$ before the phase $k$, involving approach $i$, ends \\
-$j$ & Vehicle id for predicted vehicle arrival within the horizon  \\
-$t_{ij}$ & The arrival time for vehicle $j$ on approach $i$
-\\ \hline
-\end{tabular}
+{\bf Table 4 in here}
 \end{center}
-\caption{Notation}
-\end{table}
 
 $H$ should be in the order of the desired cycle time and $\lambda_k$
 give the green splits and thus we have a full plan for the
@@ -58,13 +43,9 @@ signal. Stopped delay can be calculated from this plan and the
 predicted arrivals. In Figure \ref{fig:pp_delay} this idea is
 outlined.
 
-\begin{figure}[!ht]
 \begin{center}
-\includegraphics[scale=0.35]{phase-by-phase_delay-model.png} 
+{\bf Figure 4 in here}
 \end{center}
-\caption{Calculation of stopped delay in the Phase-by-Phase system for an intersection with 3 approaches and 1 exit (no turning movements).}
-\label{fig:pp_delay}
-\end{figure}
 
 In equation (\ref{eqn:pp_delay}) the rules for stopped delay are
 extracted when vehicle $j$ arrives on approach $i$ at $t_{ij}$.
@@ -102,7 +83,7 @@ both have arrivals. By switching phase immediately after $t_{21}$
 until immediately after $t_{12}$ and so on. This example involves
 switching of the phase order, which was not considered in the paper.
 
-In the PP paper \cite{1} a solution method using the above scheme is
+In the PP paper \citet{1} a solution method using the above scheme is
 presented as a combinatorial problem. But the number of combinations
 increases exponentially with the number of arrivals and the number of
 phases. Therefore a tabu search is employed. Websters formula for
@@ -135,13 +116,9 @@ times. In Figure \ref{fig:pp_improvements} the stopped delays for the
 PP system are compared to the simulation results using pretimed plans
 and standard traffic actuated control.
 
-\begin{figure}[!ht]
 \begin{center}
-\includegraphics[scale=0.35]{phase-by-phase_improvement_ratios.png} 
+{\bf Figure 5 in here}
 \end{center}
-\caption{Improvement factors of PP compared to pretimed and actuated control in the 4-phase intersection}
-\label{fig:pp_improvements}
-\end{figure}
 
 The results should only be taken as indications since a number of
 assumptions were made for PP that the prediction algorithm supplied

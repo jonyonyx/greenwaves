@@ -5,22 +5,23 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{verbatim}
 \usepackage{graphicx}
-%\usepackage{fancyhdr}
-%\usepackage[pdftex,bookmarksnumbered,colorlinks,backref, bookmarks, breaklinks, linktocpage]{hyperref}
+\usepackage[round]{natbib}
+
+\renewcommand{\baselinestretch}{1.7}
 
 \frenchspacing \setlength{\parindent}{0pt}
 \setlength{\parskip}{1ex plus 0.5ex minus 0.2ex}
 
-\addtolength{\textwidth}{1cm}
-\addtolength{\textheight}{1cm}
+\addtolength{\textwidth}{2cm}
+\addtolength{\textheight}{2cm}
 
 \setlength{\parindent}{0pt} % for adjusting indentation
 
 \hyphenation{desirable finally sta-ti-sti-cal-ly basic tailored}
 
 \title{Green Wave Traffic Optimization -- A Survey}
-\author{Andreas Warberg,\\ Department of Transport, Technical University of Denmark\\ ~ \\ 
-Jesper Larsen,\\ Department of Management, Technical University of Denmark\\ ~ \\ Rene Munk J{\o}rgensen,\\ Department of Transport, Technical University of Denmark}
+\author{Andreas Warberg\footnote{Department of Transport, Building 115, Technical University of Denmark, 2800 Kgs. Lyngby, Denmark} \\
+Jesper Larsen\footnote{Corresponding author. Department of Management Engineering, Building 305, Technical University of Denmark, 2800 Kgs. Lyngby, Denmark, email: jla@imm.dtu.dk} \\ Rene Munk J{\o}rgensen$\mbox{\footnotesize *}$}
 \date{\today}
 
 \begin{document}
@@ -47,6 +48,8 @@ control. To support this claim three adaptive systems, which use
 alternatives to the classical optimization procedures, are described
 in detail.
 \end{abstract}
+
+\clearpage
 
 \input{introduction}
 
@@ -87,6 +90,123 @@ in detail.
 Lauritzen at the Danish Road Directorate for valuable information on
 real-life applications and system setup.
 
-\bibliographystyle{alpha}
+\clearpage
+
+\bibliographystyle{plainnat}
 \bibliography{bibfile,extra}
+
+\begin{table}[!ht]
+\begin{center}
+\begin{tabular}{ll}
+\hline
+$n \in \lbrace 1,...,N \rbrace$ & Intersection indexes \\
+$p \in \lbrace 1,...,P_n \rbrace$ & Indexes of phases at intersection $n$ \\ 
+$\Psi$ & A set of signal timing settings \\
+$C_n$ & Cycle time for intersection $n$ \\
+$\theta_n$ & Offset of intersection $n$ \\
+$\phi_{np}$ & Phase $p$ green time for intersection $n$  \\
+$I_{np}$ & Interstage (lost) time from the end of phase $p$ until the next  \\
+\hline
+$l \in \lbrace 1,...,L \rbrace$ & Link indexes \\
+$q_l \in \textbf{q*}(\Psi)$ & User equilibrium link flows given signal timing parameters  \\
+$t_l(\Psi,\textbf{q*}(\Psi))$ & Travel time on link $l$ considering signal timings and user response \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Notation for the traffic signal and network model part}
+\label{tab:notation}
+\end{table}
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.4]{simple_intersection.png} 
+\end{center}
+\caption{Simple 2-phase intersection}
+\label{fig:simple_intersection}
+\end{figure}
+
+\begin{table}[!ht]
+\begin{center}
+\begin{tabular}{c|c|c}
+$p$ & $R_{min,p}$ & $R_{max,p}$ \\ \hline
+1 & $0.6$ & $0.8$ \\ 
+2 & $0.2$ & $0.4$
+\end{tabular}
+\end{center}
+\caption{Example of minimum and maximum green time ratios for a simple, 2-phase intersection}
+\label{tbl:minmaxratios}
+\end{table}
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.5]{rhodes_hierachy.png} 
+\end{center}
+\caption{The three levels of detail: network, sector, and intersection}
+\label{fig:rhodes_hierarchi}
+\end{figure}
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.5]{rhodes_prediction-strategy.png} 
+\end{center}
+\caption{Propagation of information in a simple grid}
+\label{fig:rhodes_predict}
+\end{figure}
+
+\begin{table}[!ht]
+\begin{center}
+\begin{tabular}{l|ll}
+ & \textbf{Green} & \textbf{Red} \\ \hline
+\textbf{No queue} & 0 & $T_G$ \\
+\textbf{Queue} & $T_Q$ & $T_G$ + $T_Q$
+\end{tabular}
+\end{center}
+\caption{Delay incurred for a vehicle arriving to an intersection in various states where $T_Q$ is the time for ahead queue to clear and $T_G$ is the time to the next green.}
+\label{tbl:delaycases}
+\end{table}
+
+
+\begin{table}[!ht]
+\begin{center}
+\begin{tabular}{ll}
+\hline
+$H$ & Horizon of optimization \\
+$cs$ & Cycle start time \\
+$ce = cs+H$ & Cycle end time \\
+$i = 1,...,N$ & Approach indexes \\
+$k = 1,...,M$ & Phase indexes \\
+$\lambda_k$ &  Is a partitioning of $H$ into phases and $0 = \lambda_{0} <  \lambda_{k-1} \leq \lambda_k \leq 1$ \\
+$\lambda_{k_i}$ & The time into $H$ before the phase $k$, involving approach $i$, ends \\
+$j$ & Vehicle id for predicted vehicle arrival within the horizon  \\
+$t_{ij}$ & The arrival time for vehicle $j$ on approach $i$
+\\ \hline
+\end{tabular}
+\end{center}
+\caption{Notation}
+\end{table}
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.35]{phase-by-phase_delay-model.png} 
+\end{center}
+\caption{Calculation of stopped delay in the Phase-by-Phase system for an intersection with 3 approaches and 1 exit (no turning movements).}
+\label{fig:pp_delay}
+\end{figure}
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.35]{phase-by-phase_improvement_ratios.png} 
+\end{center}
+\caption{Improvement factors of PP compared to pretimed and actuated control in the 4-phase intersection}
+\label{fig:pp_improvements}
+\end{figure}
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.5,angle=90]{dogs_herlev.png} 
+\end{center}
+\caption{Layout of the part of the O3 arterial in Herlev which is under DOGS control. The arrows and numbers indicate flow direction and examples of typical vehicle count.}
+\label{fig:dogs_herlev}
+\end{figure}
+
 \end{document}

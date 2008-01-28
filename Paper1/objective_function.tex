@@ -6,7 +6,7 @@ offset related to the common cycle time.
 
 The amount of consecutive green time, which can be distributed to the
 phases of an intersection depends on the cycle time. This is why the
-cycle time is very important to the chosen MOE. In \cite{41} Sun et
+cycle time is very important to the chosen MOE. In \citet{41} Sun et
 al. explain that 
 
 \begin{quote}[...] minimizing delay leads to short cycle length while
@@ -47,13 +47,13 @@ pace. This parameter is mostly relevant when optimizing signal plans
 for major-minor types of arterials where platoons travel (mostly)
 along a path, which traverses a string of intersections. Some of the
 most promising results for this specific type of optimization are from
-MAXBAND and MULTIBAND, described in \cite{37}.
+MAXBAND and MULTIBAND, described in \citet{37}.
 
 Almost all methods optimize some or all of these three parameters. A
 less commonly optimized parameter is the \textit{phase sequence}
 ie. the order in which phases should be green during a cycle. This is
 mostly relevant when prioritizing certain types of traffic, eg. public
-transport (see \cite{scoot2004}) or emergency vehicles, but also when
+transport (see \citet{scoot2004}) or emergency vehicles, but also when
 considering safety aspects.
 
 The problem of choosing an MOE depends on, among other things:
@@ -72,7 +72,7 @@ objective conflicts are:
 \item Minimizing delays for vehicles along an artery will cause longer waiting times for crossing pedestrians.
 \item Prioritizing eg. public transport by skipping a phase will lower the performance for private transport. 
 
-In the SCOOT system (see \cite{scoot2004}) a phase skipping approach
+In the SCOOT system (see \citet{scoot2004}) a phase skipping approach
 to bus prioritization was implemented and tested in a London
 intersection. The buses enjoyed 4 sec less delay but the delay for
 non-bus vehicles increased by 1 sec in total on average. The vehicles
@@ -85,7 +85,7 @@ average, however.
 
 Most of the articles in the survey use the average delay as an
 objective. The TRANSYT optimization package by Robertson (1969) uses
-the performance index (same as MOE) as explained in \cite{26}:
+the performance index (same as MOE) as explained in \citet{26}:
 
 \begin{quote}
 The performance index is defined as the sum for all signal-controlled
@@ -102,7 +102,7 @@ suggests that weights should be set so that 1 stop $\simeq$ 20 sec
 delay. This is in line with the guidelines used by the Danish Road
 Directorate (DRD).
 
-In \cite{41} a true multi-objective optimization approach is
+In \citet{41} a true multi-objective optimization approach is
 tested. Sun et al. use a Non-dominated Sorting Genetic Algorithm (NSGA
 II) to find Pareto-optimal solutions for the minimization objectives
 \textit{average delay} and \textit{number of stops} per unit of time.
