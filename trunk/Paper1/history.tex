@@ -5,8 +5,8 @@ throughout the field ever since they appeared and continue to be of
 great importance, even today.
 
 The first result is the two equilibrium principles of traffic flow by
-Wardrop \cite{Wardrop} and the second result is by Webster,
-\cite{Webster}, who gives expressions for optimal cycle time and green
+Wardrop \citet{Wardrop} and the second result is by Webster,
+\citet{Webster}, who gives expressions for optimal cycle time and green
 splits.
 
 \subsection{Delay and Queuing Models}
@@ -18,27 +18,27 @@ isolated intersections with a fixed timing plan under steady state and
 undersaturated conditions ie. the flow cannot be dynamic and the
 in-flow must not exceed capacity.  Webster uses his delay formula to
 give expressions for the optimum cycle and green times.  Webster's
-results have been widely used in the literature eg. in \cite{1} to
+results have been widely used in the literature eg. in \citet{1} to
 generate initial solutions of cycle length and green splits for a
-metaheuristic search and in \cite{30} to calculate cycle lengths.
+metaheuristic search and in \citet{30} to calculate cycle lengths.
 
 Webster's formula, along with other delay formulas developed from
 queuing theory, suffer because of the assumption of steady state
 conditions. As the load on the intersection increases it will take
 longer time to reach stochastic equilibrium
-\cite{traffictheory}. During the stabilization period the signal
+\citet{traffictheory}. During the stabilization period the signal
 settings must remain fixed, which will never be the case in adaptive
-systems. These types of models are still used, see eg. \cite{38} where
+systems. These types of models are still used, see eg. \citet{38} where
 Mirchandani and Zou develop a FIFO single-server queuing model with
 Poisson arrivals. A related approach using a stochastic inventory
-model is seen in \cite{10}.
+model is seen in \citet{10}.
 
 Time series analysis and other \textit{moving average} techniques can
-be used to relax these assumptions. In \cite{shortpredict} an ARIMA
+be used to relax these assumptions. In \citet{shortpredict} an ARIMA
 process is used to make short term (1 minute) predictions of
-arrivals. The RHODES system \cite{44} makes short term predictions on
+arrivals. The RHODES system \citet{44} makes short term predictions on
 multiple levels of resolution (single-vehicle and platoons). In
-\cite{1} a Poisson process is used to calculate the inter-arrival time,
+\citet{1} a Poisson process is used to calculate the inter-arrival time,
 with the parameter being the mean arrival rate, thus anticipating the
 dynamic nature of traffic.
 
@@ -61,7 +61,7 @@ equilibrium traffic flow:
 Given the choice, a user will select the route which he
 \textit{perceives} to be the best. This route does not necessarily
 correspond with the actual shortest route, which has led to the
-Stochastic User Equilibrium (SUE) variation \cite{32} where this error
+Stochastic User Equilibrium (SUE) variation \citet{32} where this error
 is modelled by a stochastic element.
 
 The SUE is the most realistic model since 1) motorists may not have
@@ -88,12 +88,12 @@ will cause changes in the flow and that changing the flow should cause
 the signal settings to be recalculated. This has given rise to a
 number of papers considering the two problems at the same time in
 so-called bilevel formulations (also known as the Network Design
-Problem). \cite{mc} presents an iterative procedure which optimizes
+Problem). \citet{mc} presents an iterative procedure which optimizes
 traffic signals and then solves the traffic assignment problem until
-mutual consistency (convergence) is achieved, and \cite{34} uses a
+mutual consistency (convergence) is achieved, and \citet{34} uses a
 gradient projection method for finding local optima combined with a
-global heuristic search. The work presented in \cite{20} is based on
-sensitivity analysis, and in \cite{2,27} the problem is solved using a
+global heuristic search. The work presented in \citet{20} is based on
+sensitivity analysis, and in \citet{2,27} the problem is solved using a
 genetic algorithm approach.
 
 A feature of adaptive systems is that they are less dependent on a

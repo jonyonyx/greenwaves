@@ -19,13 +19,9 @@ At the lowest level is \textit{intersection control} where vehicles
 are handled individually (a microscopic layer). Here the green times
 and phase ordering suggested by the middle layer are fine tuned.
 
-\begin{figure}[!ht]
 \begin{center}
-\includegraphics[scale=0.5]{rhodes_hierachy.png} 
+{\bf Figure 2 in here}
 \end{center}
-\caption{The three levels of detail: network, sector, and intersection}
-\label{fig:rhodes_hierarchi}
-\end{figure}
 
 An adaptive traffic control system must operate quickly in order to
 adapt signals to traffic in real-time. The RHODES platform has good
@@ -35,18 +31,15 @@ optimizations. At the time the article was written, the top level of
 RHODES had not received much development and thus only the middle and
 lower level are described herein.
 
-\begin{figure}[!ht]
 \begin{center}
-\includegraphics[scale=0.5]{rhodes_prediction-strategy.png} 
+{\bf Figure 3 in here}
 \end{center}
-\caption{Propagation of information in a simple grid}
-\label{fig:rhodes_predict}
-\end{figure}
 
 \subsubsection*{Prediction}
-The PREDICT method \cite{PREDICT} by the co-author, Larry Head, is used to make
-predictions for individual vehicles. PREDICT is built for network
-prediction and relies on the fact that incoming flow to an
+
+The PREDICT method \citet{PREDICT} by the co-author, Larry Head, is
+used to make predictions for individual vehicles. PREDICT is built for
+network prediction and relies on the fact that incoming flow to an
 intersection originates from adjacent intersections. This concept can
 be explained from Figure \ref{fig:rhodes_predict} where traffic
 detected at $d_a$ is the sum of right-turning traffic at detector
@@ -66,17 +59,9 @@ intersection B and queue conditions. Mirchandani and Head have
 identified four cases, which cover arrivals at an intersection, which
 are summarized in table \ref{tbl:delaycases}.
 
-\begin{table}[!ht]
 \begin{center}
-\begin{tabular}{l|ll}
- & \textbf{Green} & \textbf{Red} \\ \hline
-\textbf{No queue} & 0 & $T_G$ \\
-\textbf{Queue} & $T_Q$ & $T_G$ + $T_Q$
-\end{tabular}
+{\bf Table 3 in here}
 \end{center}
-\caption{Delay incurred for a vehicle arriving to an intersection in various states where $T_Q$ is the time for ahead queue to clear and $T_G$ is the time to the next green.}
-\label{tbl:delaycases}
-\end{table}
 
 In the cases involving queue there is, of course, a possibility that
 the vehicle will not be able to cross the intersection before several

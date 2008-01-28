@@ -8,13 +8,13 @@ Most authors choose to present a mathematical model of the problem, in
 the spirit of the one presented in section \ref{sec:model}, which
 optimizes for one or more of the parameters mentioned in section
 \ref{sec:theproblem}. Attempts to produce a closed-form solution for the
-problem are seen often eg. \cite{36}, which presents a general model
+problem are seen often eg. \citet{36}, which presents a general model
 that has resemblances with the model in section \ref{sec:dynamicmodel}.
 
 For representation of network layout, the models are based on either
 graph theory or some kind of cell transmission scheme or petri net
 system. The petri net representation is very popular and some examples
-of its use are \cite{12}, \cite{16} and \cite{petri}.
+of its use are \citet{12}, \citet{16} and \citet{petri}.
 
 In a petri representation of a traffic network, spaces on links are
 represented by cells, which can fit a single vehicle. When a cell is
@@ -33,7 +33,7 @@ eg. the proper offset for signals along an arterial to flow-specific
 parameters such as saturation flow rate and the platoon dispersion
 factor.  The model must also adjust link flows according to the signal
 settings, that is, the model must be bilevel, as introduced in section
-\ref{sec:bilevel}. An example of such a model is seen in \cite{33} where a
+\ref{sec:bilevel}. An example of such a model is seen in \citet{33} where a
 genetic algorithm finds optimal signal timing plans, considering user
 response to signal changes. TRANSYT is used to obtain a fitness (MOE)
 value and the Path Flow Estimator for determination of the stochastic
@@ -44,20 +44,20 @@ cycle time, green splits and offsets, it is clear that - even with some
 discretization of time - the search space is vast, especially when
 considering some form of simulation for obtaining the objective
 value. An example of a heuristic designed to cut down the search
-space is ADESS (see \cite{26}). Most often the heuristics are embedded
+space is ADESS (see \citet{26}). Most often the heuristics are embedded
 into the search routines and operate, for instance, by using "common
 sense" rules such as pruning short cycle lengths under high
 saturation or by exploiting sensitivity knowledge of the problem
-\cite{40}.  Another way to deal with this issue is to employ a
+\citet{40}.  Another way to deal with this issue is to employ a
 metaheuristic search, which is simply run until a result is
-needed. Some examples are: \cite{1} (tabu search), \cite{42} (particle
+needed. Some examples are: \citet{1} (tabu search), \citet{42} (particle
 swarm optimization) and genetic algorithms, which are the most popular
-metaheuristics, by far see \cite{13}, \cite{33}, \cite{43}, \cite{7},
-\cite{41}, \cite{31}, \cite{27}, \cite{2} and \cite{26}.
+metaheuristics, by far see \citet{13}, \citet{33}, \citet{43}, \citet{7},
+\citet{41}, \citet{31}, \citet{27}, \citet{2} and \citet{26}.
 
 Systems which operate in this manner are mostly suited to offline use
 considering that some reported running times are as high as several
-hours, even for small networks.  Some authors eg. \cite{16} turn
+hours, even for small networks.  Some authors eg. \citet{16} turn
 such a system into an adaptive system by re-running the optimization
 procedure every $K$ cycle but clearly this strategy is not possible
 for systems with long run time requirements. Furthermore the next set
@@ -66,14 +66,14 @@ and changing plans in an instant will cause transient sideeffects such
 as malfunctioning green waves.
 
 Much work focuses on optimizations for single intersections or
-coordination of signals along an arterial. Gartner et al. \cite{9}
+coordination of signals along an arterial. Gartner et al. \citet{9}
 gives a walkthrough of the most promising progression schemes at the
 time (PASSER-II, NO-STOP-1) and extends the MAXBAND approach from a
 single-arterial bandwidth optimization into MULTIBAND, which optimizes
-bandwidth along multiple, possibly intersecting, arterials. \cite{6}
+bandwidth along multiple, possibly intersecting, arterials. \citet{6}
 is an example of the selection and optimization of an arterial - or
 priority route - with subsequent network-wide optimization, taking the
-arterial optimization as a constraint.  In the article \cite{24}
+arterial optimization as a constraint.  In the article \citet{24}
 Heydecker propose how to use existing optimization methods for single
 intersections in combination to achieve a network optimization. Though
 Heydecker admits that, because of the decentralization, it will be

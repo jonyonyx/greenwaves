@@ -4,30 +4,11 @@ In this section an example of a classical mathematical model for
 offline optimization will be presented along with a model, which
 allows for more dynamic systems. The objective function used in an
 offline optimizer does not consider multi-objectivity but could be
-replaced by a more refined performance measure.
+replaced by a more refined performance measure. Notation is given in Table \ref{tab:notation}
 
-The following notation is used:
-
-\begin{table}[!ht]
 \begin{center}
-\begin{tabular}{ll}
-\hline
-$n \in \lbrace 1,...,N \rbrace$ & Intersection indexes \\
-$p \in \lbrace 1,...,P_n \rbrace$ & Indexes of phases at intersection $n$ \\ 
-$\Psi$ & A set of signal timing settings \\
-$C_n$ & Cycle time for intersection $n$ \\
-$\theta_n$ & Offset of intersection $n$ \\
-$\phi_{np}$ & Phase $p$ green time for intersection $n$  \\
-$I_{np}$ & Interstage (lost) time from the end of phase $p$ until the next  \\
-\hline
-$l \in \lbrace 1,...,L \rbrace$ & Link indexes \\
-$q_l \in \textbf{q*}(\Psi)$ & User equilibrium link flows given signal timing parameters  \\
-$t_l(\Psi,\textbf{q*}(\Psi))$ & Travel time on link $l$ considering signal timings and user response \\
-\hline
-\end{tabular}
+{\bf Table 1 in here}
 \end{center}
-\caption{Notation for the traffic signal and network model part}
-\end{table}
 
 \subsubsection*{A classical model}
 
@@ -36,7 +17,7 @@ set of signal settings, $\Psi$, and a network of user equilibrium link
 flows (see section \ref{sec:usereq}), $\textbf{q*}(\Psi)$, which is
 dependent on the signal settings.
 
-Teklu \cite{2} presents a model which is typical for offline optimizers, which is given here with slight modifications:
+Teklu \citet{2} presents a model which is typical for offline optimizers, which is given here with slight modifications:
 
 \begin{eqnarray}
 \min & TT(\Psi, \textbf{q*}\left( \Psi\right)) = \displaystyle\sum_{l = 1}^{L} q_l \cdot t_l(\Psi,\textbf{q*}(\Psi))
@@ -48,7 +29,7 @@ Teklu \cite{2} presents a model which is typical for offline optimizers, which i
 \label{eqn:commoncycledef} C_n = \sum_{p=1}^{P_n} ( \phi_{np} + I_{np} ) & \forall n
 \end{eqnarray}
 
-In \cite{2} the chosen MOE is the travel time defined as the sum of flow
+In \citet{2} the chosen MOE is the travel time defined as the sum of flow
 multiplied by travel time on each link and $\Psi = \lbrace
 C,\theta,\phi \rbrace$. The user equilibrium flows are calculated
 using a variational inequality, which is not reprinted here
@@ -77,7 +58,7 @@ order is assumed given.
 
 In a general discrete time model, time is indexed by $t \in H = \lbrace
 t_{min},...,t_{max} \rbrace$ and thus $H$ indicates the horizon of the
-optimization. \cite{36} contains an example of a general
+optimization. \citet{36} contains an example of a general
 continuous model, which has similarities to the  model that
 will be presented in this section. Each signal is designated a phase
 for each time unit. Thus the concept of a cycle becomes virtual as
@@ -105,13 +86,9 @@ this number is 2: straight, left, and right turning flows in north and
 south directions for phase 1 and in east and west directions for phase
 2.
 
-\begin{figure}[!ht]
 \begin{center}
-\includegraphics[scale=0.4]{simple_intersection.png} 
+{\bf Figure 1 in here}
 \end{center}
-\caption{Simple 2-phase intersection}
-\label{fig:simple_intersection}
-\end{figure}
 
 Thus a specific phase $p = p_n(t) \in \lbrace 1,...,P_n \rbrace$ is
 selected for each timeslot. With this definition the green splits are
@@ -168,17 +145,9 @@ Considering the north-south direction (phase 1) of figure
 east-west direction (phase 2) being a minor road, the min and max
 ratios could be set as in Table \ref{tbl:minmaxratios}.
 
-\begin{table}[!ht]
 \begin{center}
-\begin{tabular}{c|c|c}
-$p$ & $R_{min,p}$ & $R_{max,p}$ \\ \hline
-1 & $0.6$ & $0.8$ \\ 
-2 & $0.2$ & $0.4$
-\end{tabular}
+{\bf Table 2 in here}
 \end{center}
-\caption{Example of minimum and maximum green time ratios for a simple, 2-phase intersection}
-\label{tbl:minmaxratios}
-\end{table}
 
 Equations \ref{eqn:minmaxtimes} and \ref{eqn:proportions},
 along with proper minimum and maximum values, ensure that green time
