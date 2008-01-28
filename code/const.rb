@@ -22,7 +22,7 @@ class Csvtable < Array
     
     reader.close
   end
-  def Csvtable.enumerate csvfile
+  def self.enumerate csvfile
     reader = CSV.open(csvfile,'r',';')
     header = reader.shift.map{|col_name| col_name.downcase}
     
@@ -49,19 +49,30 @@ class VissimElem
     @prop / @@total_prop[@type]
   end
   def to_s
-    "#{@type} #{@number} #{format('%f', proportion)} '#{@name}'"
+    "#{@type} #{@number} '#{@name}'"
   end
+  def hash; @number; end
 end
 
 class Link < VissimElem
-  attr_reader :direction,:has_buses
+  attr_reader :direction,:has_buses,:connectors,:adjacent
   def initialize number,name,direction,rel_proportion = 0.0, bus_input = 'N'
     super 'LINK',number,name,rel_proportion
     @direction = direction
     @has_buses = bus_input == 'Y' # are buses inserted on this link?
+    @adjacent = [] # list of links, which can be reached from self
   end
+  def add adj_link
+    raise "Link was nil #{to_s}" unless adj_link
+    @adjacent << adj_link
+  end
+  # is this link an exit (from the network) link?
+  def exit?; @adjacent.empty?; end
   def to_s
-    "#{@type} #{@number} #{format('%f', proportion)} '#{@name} #{@direction}'"
+    str = super.to_s
+    str += ' ' + format('%f', proportion) if @prop > 0
+    str += ' ' + @direction if @direction
+    str
   end
 end
 class Composition < VissimElem
@@ -69,7 +80,6 @@ class Composition < VissimElem
     super 'COMPOSITION',number,name,rel_proportion
   end
 end
-
 class VissimFun
   def VissimFun.get_links area_name
     links = []
