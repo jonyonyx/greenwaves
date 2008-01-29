@@ -58,26 +58,51 @@ while i < inp.length
 end
 
 # now have both the connectors and links
-Herlev_links = VissimFun.get_links('herlev')
 
-def discover link, route, &block_expr
+def discover link, route=Route.new, &callback
   route << link
   for adj_link in link.adjacent
-    next if route.include?(adj_link)
+    next if route.include?(adj_link) # avoid loops
     if adj_link.exit?
-      #puts "found an exit at #{adj_link}"
-      yield route + [adj_link] # found an exit link down this route
+      route << adj_link
+      yield route # found an exit link for this route
     else
-      #puts "Following #{link} -> #{adj_link}"
-      discover(adj_link,route,&block_expr) # look further
+      discover(adj_link,route,&callback) # look further
     end
   end
 end
 
-for link in Herlev_links.map{|l| Links[l.number]}[0..0]
-  discover(link,[]) do |route|
-    puts route.join(' -> ')
+Input_links = VissimFun.get_links('herlev','input').find_all{|l| l.input? }
+Exit_links = VissimFun.get_links('herlev','exit').find_all{|l| l.exit? }
+
+Exit_numbers = Exit_links.map{|l| l.number}
+
+routes = []
+for link in Input_links.map{|l| Links[l.number]}#[1..1]
+  discover(link) do |route|
+    #puts route.map{|l|l.number}.join(' > ')
+    routes << route if Exit_numbers.include?(route.exit.number)
   end
+end
+
+puts "found #{routes.length} routes"
+
+# Example of routing decision
+
+#ROUTING_DECISION 3 NAME "" LABEL  0.00 0.00
+#     LINK 47131394  AT 50.246
+#     TIME  FROM 0.0 UNTIL 99999.0
+#     NODE 0
+#      VEHICLE_CLASSES ALL
+#     ROUTE     2  DESTINATION LINK 48131218  AT  142.668
+#       FRACTION     1
+#       OVER 10267 48130431 10927 20094 10930 48130432 10274
+#     ROUTE     1  DESTINATION LINK 25060312  AT   57.012
+#       FRACTION     1
+#       OVER 10266 48130429 49131059 48130424 10139
+
+for route in routes[0..0]
+  puts route.to_s
 end
 
 puts "END"
