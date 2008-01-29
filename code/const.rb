@@ -53,13 +53,43 @@ class VissimElem
   end
   def hash; @number; end
 end
-class Route < Array
-  def start; self[0]; end
-  def exit; self[-1]; end
-  def to_s
-    #map{|link| link.number}.join(' > ')
-    "#{start} > ... (#{length-2}) > #{exit}"
+class Route  
+  # a route is a list of links which are followed by using
+  # the given connectors
+  def initialize start_link
+    raise 'Start link cannot be nil!' unless start_link
+    @seq = []
+    @seq << [start_link, nil] # no connector used to reach start link
   end
+  def append link, by_conn
+    @seq << [link, by_conn]
+  end
+  def length; @seq.length; end
+  def start; @seq[0][0]; end
+  def exit; @seq[-1][0]; end
+  # return a list of connectors used respecting the link order
+  # skipping the connector of the start link, which is known to be nil
+  def connectors
+    @seq[1..-1].map{|link,by_conn| by_conn}
+  end
+  def links
+    @seq.map{|link,by_conn| link}
+  end
+  def include? link
+    links.include? link
+  end
+  # returns a space-separated string of the connector-link-connector... sequence
+  # for use in the vissim OVER format in route decisions
+  def to_vissim
+    str = ''
+    for link,conn in @seq[1..-2]
+      str += "#{conn} #{link.number} "
+    end
+    str += @seq[-1][1].to_s # last connector, omit the link (implicit = exit link)
+  end
+  def to_s
+    "#{start} > ... (#{length-2}) > #{exit}"
+  end  
 end
 class Link < VissimElem
   attr_reader :direction,:has_buses,:adjacent
@@ -67,11 +97,16 @@ class Link < VissimElem
     super 'LINK',number,name,rel_proportion
     @direction = direction
     @has_buses = bus_input == 'Y' # are buses inserted on this link?
-    @adjacent = [] # list of links, which can be reached from self
+    # map from adjacent links, which can be reached from self, 
+    # to the used connector
+    @adjacent = {}
   end
-  def add adj_link
+  def adjacent_links; @adjacent.keys; end
+  # connects self to given adjacent link by given connector
+  def add adj_link,conn
     raise "Link was nil #{to_s}" unless adj_link
-    @adjacent << adj_link
+    raise "Connector was nil #{to_s}" unless conn
+    @adjacent[adj_link] = conn
   end
   # is this link an exit (from the network) link?
   def exit?; @adjacent.empty?; end
@@ -79,8 +114,8 @@ class Link < VissimElem
     # look for links, which have self on the adjacent list
     # if none are found, this is an input link
     ObjectSpace.each_object(Link) do |link|
-      return false if link.adjacent.include?(self)
-    end    
+      return false if link.adjacent_links.include?(self)
+    end
     true
   end
   def to_s

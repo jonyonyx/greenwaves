@@ -42,6 +42,8 @@ while i < inp.length
     next
   end
   
+  conn_number = m[1].to_i
+  
   i = i + 1
   # number always in the first line after conn declaration
   from_link_num = inp[i].split[2].to_i
@@ -53,18 +55,20 @@ while i < inp.length
   to_link_num = inp[i].split[2].to_i
     
   # found a connection
-  Links[from_link_num].add(Links[to_link_num])
+  Links[from_link_num].add(Links[to_link_num],conn_number)
      
 end
 
 # now have both the connectors and links
 
-def discover link, route=Route.new, &callback
-  route << link
-  for adj_link in link.adjacent
+def discover link, route=Route.new(link), &callback
+  for adj_link,conn in link.adjacent
     next if route.include?(adj_link) # avoid loops
+    
+    # assume there exist a valid route using this connector to reach adj_link;
+    # if this is not true, nothing is returned anyhow.
+    route.append adj_link,conn
     if adj_link.exit?
-      route << adj_link
       yield route # found an exit link for this route
     else
       discover(adj_link,route,&callback) # look further
@@ -80,12 +84,16 @@ Exit_numbers = Exit_links.map{|l| l.number}
 routes = []
 for link in Input_links.map{|l| Links[l.number]}#[1..1]
   discover(link) do |route|
-    #puts route.map{|l|l.number}.join(' > ')
+    #puts route.to_s
     routes << route if Exit_numbers.include?(route.exit.number)
   end
 end
 
 puts "found #{routes.length} routes"
+
+puts routes.inspect
+
+#exit(0)
 
 # Example of routing decision
 
@@ -103,16 +111,22 @@ puts "found #{routes.length} routes"
 
 # generate a routing decision for each links
 i = 1
-for link in Input_links
+for link in Input_links.find_all{|l| l.number == 48130426} # herlev sydgående
   puts "ROUTING_DECISION #{i} NAME \"\" LABEL  0.00 0.00"
-  puts "     LINK #{link.number} AT 50.000" # AT must be AFTER the input point
+  # AT must be AFTER the input point
+  # link inputs are always defined in the end of the link
+  puts "     LINK #{link.number} AT 5.000"
   puts "     TIME FROM 0.0 UNTIL 99999.0"
   puts "     NODE 0"
   puts "      VEHICLE_CLASSES ALL"
   
   # routing decisions have one or more routes to choose from
-  for route in routes[0..0]
-    puts route.to_s
+  j = 1
+  for route in routes.find_all{|r| r.start.number == link.number}# and r.exit.number == 48131220}
+    puts "     ROUTE     #{j}  DESTINATION LINK #{route.exit.number}  AT   5.000"
+    puts "     FRACTION 1"
+    puts "     OVER #{route.to_vissim}"
+    j += 1
   end
   i += 1
 end
