@@ -101,8 +101,20 @@ puts "found #{routes.length} routes"
 #       FRACTION     1
 #       OVER 10266 48130429 49131059 48130424 10139
 
-for route in routes[0..0]
-  puts route.to_s
+# generate a routing decision for each links
+i = 1
+for link in Input_links
+  puts "ROUTING_DECISION #{i} NAME \"\" LABEL  0.00 0.00"
+  puts "     LINK #{link.number} AT 50.000" # AT must be AFTER the input point
+  puts "     TIME FROM 0.0 UNTIL 99999.0"
+  puts "     NODE 0"
+  puts "      VEHICLE_CLASSES ALL"
+  
+  # routing decisions have one or more routes to choose from
+  for route in routes[0..0]
+    puts route.to_s
+  end
+  i += 1
 end
 
 puts "END"
