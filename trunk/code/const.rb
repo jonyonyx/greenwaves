@@ -53,9 +53,16 @@ class VissimElem
   end
   def hash; @number; end
 end
-
+class Route < Array
+  def start; self[0]; end
+  def exit; self[-1]; end
+  def to_s
+    #map{|link| link.number}.join(' > ')
+    "#{start} > ... (#{length-2}) > #{exit}"
+  end
+end
 class Link < VissimElem
-  attr_reader :direction,:has_buses,:connectors,:adjacent
+  attr_reader :direction,:has_buses,:adjacent
   def initialize number,name,direction,rel_proportion = 0.0, bus_input = 'N'
     super 'LINK',number,name,rel_proportion
     @direction = direction
@@ -68,6 +75,14 @@ class Link < VissimElem
   end
   # is this link an exit (from the network) link?
   def exit?; @adjacent.empty?; end
+  def input?
+    # look for links, which have self on the adjacent list
+    # if none are found, this is an input link
+    ObjectSpace.each_object(Link) do |link|
+      return false if link.adjacent.include?(self)
+    end    
+    true
+  end
   def to_s
     str = super.to_s
     str += ' ' + format('%f', proportion) if @prop > 0
@@ -81,9 +96,9 @@ class Composition < VissimElem
   end
 end
 class VissimFun
-  def VissimFun.get_links area_name
+  def VissimFun.get_links area_name, type = 'input'
     links = []
-    Csvtable.enumerate("#{Vissim_dir}#{area_name}_input_links.csv") do |row|
+    Csvtable.enumerate("#{Vissim_dir}#{area_name}_#{type}_links.csv") do |row|
       links << Link.new(
         row['number'].to_i, 
         row['name'], 
