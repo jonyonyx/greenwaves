@@ -1,23 +1,23 @@
-NUMBER;NAME;DIRECTION;REL_INFLOW;BUS_INPUT
-48131169;O3 Herlev;N;100;Y
-25060312;O3 Herlev;N;0;
-48130426;O3 Herlev;S;90;Y
-48131145;O3 Herlev;S;0;
-47131394;Herlev sygehus;E;20;N
-47131391;Herlev sygehus;E;0;
-47131392;Herlev sygehus;W;5;N
-48130428;Herlev sygehus;W;0;
-48131222;Hjortespringvej;E;5;N
-47131608;Hjortespringvej;E;0;
-47131607;Hjortespringvej;W;5;N
-48131220;Hjortespringvej;W;0;
-3;Herlev Bygade;E;10;N
-48131207;Herlev Bygade;E;0;
-48131198;Herlev Hovedgade;E;15;Y
-48131188;Herlev Hovedgade;E;0;
-48131190;Herlev Hovedgade;W;10;Y
-48131196;Herlev Hovedgade;W;0;
-48131164;Mileparken;E;5;N
-48131156;Mileparken;E;0;
-47131603;Mileparken;W;5;N
-47131374;Mileparken;W;0;
+NUMBER;NAME;DIRECTION;REL_INFLOW;BUS_INPUT;INPUT
+48131169;O3 Herlev;N;100;Y;Y
+25060312;O3 Herlev;N;0;;N
+48130426;O3 Herlev;S;90;Y;Y
+48131145;O3 Herlev;S;0;;N
+47131394;Herlev sygehus;E;20;N;Y
+47131391;Herlev sygehus;E;0;;N
+47131392;Herlev sygehus;W;5;N;Y
+48130428;Herlev sygehus;W;0;;N
+48131222;Hjortespringvej;E;5;N;Y
+47131608;Hjortespringvej;E;0;;N
+47131607;Hjortespringvej;W;5;N;Y
+48131220;Hjortespringvej;W;0;;N
+3;Herlev Bygade;E;10;N;Y
+48131207;Herlev Bygade;E;0;;N
+48131198;Herlev Hovedgade;E;15;Y;Y
+48131188;Herlev Hovedgade;E;0;;N
+48131190;Herlev Hovedgade;W;10;Y;Y
+48131196;Herlev Hovedgade;W;0;;N
+48131164;Mileparken;E;5;N;Y
+48131156;Mileparken;E;0;;N
+47131603;Mileparken;W;5;N;Y
+47131374;Mileparken;W;0;;N
