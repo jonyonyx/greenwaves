@@ -3,11 +3,7 @@
 # Output strings, which define input in consecutive periods in the Vissim format (see below)
 
 require 'const'
-require 'csv'
 require 'dbi'
-require 'Win32API'
-require 'win32/clipboard' 
-include Win32
 
 Acc_xls = "#{Herlev_dir}aggr.xls"
 CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{Acc_xls};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
