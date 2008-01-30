@@ -45,8 +45,12 @@ while i < inp.length
   conn_number = m[1].to_i
   
   i = i + 1
+  
   # number always in the first line after conn declaration
-  from_link_num = inp[i].split[2].to_i
+  # example: FROM LINK 28 LANES 1 2 AT 819.728
+  m = /FROM LINK (\d+) LANES (\d )+/.match(inp[i])
+  from_link_num = m[1].to_i
+  lanes = m[2].split(' ').length
   
   # next comes the knot definitions
   # and the the to-link
@@ -54,9 +58,13 @@ while i < inp.length
   
   to_link_num = inp[i].split[2].to_i
     
+  from_link = Links[from_link_num]
+  to_link = Links[to_link_num]
+  
+  conn = Connector.new(conn_number,from_link,to_link,lanes)
+  
   # found a connection
-  Links[from_link_num].add(Links[to_link_num],conn_number)
-     
+  from_link.add to_link, conn     
 end
 
 #puts Links[47131391].exit?
@@ -71,13 +79,12 @@ def discover link, path=[[link,nil]], &callback
     
     # assume there exist a valid route using this connector to reach adj_link;
     # if this is not true, nothing is returned anyhow.
-    path = path + [[adj_link,conn]]
     if adj_link.exit?
       # found an exit link for this path
-      yield Route.new(path) 
+      yield Route.new(path + [[adj_link,conn]]) 
     else
       # copy the path to avoid backreferences among routes
-      discover(adj_link,path,&callback) # look further
+      discover(adj_link,path + [[adj_link,conn]],&callback) # look further
     end
   end
 end
@@ -88,15 +95,34 @@ Exit_links = VissimFun.get_links('herlev','exit').find_all{|l| l.exit? }
 Exit_numbers = Exit_links.map{|l| l.number}
 
 routes = []
-for link in Input_links.map{|l| Links[l.number]}#[1..1]
+for link in Input_links.map{|l| Links[l.number]}.compact#[8..8]
   discover(link) do |route|
     #puts route.to_s
     routes << route if Exit_numbers.include?(route.exit.number)
   end
 end
 
-puts "found #{routes.length} routes"
+# arterial optimization: prune "identical" routes ie same start and end
 
+identical_routes = [] # the identical routes with fewer lanes to remove
+for i in (0...routes.length)
+  for j in (0...routes.length)
+    next if i == j
+    r1 = routes[i]
+    r2 = routes[j]
+    
+    if r1.start == r2.start and r1.exit == r2.exit
+      # found identical route
+      # the shortest one is always the best, since the other includes 
+      # a rest stop
+      identical_routes << [r1,r2].min{|a,b| a.length <=> b.length}
+    end
+    
+  end
+end
+routes = routes - identical_routes
+puts "Pruned #{identical_routes.length} of #{identical_routes.length + routes.length} routes because they had the same start and exit"
+#exit(0)
 
 # Example of routing decision
 
@@ -112,26 +138,32 @@ puts "found #{routes.length} routes"
 #       FRACTION     1
 #       OVER 10266 48130429 49131059 48130424 10139
 
-# generate a routing decision for each links
+# generate a routing decision for each link
+output_string = ''
 i = 1
-for link in Input_links.find_all{|l| l.number == 48130426} # herlev sydgående
-  puts "ROUTING_DECISION #{i} NAME \"\" LABEL  0.00 0.00"
+for link in Input_links#.find_all{|l| l.number == 48130426} # herlev sydgående
+  output_string += "ROUTING_DECISION #{i} NAME \"\" LABEL  0.00 0.00\n"
   # AT must be AFTER the input point
   # link inputs are always defined in the end of the link
-  puts "     LINK #{link.number} AT 50.000"
-  puts "     TIME FROM 0.0 UNTIL 99999.0"
-  puts "     NODE 0"
-  puts "      VEHICLE_CLASSES ALL"
+  output_string += "     LINK #{link.number} AT 50.000\n"
+  output_string += "     TIME FROM 0.0 UNTIL 99999.0\n"
+  output_string += "     NODE 0\n"
+  output_string += "      VEHICLE_CLASSES ALL\n"
   
   # routing decisions have one or more routes to choose from
   j = 1
   for route in routes.find_all{|r| r.start.number == link.number}# and r.exit.number == 48131220}
-    puts "     ROUTE     #{j}  DESTINATION LINK #{route.exit.number}  AT   5.000"
-    puts "     FRACTION 1"
-    puts "     OVER #{route.to_vissim}"
+    output_string += "     ROUTE     #{j}  DESTINATION LINK #{route.exit.number}  AT   5.000\n"
+    output_string += "     FRACTION 1\n"
+    output_string += "     OVER #{route.to_vissim}\n"
     j += 1
-  end
+  end  
+
+  puts "Generated #{j-1} routes starting from #{link}"
   i += 1
 end
+
+Clipboard.set_data output_string
+puts "Please find the Routing Decisions on your clipboard."
 
 puts "END"

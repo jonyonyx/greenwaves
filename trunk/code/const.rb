@@ -3,6 +3,9 @@
 # and open the template in the editor.
  
 require 'csv'
+require 'Win32API'
+require 'win32/clipboard' 
+include Win32
 
 Base_dir = 'D:\\greenwaves\\'
 Herlev_dir = Base_dir + 'data\\DOGS Herlev 2007\\'
@@ -79,9 +82,9 @@ class Route
   def to_vissim
     str = ''
     for link,conn in @seq[1..-2]
-      str += "#{conn} #{link.number} "
+      str += "#{conn.number} #{link.number} "
     end
-    str += @seq[-1][1].to_s # last connector, omit the link (implicit = exit link)
+    str += @seq[-1][1].number.to_s # last connector, omit the link (implicit = exit link)
   end
   def to_s
     "#{start} > ... (#{length-2}) > #{exit}"
@@ -119,6 +122,12 @@ class Link < VissimElem
     str += ' ' + format('%f', proportion) if @prop > 0
     str += ' ' + @direction if @direction
     str
+  end
+end
+class Connector
+  attr_reader :number,:from,:to,:lanes
+  def initialize number,from,to,lanes
+    @number,@from,@to,@lanes = number,from,to,lanes
   end
 end
 class Composition < VissimElem
