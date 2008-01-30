@@ -98,14 +98,15 @@ class Route
 end
 class Link < VissimElem
   attr_reader :direction,:has_buses,:adjacent
-  def initialize number,name,direction,rel_proportion = 0.0, bus_input = 'N',exit = false
+  def initialize number,name,direction,
+      rel_proportion = 0.0, bus_input = 'N',link_type = 'INTERNAL'
     super 'LINK',number,name,rel_proportion
     @direction = direction
     @has_buses = bus_input == 'Y' # are buses inserted on this link?
     # map from adjacent links, which can be reached from self, 
     # to the used connector
     @adjacent = {}
-    @exit = exit
+    @link_type = link_type
   end
   def adjacent_links; @adjacent.keys; end
   # connects self to given adjacent link by given connector
@@ -115,8 +116,9 @@ class Link < VissimElem
     @adjacent[adj_link] = conn
   end
   # is this link an exit (from the network) link?
-  def exit?; @exit; end
+  def exit?; @link_type == 'EXIT' or @adjacent.empty?; end
   def input?
+    return true if @link_type == 'INPUT'
     # look for links, which have self on the adjacent list
     # if none are found, this is an input link
     ObjectSpace.each_object(Link) do |link|
@@ -162,7 +164,7 @@ class VissimFun
           row['direction'], 
           row['rel_flow'].to_f, 
           row['bus_input'],
-          row['input'] == 'Y')
+          row['type'])
       end
     end
     links
