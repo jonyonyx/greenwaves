@@ -59,19 +59,24 @@ while i < inp.length
      
 end
 
+#puts Links[47131391].exit?
+#exit(0)
+
 # now have both the connectors and links
 
-def discover link, route=Route.new(link), &callback
+def discover link, path=[[link,nil]], &callback
   for adj_link,conn in link.adjacent
-    next if route.include?(adj_link) # avoid loops
+    # avoid loops by checking if the path contain this link
+    next if path.map{|l,c|l}.include?(adj_link) 
     
     # assume there exist a valid route using this connector to reach adj_link;
     # if this is not true, nothing is returned anyhow.
-    route.append adj_link,conn
     if adj_link.exit?
-      yield route # found an exit link for this route
+      # found an exit link for this path
+      yield Route.new(path + [[adj_link,conn]]) 
     else
-      discover(adj_link,route,&callback) # look further
+      # copy the path to avoid backreferences among routes
+      discover(adj_link,path + [[adj_link,conn]],&callback) # look further
     end
   end
 end
@@ -91,9 +96,6 @@ end
 
 puts "found #{routes.length} routes"
 
-puts routes.inspect
-
-#exit(0)
 
 # Example of routing decision
 
@@ -115,7 +117,7 @@ for link in Input_links.find_all{|l| l.number == 48130426} # herlev sydgående
   puts "ROUTING_DECISION #{i} NAME \"\" LABEL  0.00 0.00"
   # AT must be AFTER the input point
   # link inputs are always defined in the end of the link
-  puts "     LINK #{link.number} AT 5.000"
+  puts "     LINK #{link.number} AT 50.000"
   puts "     TIME FROM 0.0 UNTIL 99999.0"
   puts "     NODE 0"
   puts "      VEHICLE_CLASSES ALL"
