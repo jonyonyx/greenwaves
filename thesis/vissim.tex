@@ -1,0 +1,68 @@
+\section{Vissim - The Simulator}
+Vissim provides a microscopic simulation of traffic in a network. In this context microscopic entails that each vehicle is individually modelled and, in a sense, Vissim takes the view of the users of the network.
+
+\subsection{Traffic Input}
+Vissim is capable of dynamic traffic assignment (DTA) as well as static input. DTA is a method by \cite{Wardrop} in which the traffic flow adapts to the capacity of the network due to a \textit{stochastic user equilibrium} (SUE). 
+
+Vissim can perform this form of traffic input given zones, which are confined and non-overlapping areas of the network, and a matrix describing the relative traffic from each zone to each other zone.
+
+In this project DTA was abandoned on recommendation from CTT professor Otto Anker Nielsen due to the dynamic nature of the traffic signals since, in his experience, odd phenomenon may occur.
+
+Instead static input was chosen. In static input traffic enters on specific links and traverse the network until an exit link has been reached. Static input is used in combination with routing decisions, which are usually placed on the input links such that each vehicle entering will immediately be assigned a route through the network. For a description of link input sizes and routes used in the simulations, please refer to section \ref{modelling}.
+
+\subsection{Network Elements}
+
+Vissim is highly flexible with regards to network layout description and intersection turning movements can be fine-tuned almost to perfection, given enough time. The network design process is done using a GUI interface where links are joined using connectors.
+
+Links are directed sections of road with $n>=1$ lanes. All lanes have the same direction as the link - the opposite direction is modelled using a parallel link.
+
+Connectors are mostly relevant in intersections where they connect exactly two links, however the lanes connected within the links can be chosen freely.
+
+Vissim maintains a \textit{.inp} file, which contains the most relevant informations necessary to run a simulation including information on links, connectors and routes. 
+
+\subsubsection*{Links inputs}
+Due to the number of input links and the need to run simulations with various inputs it was decided to implement routines to automate link input definitions.
+
+Since Vissim relies on a text format it is possible to generate strings, which can be inserted in the appropriate section of the \textit{.inp} file.
+
+The format of a link input is:
+\begin{verbatim}
+INPUT <input_number>
+      NAME "<input_description>" LABEL  0.00 0.00
+      LINK <link_number> Q <link_contrib> COMPOSITION <comp>
+      TIME FROM <t_begin> UNTIL <t_end>
+\end{verbatim}
+
+(Vehicles always arrive at the beginning of the link.)
+
+Where the most important fields are the \textit{link_number}, defining on which link the input occurs, the \textit{link_contrib}, which is the input quantity in vehicles per hour and finally \textit{t_begin} and \textit{t_end} ie. the time period in which this traffic quantity must be generated.
+
+The \textit{comp} variable defines the traffic composition used eg. cars, trucks, buses or a combination. It is possible to defined multiple inputs on the same link for the same period of time. This can be used to define link input for each vehicle type (with its own composition) individually rather than defining input for a mixed composition.
+
+\subsubsection*{Routing decisions}
+As mentioned routing decisions are made for vehicles immediately after they enter the system. This is done by placing a route decision point somewhere on an input link and designate a number of exit links, which can be internal links also, so as to generate a set of routes, which can be chosen among from some distribution.
+
+For arterial simulation a general assumption is that most traffic is throughgoing. However, it is unrealistic to omit routes, which are not straight through. As will be seen in the data analysis section (\ref{data}), there are special circumstances to be handled for the two areas being modelled and thus is necessary to provide detailed route choices.
+
+There exist many routes even for small networks when routes are symmetric (albeit using different links). Routes can be designed using the GUI tool provided with Vissim, however since the number of routes that can be taken will grow exponentially in the number of exit links, it is unfeasible to use this approach - especially when different route choice distributions are to be tested. Therefore it was decided to design route generation in the Vissim format, in addition to the before mentioned link input generator.
+
+A routing decisions and the corresponding choice set takes the format:
+
+\begin{verbatim}
+ROUTING_DECISION <number> NAME "<description>" LABEL  0.00 0.00
+     LINK <origin_link> AT 50.000
+     TIME FROM 0.0 UNTIL 99999.0
+     NODE 0
+      VEHICLE_CLASSES ALL
+     ROUTE     1  DESTINATION LINK <dest_link1>  AT   5.000
+     FRACTION 1
+     OVER <connector> <link> ... <connector>
+     ROUTE     2  DESTINATION LINK <dest_link2>  AT   5.000
+     FRACTION 1
+     OVER <connector> <link> ... <connector>
+\end{verbatim}
+
+The \textit{origin_link} denotes the position of the decision point. Beyond the line \verb|VEHICLE_CLASS ALL| is a number of lines with route alternatives. The \verb|OVER...| lines describe the path taken from \textit{origin_link} to \textit{dest_link}. The first connector must be downstream of - and connected to - the decision point link. Likewise the final connector must be upstream and connected to the destination and the same applies to internal links.
+
+In order to enumerate all relevant routes it is necessary to parse the \textit{.inp} file and generate an internal representation of the network as a graph. A route discovery routine was implemented:
+
