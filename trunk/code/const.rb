@@ -56,13 +56,9 @@ end
 class Route  
   # a route is a list of links which are followed by using
   # the given connectors
-  def initialize start_link
-    raise 'Start link cannot be nil!' unless start_link
-    @seq = []
-    @seq << [start_link, nil] # no connector used to reach start link
-  end
-  def append link, by_conn
-    @seq << [link, by_conn]
+  def initialize path # array of link- and connector tuples
+    raise "Minimal route has a start and exit link, received #{path.inspect}!" if path.length < 2
+    @seq = path
   end
   def length; @seq.length; end
   def start; @seq[0][0]; end
