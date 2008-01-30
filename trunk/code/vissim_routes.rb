@@ -67,7 +67,8 @@ while i < inp.length
   from_link.add to_link, conn     
 end
 
-#puts Links[47131391].exit?
+#puts Links[25060312].exit?
+#puts Links[25060312].adjacent
 #exit(0)
 
 # now have both the connectors and links
@@ -89,13 +90,16 @@ def discover link, path=[[link,nil]], &callback
   end
 end
 
-Input_links = VissimFun.get_links('herlev','input').find_all{|l| l.input? }
-Exit_links = VissimFun.get_links('herlev','exit').find_all{|l| l.exit? }
+Herlev_links = VissimFun.get_links('herlev')
+
+Input_links = Herlev_links.find_all{|l| l.input? }
+Exit_links = Herlev_links.find_all{|l| l.exit? }
 
 Exit_numbers = Exit_links.map{|l| l.number}
 
 routes = []
 for link in Input_links.map{|l| Links[l.number]}.compact#[8..8]
+  puts "discovering from #{link}"
   discover(link) do |route|
     #puts route.to_s
     routes << route if Exit_numbers.include?(route.exit.number)
@@ -115,7 +119,7 @@ for i in (0...routes.length)
       # found identical route
       # the shortest one is always the best, since the other includes 
       # a rest stop
-      identical_routes << [r1,r2].min{|a,b| a.length <=> b.length}
+      identical_routes << [r1,r2].min
     end
     
   end
@@ -152,7 +156,7 @@ for link in Input_links#.find_all{|l| l.number == 48130426} # herlev sydgående
   
   # routing decisions have one or more routes to choose from
   j = 1
-  for route in routes.find_all{|r| r.start.number == link.number}# and r.exit.number == 48131220}
+  for route in routes.find_all{|r| r.start.number == link.number}.sort
     output_string += "     ROUTE     #{j}  DESTINATION LINK #{route.exit.number}  AT   5.000\n"
     output_string += "     FRACTION 1\n"
     output_string += "     OVER #{route.to_vissim}\n"

@@ -55,6 +55,9 @@ class VissimElem
     "#{@type} #{@number} '#{@name}'"
   end
   def hash; @number; end
+  def eql?(other)
+    other.number == @number
+  end
 end
 class Route  
   # a route is a list of links which are followed by using
@@ -89,16 +92,20 @@ class Route
   def to_s
     "#{start} > ... (#{length-2}) > #{exit}"
   end  
+  def <=>(other)
+    length <=> other.length
+  end
 end
 class Link < VissimElem
   attr_reader :direction,:has_buses,:adjacent
-  def initialize number,name,direction,rel_proportion = 0.0, bus_input = 'N'
+  def initialize number,name,direction,rel_proportion = 0.0, bus_input = 'N',exit = false
     super 'LINK',number,name,rel_proportion
     @direction = direction
     @has_buses = bus_input == 'Y' # are buses inserted on this link?
     # map from adjacent links, which can be reached from self, 
     # to the used connector
     @adjacent = {}
+    @exit = exit
   end
   def adjacent_links; @adjacent.keys; end
   # connects self to given adjacent link by given connector
@@ -108,7 +115,7 @@ class Link < VissimElem
     @adjacent[adj_link] = conn
   end
   # is this link an exit (from the network) link?
-  def exit?; @adjacent.empty?; end
+  def exit?; @exit; end
   def input?
     # look for links, which have self on the adjacent list
     # if none are found, this is an input link
@@ -136,15 +143,27 @@ class Composition < VissimElem
   end
 end
 class VissimFun
-  def VissimFun.get_links area_name, type = 'input'
+  def VissimFun.get_links area_name
+    
+    links_map = {}
+    ObjectSpace.each_object(Link) do |link|
+      links_map[link.number] = link
+    end
+    
     links = []
-    Csvtable.enumerate("#{Vissim_dir}#{area_name}_#{type}_links.csv") do |row|
-      links << Link.new(
-        row['number'].to_i, 
-        row['name'], 
-        row['direction'], 
-        row['rel_flow'].to_f, 
-        row['bus_input'])
+    Csvtable.enumerate("#{Vissim_dir}#{area_name}_links.csv") do |row|     
+      num = row['number'].to_i
+      if links_map.has_key?(num)
+        links << links_map[num]
+      else
+        links << Link.new(
+          num, 
+          row['name'], 
+          row['direction'], 
+          row['rel_flow'].to_f, 
+          row['bus_input'],
+          row['input'] == 'Y')
+      end
     end
     links
   end
