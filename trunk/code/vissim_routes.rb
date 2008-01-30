@@ -71,12 +71,13 @@ def discover link, path=[[link,nil]], &callback
     
     # assume there exist a valid route using this connector to reach adj_link;
     # if this is not true, nothing is returned anyhow.
+    path = path + [[adj_link,conn]]
     if adj_link.exit?
       # found an exit link for this path
-      yield Route.new(path + [[adj_link,conn]]) 
+      yield Route.new(path) 
     else
       # copy the path to avoid backreferences among routes
-      discover(adj_link,path + [[adj_link,conn]],&callback) # look further
+      discover(adj_link,path,&callback) # look further
     end
   end
 end
