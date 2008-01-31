@@ -8,14 +8,22 @@ require 'const'
 
 puts "BEGIN"
 
-test = "123"
-
-if test.instance_of?(String)
-  puts "a string"
-elsif test.instance_of?(Fixnum)
-  puts "an int"
-else
-  puts "#{test.class}"
+class Klass  
+  def hi name
+    puts "hi #{name} i am klass!"
+  end
 end
+
+class SubKlass < Klass
+  def hi name
+    super "name"
+    puts "hi #{name} i am subklass!"
+    #super.hi
+  end
+end
+
+sk = SubKlass.new
+
+sk.hi "andreas"
 
 puts "END"

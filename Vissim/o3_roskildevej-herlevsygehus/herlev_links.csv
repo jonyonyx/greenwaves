@@ -1,23 +1,23 @@
-NUMBER;NAME;DIRECTION;REL_INFLOW;BUS_INPUT;TYPE
-48131169;O3 Herlev;N;100;Y;INPUT
-25060312;O3 Herlev;N;0;;EXIT
-48130426;O3 Herlev;S;90;Y;INPUT
-48131145;O3 Herlev;S;0;;EXIT
-47131394;Herlev sygehus;E;20;N;INPUT
-47131391;Herlev sygehus;E;0;;EXIT
-47131392;Herlev sygehus;W;5;N;INPUT
-48130428;Herlev sygehus;W;0;;EXIT
-48131222;Hjortespringvej;E;5;N;INPUT
-47131608;Hjortespringvej;E;0;;EXIT
-47131607;Hjortespringvej;W;5;N;INPUT
-48131220;Hjortespringvej;W;0;;EXIT
-3;Herlev Bygade;E;10;N;INPUT
-48131207;Herlev Bygade;E;0;;EXIT
-48131198;Herlev Hovedgade;E;15;Y;INPUT
-48131188;Herlev Hovedgade;E;0;;EXIT
-48131190;Herlev Hovedgade;W;10;Y;INPUT
-48131196;Herlev Hovedgade;W;0;;EXIT
-48131164;Mileparken;E;5;N;INPUT
-48131156;Mileparken;E;0;;EXIT
-47131603;Mileparken;W;5;N;INPUT
-47131374;Mileparken;W;0;;EXIT
+NUMBER;NAME;DIRECTION;REL_INFLOW;HAS_BUSES;HAS_TRUCKS;TYPE
+48131169;O3 Herlev;N;100;Y;Y;INPUT
+25060312;O3 Herlev;N;0;;;EXIT
+48130426;O3 Herlev;S;90;Y;Y;INPUT
+48131145;O3 Herlev;S;0;;;EXIT
+47131394;Herlev sygehus;E;20;N;N;INPUT
+47131391;Herlev sygehus;E;0;;;EXIT
+47131392;Herlev sygehus;W;5;N;Y;INPUT
+48130428;Herlev sygehus;W;0;;;EXIT
+48131222;Hjortespringvej;E;5;N;N;INPUT
+47131608;Hjortespringvej;E;0;;;EXIT
+47131607;Hjortespringvej;W;5;N;Y;INPUT
+48131220;Hjortespringvej;W;0;;;EXIT
+3;Herlev Bygade;E;10;N;N;INPUT
+48131207;Herlev Bygade;E;0;;;EXIT
+48131198;Herlev Hovedgade;E;15;Y;Y;INPUT
+48131188;Herlev Hovedgade;E;0;;;EXIT
+48131190;Herlev Hovedgade;W;10;Y;Y;INPUT
+48131196;Herlev Hovedgade;W;0;;;EXIT
+48131164;Mileparken;E;5;N;N;INPUT
+48131156;Mileparken;E;0;;;EXIT
+47131603;Mileparken;W;5;N;N;INPUT
+47131374;Mileparken;W;0;;;EXIT

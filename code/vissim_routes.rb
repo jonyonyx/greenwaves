@@ -28,7 +28,7 @@ for line in inp
   
   #puts "#{number} '#{name}'"
   
-  Links[number] = Link.new(number,name,nil)
+  Links[number] = Link.new(number,{})
 end
 
 #now get the connectors and join them up using the links
@@ -43,6 +43,7 @@ while i < inp.length
   end
   
   conn_number = m[1].to_i
+  conn_name = m[2]
   
   i = i + 1
   
@@ -61,7 +62,7 @@ while i < inp.length
   from_link = Links[from_link_num]
   to_link = Links[to_link_num]
   
-  conn = Connector.new(conn_number,from_link,to_link,lanes)
+  conn = Connector.new(conn_number,conn_name,from_link,to_link,lanes)
   
   # found a connection
   from_link.add to_link, conn     
@@ -99,7 +100,7 @@ Exit_numbers = Exit_links.map{|l| l.number}
 
 routes = []
 for link in Input_links.map{|l| Links[l.number]}.compact#[8..8]
-  puts "discovering from #{link}"
+  #puts "discovering from #{link}"
   discover(link) do |route|
     #puts route.to_s
     routes << route if Exit_numbers.include?(route.exit.number)

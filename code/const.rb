@@ -27,36 +27,15 @@ class Csvtable < Array
   end
   def self.enumerate csvfile
     reader = CSV.open(csvfile,'r',';')
-    header = reader.shift.map{|col_name| col_name.downcase}
+    header = reader.shift
     
     reader.each do |row|
-      row_map = {}
-      row.each_with_index{|e,i| row_map[header[i]] = e}
+      row_map = {} # NB: case sensitive
+      row.each_with_index{|e,i| row_map[header[i]] = e.to_s}
       yield row_map
     end
     
     reader.close
-  end
-end
-    
-class VissimElem
-  attr_reader :type,:number,:name
-  
-  # total proportion request by all elems of each type
-  @@total_prop = Hash.new(0.0) 
-  def initialize type,number,name,prop
-    @type,@number,@name,@prop = type,number,name,prop
-    @@total_prop[@type] = @@total_prop[@type] + prop
-  end
-  def proportion
-    @prop / @@total_prop[@type]
-  end
-  def to_s
-    "#{@type} #{@number} '#{@name}'"
-  end
-  def hash; @number; end
-  def eql?(other)
-    other.number == @number
   end
 end
 class Route  
@@ -96,17 +75,48 @@ class Route
     length <=> other.length
   end
 end
+class VissimElem
+  attr_reader :number,:name  
+  def initialize number,attributes
+    @number = number
+    self.update attributes
+  end
+  def update attributes
+    @name = attributes['NAME'] if attributes['NAME']
+  end
+  def type; self.class.to_s.upcase; end
+  def to_s
+    "#{type} #{@number} '#{@name}'"
+  end
+  def hash; @number; end
+  def eql?(other); other.number == @number; end
+end
 class Link < VissimElem
-  attr_reader :direction,:has_buses,:adjacent
-  def initialize number,name,direction,
-      rel_proportion = 0.0, bus_input = 'N',link_type = 'INTERNAL'
-    super 'LINK',number,name,rel_proportion
-    @direction = direction
-    @has_buses = bus_input == 'Y' # are buses inserted on this link?
+  attr_reader :direction,:has_buses,:has_trucks,:link_type,:rel_inflow,:adjacent
+  # total proportion request by all elems of each type
+  @@total_inflow = 0.0
+  def initialize number,attributes    
+    super number,attributes    
+    update attributes
+    
     # map from adjacent links, which can be reached from self, 
     # to the used connector
     @adjacent = {}
-    @link_type = link_type
+  end
+  def update attributes 
+    super
+    @direction = attributes['DIRECTION']
+    @has_buses = attributes['HAS_BUSES'] == 'Y' # are buses inserted on this link?
+    @has_trucks = attributes['HAS_TRUCKS'] == 'Y' # are trucks inserted on this link?
+    @link_type = attributes['TYPE']
+        
+    # subtract the old contribution, if defined
+    @@total_inflow -= @rel_inflow if @rel_inflow
+    @rel_inflow = attributes['REL_INFLOW'] ? attributes['REL_INFLOW'].to_i : 0.0
+    @@total_inflow += @rel_inflow
+  end
+  def proportion
+    @rel_inflow / @@total_inflow
   end
   def adjacent_links; @adjacent.keys; end
   # connects self to given adjacent link by given connector
@@ -127,25 +137,23 @@ class Link < VissimElem
     true
   end
   def to_s
-    str = super.to_s
-    str += ' ' + format('%f', proportion) if @prop > 0
+    str = super
+    str += ' ' + format('%f', proportion) if @rel_inflow > 0.0
     str += ' ' + @direction if @direction
     str
   end
 end
-class Connector
-  attr_reader :number,:from,:to,:lanes
-  def initialize number,from,to,lanes
-    @number,@from,@to,@lanes = number,from,to,lanes
-  end
-end
-class Composition < VissimElem
-  def initialize number,name,rel_proportion
-    super 'COMPOSITION',number,name,rel_proportion
+class Connector < VissimElem
+  attr_reader :from,:to,:lanes
+  def initialize number,name,from,to,lanes
+    super number,'NAME' => name
+    @from,@to,@lanes = from,to,lanes
   end
 end
 class VissimFun
-  def VissimFun.get_links area_name
+  def VissimFun.get_links area_name, type_filter = nil
+    
+    type_filter = type_filter.downcase if type_filter
     
     links_map = {}
     ObjectSpace.each_object(Link) do |link|
@@ -154,17 +162,16 @@ class VissimFun
     
     links = []
     Csvtable.enumerate("#{Vissim_dir}#{area_name}_links.csv") do |row|     
-      num = row['number'].to_i
-      if links_map.has_key?(num)
-        links << links_map[num]
+      number = row['NUMBER'].to_i
+            
+      if links_map.has_key?(number)
+        # enrich the existing object with data from the csv file
+        link = links_map[number]
+        link.update row
+        links << link
       else
-        links << Link.new(
-          num, 
-          row['name'], 
-          row['direction'], 
-          row['rel_flow'].to_f, 
-          row['bus_input'],
-          row['type'])
+        next if type_filter and not row['TYPE'].downcase == type_filter
+        links << Link.new(number,row)
       end
     end
     links
