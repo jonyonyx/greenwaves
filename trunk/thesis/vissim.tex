@@ -6,7 +6,7 @@ Vissim is capable of dynamic traffic assignment (DTA) as well as static input. D
 
 Vissim can perform this form of traffic input given zones, which are confined and non-overlapping areas of the network, and a matrix describing the relative traffic from each zone to each other zone.
 
-In this project DTA was abandoned on recommendation from CTT professor Otto Anker Nielsen due to the dynamic nature of the traffic signals since, in his experience, odd phenomenon may occur.
+In this project DTA was abandoned on recommendation from CTT professor Otto Anker Nielsen due to the dynamic nature of the traffic signals since, in his experience, odd phenomenon may occur such as unpredictable gridlocks, when adjacent links are fully saturated.
 
 Instead static input was chosen. In static input traffic enters on specific links and traverse the network until an exit link has been reached. Static input is used in combination with routing decisions, which are usually placed on the input links such that each vehicle entering will immediately be assigned a route through the network. For a description of link input sizes and routes used in the simulations, please refer to section \ref{modelling}.
 
@@ -37,7 +37,7 @@ INPUT <input_number>
 
 Where the most important fields are the \textit{link_number}, defining on which link the input occurs, the \textit{link_contrib}, which is the input quantity in vehicles per hour and finally \textit{t_begin} and \textit{t_end} ie. the time period in which this traffic quantity must be generated.
 
-The \textit{comp} variable defines the traffic composition used eg. cars, trucks, buses or a combination. It is possible to defined multiple inputs on the same link for the same period of time. This can be used to define link input for each vehicle type (with its own composition) individually rather than defining input for a mixed composition.
+The \textit{comp} variable defines the traffic composition used eg. cars, trucks, buses or a combination. It is possible, but not recommended, to defined multiple inputs on the same link for the same period of time. Since the traffic composition will remain fairly static it is more intuitive to define a single link input for a traffic composition, which defines relative proportions of each possible vehicle type.
 
 \subsubsection*{Routing decisions}
 As mentioned routing decisions are made for vehicles immediately after they enter the system. This is done by placing a route decision point somewhere on an input link and designate a number of exit links, which can be internal links also, so as to generate a set of routes, which can be chosen among from some distribution.
