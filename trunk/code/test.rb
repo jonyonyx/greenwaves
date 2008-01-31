@@ -8,22 +8,13 @@ require 'const'
 
 puts "BEGIN"
 
-class Klass  
-  def hi name
-    puts "hi #{name} i am klass!"
-  end
+s = "abc456abc"
+i = 0
+
+until /456/.match(s)
+  puts i
+  i+=1
 end
 
-class SubKlass < Klass
-  def hi name
-    super "name"
-    puts "hi #{name} i am subklass!"
-    #super.hi
-  end
-end
-
-sk = SubKlass.new
-
-sk.hi "andreas"
 
 puts "END"

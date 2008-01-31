@@ -79,31 +79,44 @@ class VissimElem
   attr_reader :number,:name  
   def initialize number,attributes
     @number = number
-    self.update attributes
+    update attributes
   end
   def update attributes
-    @name = attributes['NAME'] if attributes['NAME']
+    @name = attributes['NAME']
   end
-  def type; self.class.to_s.upcase; end
+  def type; self.class.to_s; end
   def to_s
     "#{type} #{@number} '#{@name}'"
   end
-  def hash; @number; end
-  def eql?(other); other.number == @number; end
+  def hash; @number + type.hash; end
+  def eql?(other); self.class == other.class and @number == other.number; end
+end
+class SignalController < VissimElem
+  attr_reader :controller_type,:cycle_time,:offset
+  def initialize number, attributes
+    super
+    update attributes
+  end
+  def update attributes
+    super
+    @controller_type = attributes['TYPE']
+    @cycle_time = attributes['CYCLE_TIME'].to_f
+    @offset = attributes['OFFSET'].to_f
+  end
 end
 class Link < VissimElem
   attr_reader :direction,:has_buses,:has_trucks,:link_type,:rel_inflow,:adjacent
   # total proportion request by all elems of each type
   @@total_inflow = 0.0
   def initialize number,attributes    
-    super number,attributes    
+    super
     update attributes
     
     # map from adjacent links, which can be reached from self, 
     # to the used connector
     @adjacent = {}
   end
-  def update attributes 
+  def update attributes
     super
     @direction = attributes['DIRECTION']
     @has_buses = attributes['HAS_BUSES'] == 'Y' # are buses inserted on this link?

@@ -11,66 +11,11 @@
 #   from A and then B until a connector, which ends in C, is found
 
 require 'const'
+require 'vissim'
 
 puts "BEGIN"
 
-inp = IO.readlines("#{Vissim_dir}tilpasset_model.inp")
-
-Links = {} # map from link numbers for link objects
-
-# first parse all LINKS
-
-for line in inp
-  m =  /^LINK\s+(\d+) NAME \"([\w\s\d]*)\"/.match(line)
-  next unless m
-  number = m[1].to_i
-  name = m[2]
-  
-  #puts "#{number} '#{name}'"
-  
-  Links[number] = Link.new(number,{})
-end
-
-#now get the connectors and join them up using the links
-
-i = 0
-while i < inp.length
-  line = inp[i]
-  m =  /^CONNECTOR\s+(\d+) NAME \"([\w\s\d]*)\"/.match(line)
-  unless m
-    i = i + 1
-    next
-  end
-  
-  conn_number = m[1].to_i
-  conn_name = m[2]
-  
-  i = i + 1
-  
-  # number always in the first line after conn declaration
-  # example: FROM LINK 28 LANES 1 2 AT 819.728
-  m = /FROM LINK (\d+) LANES (\d )+/.match(inp[i])
-  from_link_num = m[1].to_i
-  lanes = m[2].split(' ').length
-  
-  # next comes the knot definitions
-  # and the the to-link
-  i = i + 1 until /TO LINK/.match(inp[i])
-  
-  to_link_num = inp[i].split[2].to_i
-    
-  from_link = Links[from_link_num]
-  to_link = Links[to_link_num]
-  
-  conn = Connector.new(conn_number,conn_name,from_link,to_link,lanes)
-  
-  # found a connection
-  from_link.add to_link, conn     
-end
-
-#puts Links[25060312].exit?
-#puts Links[25060312].adjacent
-#exit(0)
+vissim = Vissim.new("#{Vissim_dir}tilpasset_model.inp")
 
 # now have both the connectors and links
 
@@ -99,7 +44,7 @@ Exit_links = Herlev_links.find_all{|l| l.exit? }
 Exit_numbers = Exit_links.map{|l| l.number}
 
 routes = []
-for link in Input_links.map{|l| Links[l.number]}.compact#[8..8]
+for link in Input_links.map{|l| vissim.links_map[l.number]}.compact#[8..8]
   #puts "discovering from #{link}"
   discover(link) do |route|
     #puts route.to_s
@@ -120,7 +65,7 @@ for i in (0...routes.length)
       # found identical route
       # the shortest one is always the best, since the other includes 
       # a rest stop
-      identical_routes << [r1,r2].min
+      identical_routes << [r1,r2].max
     end
     
   end
