@@ -23,6 +23,12 @@ class Vissim
     parse_controllers(inp) do |sc|
       puts sc#.inspect
       @sc_map[sc.number] = sc
+      for grp in sc.groups.values
+        puts "\t#{grp}"
+        for head in grp.heads
+          puts "\t\t#{head}"
+        end
+      end
     end
   end
   # returns signal controllers and their groups.
@@ -35,18 +41,40 @@ class Vissim
         next
       end
       
-      sc = SignalController.new($1.to_i,
+      ctrl = SignalController.new($1.to_i,
         'NAME' => $2, 
         'TYPE' => $3, 
         'CYCLE_TIME' => $4, 
         'OFFSET' => $5)
       
-      # find the signal groups
-      i += 1 until inp[i] =~ /^SIGNAL_GROUP (\d+)  NAME \"([\w\s\d\/]*)\"  SCJ #{sc.number}  RED_END ([\d\.]+)  GREEN_END ([\d\.]+)  TRED_AMBER ([\d\.]+)  TAMBER ([\d\.]+)/
-      
-      yield sc
-      
       i += 1
+      # parse signal groups and signal heads
+      # until the next signal controller statement is found
+      until inp[i] =~ /^SCJ/
+        # find the signal groups
+        if inp[i] =~ /^SIGNAL_GROUP (\d+)  NAME \"([,\w\s\d\/]*)\"  SCJ #{ctrl.number}  RED_END ([\d\.]+)  GREEN_END ([\d\.]+)  TRED_AMBER ([\d\.]+)  TAMBER ([\d\.]+)/
+          
+          grp = SignalGroup.new($1.to_i,
+            'NAME' => $2,
+            'RED_END' => $3,
+            'GREEN_END' => $4,
+            'TRED_AMBER' => $5,
+            'TAMBER' => $6)
+          ctrl.add grp
+        elsif inp[i] =~ /SIGNAL_HEAD (\d+)\s+NAME \"([\w\s\d\/]*)\"\s+LABEL  0.00 0.00\s+SCJ #{ctrl.number}\s+GROUP (\d+)\s+POSITION LINK (\d+)\s+LANE (\d)/
+          head = SignalHead.new($1.to_i, 'NAME' => $2, 'POSITION LINK' => $4, 'LANE' => $5)
+          grpnum = $3.to_i
+          grp = ctrl.groups[grpnum]
+          
+          raise "Warning: signal head '#{head}' is missing its group #{grpnum} at controller '#{ctrl}'" unless grp
+          grp.add(head) 
+        end      
+      
+        i += 1
+      end
+      
+      
+      yield ctrl
     end
   end
   def parse_connectors inp

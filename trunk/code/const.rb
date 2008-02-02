@@ -92,16 +92,50 @@ class VissimElem
   def eql?(other); self.class == other.class and @number == other.number; end
 end
 class SignalController < VissimElem
-  attr_reader :controller_type,:cycle_time,:offset
+  attr_reader :controller_type,:cycle_time,:offset,:groups
   def initialize number, attributes
     super
     update attributes
+    @groups = {}
   end
   def update attributes
     super
     @controller_type = attributes['TYPE']
     @cycle_time = attributes['CYCLE_TIME'].to_f
     @offset = attributes['OFFSET'].to_f
+  end
+  def add group
+    @groups[group.number] = group
+  end
+end
+class SignalGroup < VissimElem
+  attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads
+  def initialize(number,attributes)
+    super
+    update attributes
+    @heads = [] # signal heads in this group
+  end
+  def update attributes
+    super
+    @red_end = attributes['RED_END'].to_f
+    @green_end = attributes['GREEN_END'].to_f
+    @tred_amber = attributes['TRED_AMBER'].to_f
+    @tamber = attributes['TAMBER'].to_f
+  end
+  def add head
+    @heads << head
+  end
+end
+class SignalHead < VissimElem
+  attr_reader :position_link,:lane
+  def initialize number, attributes
+    super
+    update attributes
+  end
+  def update attributes
+    super
+    @position_link = attributes['POSITION LINK'].to_i
+    @lane = attributes['LANE'].to_i
   end
 end
 class Link < VissimElem
