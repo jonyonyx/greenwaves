@@ -1,0 +1,30 @@
+PROGRAM herlev_sygehus; /* D:\greenwaves\Vissim\o3_roskildevej-herlevsygehus\herlev_sygehus.vv */
+
+
+/* ARRAYS */ 
+
+/* SUBROUTINES */ 
+
+/* PARAMETERS DEPENDENT ON SCJ-PROGRAM */ 
+            
+/* EXPRESSIONS */ 
+            cycle_sec := T;
+            cycle_sec_plus1 := cycle_sec + 1;
+
+/* MAIN PROGRAM */ 
+
+S00Z001:    IF cycle_sec = 35 THEN
+S01Z001:      Is(1,2)
+            ELSE
+S00Z002:      IF cycle_sec = 50 THEN
+S01Z002:        Is(2,3)
+              ELSE
+S00Z003:        IF cycle_sec = 80 THEN
+S01Z003:          Is(3,1); SetT(1);
+                  GOTO PROG_ENDE
+                END
+              END
+            END;
+S02Z004:    SetT(cycle_sec_plus1)
+PROG_ENDE:    .
+/*----------------------------------------------------------------------------*/

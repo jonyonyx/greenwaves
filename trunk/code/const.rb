@@ -6,6 +6,7 @@ require 'csv'
 require 'Win32API'
 require 'win32/clipboard' 
 include Win32
+require 'facets'
 
 Base_dir = 'D:\\greenwaves\\'
 Herlev_dir = Base_dir + 'data\\DOGS Herlev 2007\\'
@@ -41,32 +42,33 @@ end
 class Route  
   # a route is a list of links which are followed by using
   # the given connectors
-  def initialize path # array of link- and connector tuples
+  def initialize path # ordered hash of link to connector
     raise "Minimal route has a start and exit link, received #{path.inspect}!" if path.length < 2
     @seq = path
   end
   def length; @seq.length; end
-  def start; @seq[0][0]; end
-  def exit; @seq[-1][0]; end
+  def start; links.first; end
+  def exit; links.last; end
   # return a list of connectors used respecting the link order
   # skipping the connector of the start link, which is known to be nil
   def connectors
-    @seq[1..-1].map{|link,by_conn| by_conn}
+    @seq.values
   end
   def links
-    @seq.map{|link,by_conn| link}
+    @seq.keys
   end
   def include? link
-    links.include? link
+    @seq.has_key? link
   end
   # returns a space-separated string of the connector-link-connector... sequence
   # for use in the vissim OVER format in route decisions
   def to_vissim
     str = ''
-    for link,conn in @seq[1..-2]
-      str += "#{conn.number} #{link.number} "
+    for link in links
+      conn = @seq[link]
+      str += "#{conn.number if conn} #{link.number} "
     end
-    str += @seq[-1][1].number.to_s # last connector, omit the link (implicit = exit link)
+    str += connectors.last.number.to_s # last connector, omit the link (implicit = exit link)
   end
   def to_s
     "#{start} > ... (#{length-2}) > #{exit}"
@@ -226,5 +228,6 @@ class VissimFun
 end
 
 if $0 == __FILE__ 
-  puts VissimFun.get_links('herlev')
+  h = {}
+  puts h.methods
 end
