@@ -1,4 +1,5 @@
 require 'const'
+Name_pat = '([,\w\s\d\/]*)'
 
 class Vissim
   attr_reader :links_map,:conn_map,:sc_map
@@ -21,38 +22,41 @@ class Vissim
     
     @sc_map = {}
     parse_controllers(inp) do |sc|
-      puts sc#.inspect
       @sc_map[sc.number] = sc
+    end
+  end
+  def to_s
+    str = ''    
+    for sc in @sc_map.values
       for grp in sc.groups.values
-        puts "\t#{grp}"
+        str += "\t#{grp}\n"
         for head in grp.heads
-          puts "\t\t#{head}"
+          str += "\t\t#{head}\n"
         end
       end
     end
+    str
   end
   # returns signal controllers and their groups.
-  def parse_controllers inp    
-    puts "parsing controllers"
+  def parse_controllers inp
     i = 0
     while i < inp.length
-      unless inp[i] =~ /^SCJ (\d+)\s+NAME \"([\w\s\d\/]*)\"\s+TYPE (\w+)\s+CYCLE_TIME ([\d\.]+)\s+ OFFSET ([\d\.])/
+      unless inp[i] =~ /^SCJ (\d+)\s+NAME \"#{Name_pat}\"\s+TYPE FIXED_TIME\s+CYCLE_TIME ([\d\.]+)\s+ OFFSET ([\d\.])/
         i += 1
         next
       end
       
       ctrl = SignalController.new($1.to_i,
         'NAME' => $2, 
-        'TYPE' => $3, 
-        'CYCLE_TIME' => $4, 
-        'OFFSET' => $5)
+        'CYCLE_TIME' => $3, 
+        'OFFSET' => $4)
       
       i += 1
       # parse signal groups and signal heads
       # until the next signal controller statement is found
       until inp[i] =~ /^SCJ/
         # find the signal groups
-        if inp[i] =~ /^SIGNAL_GROUP (\d+)  NAME \"([,\w\s\d\/]*)\"  SCJ #{ctrl.number}  RED_END ([\d\.]+)  GREEN_END ([\d\.]+)  TRED_AMBER ([\d\.]+)  TAMBER ([\d\.]+)/
+        if inp[i] =~ /^SIGNAL_GROUP (\d+)  NAME \"#{Name_pat}\"  SCJ #{ctrl.number}  RED_END ([\d\.]+)  GREEN_END ([\d\.]+)  TRED_AMBER ([\d\.]+)  TAMBER ([\d\.]+)/
           
           grp = SignalGroup.new($1.to_i,
             'NAME' => $2,
@@ -61,7 +65,7 @@ class Vissim
             'TRED_AMBER' => $5,
             'TAMBER' => $6)
           ctrl.add grp
-        elsif inp[i] =~ /SIGNAL_HEAD (\d+)\s+NAME \"([\w\s\d\/]*)\"\s+LABEL  0.00 0.00\s+SCJ #{ctrl.number}\s+GROUP (\d+)\s+POSITION LINK (\d+)\s+LANE (\d)/
+        elsif inp[i] =~ /SIGNAL_HEAD (\d+)\s+NAME \"#{Name_pat}\"\s+LABEL  0.00 0.00\s+SCJ #{ctrl.number}\s+GROUP (\d+)\s+POSITION LINK (\d+)\s+LANE (\d)/
           head = SignalHead.new($1.to_i, 'NAME' => $2, 'POSITION LINK' => $4, 'LANE' => $5)
           grpnum = $3.to_i
           grp = ctrl.groups[grpnum]
@@ -80,7 +84,7 @@ class Vissim
   def parse_connectors inp
     i = 0
     while i < inp.length
-      unless inp[i] =~ /^CONNECTOR\s+(\d+) NAME \"([\w\s\d]*)\"/
+      unless inp[i] =~ /^CONNECTOR\s+(\d+) NAME \"#{Name_pat}\"/
         i += 1
         next
       end
@@ -107,7 +111,7 @@ class Vissim
   end
   def parse_links inp    
     for line in inp
-      next unless line =~ /^LINK\s+(\d+) NAME \"([\w\s\d]*)\"/
+      next unless line =~ /^LINK\s+(\d+) NAME \"#{Name_pat}\"/
   
       yield Link.new($1.to_i,'NAME' => $2)
     end

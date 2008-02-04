@@ -35,7 +35,7 @@ INPUT <input_number>
 
 (Vehicles always arrive at the beginning of the link.)
 
-Where the most important fields are the \textit{link_number}, defining on which link the input occurs, the \textit{link_contrib}, which is the input quantity in vehicles per hour and finally \textit{t_begin} and \textit{t_end} ie. the time period in which this traffic quantity must be generated.
+Where the most important fields are the \textit{link\_number}, defining on which link the input occurs, the \textit{link\_contrib}, which is the input quantity in vehicles per hour and finally \textit{t\_begin} and \textit{t\_end} ie. the time period in which this traffic quantity must be generated.
 
 The \textit{comp} variable defines the traffic composition used eg. cars, trucks, buses or a combination. It is possible, but not recommended, to defined multiple inputs on the same link for the same period of time. Since the traffic composition will remain fairly static it is more intuitive to define a single link input for a traffic composition, which defines relative proportions of each possible vehicle type.
 
@@ -62,7 +62,25 @@ ROUTING_DECISION <number> NAME "<description>" LABEL  0.00 0.00
      OVER <connector> <link> ... <connector>
 \end{verbatim}
 
-The \textit{origin_link} denotes the position of the decision point. Beyond the line \verb|VEHICLE_CLASS ALL| is a number of lines with route alternatives. The \verb|OVER...| lines describe the path taken from \textit{origin_link} to \textit{dest_link}. The first connector must be downstream of - and connected to - the decision point link. Likewise the final connector must be upstream and connected to the destination and the same applies to internal links.
+The \textit{origin\_link} denotes the position of the decision point. Beyond the line \verb|VEHICLE_CLASS ALL| is a number of lines with route alternatives. The \verb|OVER...| lines describe the path taken from \textit{origin\_link} to \textit{dest\_link}. The first connector must be downstream of - and connected to - the decision point link. Likewise the final connector must be upstream and connected to the destination and the same applies to internal links.
 
 In order to enumerate all relevant routes it is necessary to parse the \textit{.inp} file and generate an internal representation of the network as a graph. A route discovery routine was implemented:
 
+\begin{verbatim}
+def discover link, path=[[link,nil]], &callback
+  for adj_link,conn in link.adjacent
+    # avoid loops by checking if the path contain this link
+    next if path.map{|l,c|l}.include?(adj_link) 
+    
+    # assume there exist a valid route using this connector to 
+    # reach adj_link; if this is not true, nothing is returned anyhow.
+    if adj_link.exit?
+      # found an exit link for this path
+      yield Route.new(path + [[adj_link,conn]]) 
+    else
+      # look further
+      discover(adj_link,path + [[adj_link,conn]],&callback)
+    end
+  end
+end
+\end{verbatim}

@@ -12,6 +12,7 @@
 
 require 'const'
 require 'vissim'
+require 'facets/dictionary'
 
 puts "BEGIN"
 
@@ -19,19 +20,19 @@ vissim = Vissim.new("#{Vissim_dir}tilpasset_model.inp")
 
 # now have both the connectors and links
 
-def discover link, path=[[link,nil]], &callback
+def discover link, path=Dictionary[link,nil], &callback
   for adj_link,conn in link.adjacent
     # avoid loops by checking if the path contain this link
-    next if path.map{|l,c|l}.include?(adj_link) 
+    next if path.has_key?(adj_link) 
     
     # assume there exist a valid route using this connector to reach adj_link;
     # if this is not true, nothing is returned anyhow.
     if adj_link.exit?
       # found an exit link for this path
-      yield Route.new(path + [[adj_link,conn]]) 
+      yield Route.new(path.merge(adj_link => conn)) 
     else
       # copy the path to avoid backreferences among routes
-      discover(adj_link,path + [[adj_link,conn]],&callback) # look further
+      discover(adj_link,path.merge(adj_link => conn),&callback) # look further
     end
   end
 end
