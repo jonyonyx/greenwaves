@@ -1,30 +1,49 @@
 PROGRAM herlev_sygehus; /* D:\greenwaves\Vissim\o3_roskildevej-herlevsygehus\herlev_sygehus.vv */
 
+CONST 
+            STAGE1_TIME = 40,
+            STAGE2_TIME = 10,
+            STAGE3_TIME = 30,
+            BASE_CYCLE_TIME = 80;
 
 /* ARRAYS */ 
 
 /* SUBROUTINES */ 
 
+SUBROUTINE DOGS;  /* DOGS.vv */
+D01S00Z001: DOGS_LEVEL := 0;
+D01S00Z002: IF cycle_sec = CURRENT_CYCLE_TIME THEN
+D01S01Z002:   SetT(1)
+            ELSE
+D01S00Z003:   SetT(cycle_sec_plus1)
+            END
+D01PROG_ENDE: .
+/*----------------------------------------------------------------------------*/
+
 /* PARAMETERS DEPENDENT ON SCJ-PROGRAM */ 
             
 /* EXPRESSIONS */ 
+            stage1_end := STAGE1_TIME + GREEN_EXT;
+            stage2_end := stage1_end + STAGE2_TIME;
+            stage3_end := stage2_end + STAGE3_TIME;
             cycle_sec := T;
             cycle_sec_plus1 := cycle_sec + 1;
+            GREEN_EXT := DOGS_LEVEL * 10;
+            CURRENT_CYCLE_TIME := BASE_CYCLE_TIME + GREEN_EXT;
 
 /* MAIN PROGRAM */ 
 
-S00Z001:    IF cycle_sec = 35 THEN
-S01Z001:      Is(1,2)
-            ELSE
-S00Z002:      IF cycle_sec = 50 THEN
-S01Z002:        Is(2,3)
-              ELSE
-S00Z003:        IF cycle_sec = 80 THEN
-S01Z003:          Is(3,1); SetT(1);
-                  GOTO PROG_ENDE
-                END
-              END
+S00Z001:    GOSUB DOGS;
+S00Z002:    IF T = stage1_end THEN
+S01Z002:      Is(1,2);
+              GOTO PROG_ENDE
             END;
-S02Z004:    SetT(cycle_sec_plus1)
+S00Z003:    IF T = stage2_end THEN
+S01Z003:      Is(2,3);
+              GOTO PROG_ENDE
+            END;
+S00Z004:    IF T = stage3_end THEN
+S01Z004:      Is(3,1)
+            END
 PROG_ENDE:    .
 /*----------------------------------------------------------------------------*/

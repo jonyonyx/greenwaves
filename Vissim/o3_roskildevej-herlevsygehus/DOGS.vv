@@ -1,0 +1,22 @@
+VISVAP VERSION 2.14 - 01
+Z0|S0|T|START|00100011|0#
+Z1|S0|A|DOGS_LEVEL := 0|10100011|0#
+Z2|S0|B|cycle_sec = CURRENT_CYCLE_TIME|10110011|0#
+Z3|S0|A|SetT(cycle_sec_plus1)|10010011|0#
+Z1|S1|Z|The amount of time to extend the primary direction green time.|00000011|0#
+Z2|S1|A|SetT(1)|01100011|0#
+Z3|S1|L||11100010|0#
+Z4|S1|T|END|10000011|0#
+
+KONSTANTEN
+BASE_CYCLE_TIME|80|||||||||#
+
+ARRAYS
+
+AUSDRUECKE
+cycle_sec|T|#
+cycle_sec_plus1|cycle_sec + 1|#
+GREEN_EXT|DOGS_LEVEL * 10|#
+CURRENT_CYCLE_TIME|BASE_CYCLE_TIME + GREEN_EXT|#
+
+UPROG
