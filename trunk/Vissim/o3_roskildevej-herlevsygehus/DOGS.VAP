@@ -1,0 +1,25 @@
+PROGRAM DOGS; /* D:\greenwaves\Vissim\o3_roskildevej-herlevsygehus\DOGS.vv */
+
+CONST 
+            TOTAL_TIME = 80;
+
+/* ARRAYS */ 
+
+/* SUBROUTINES */ 
+
+/* PARAMETERS DEPENDENT ON SCJ-PROGRAM */ 
+            
+/* EXPRESSIONS */ 
+            cycle_sec := T;
+            cycle_sec_plus1 := cycle_sec + 1;
+
+/* MAIN PROGRAM */ 
+
+S00Z001:    GREEN_BASE_EXT := 10;
+S00Z002:    IF IF cycle_sec = TOTAL_TIME THEN
+S01Z002:      SetT(1)
+            ELSE
+S00Z003:      SetT(cycle_sec_plus1)
+            END
+PROG_ENDE:    .
+/*----------------------------------------------------------------------------*/

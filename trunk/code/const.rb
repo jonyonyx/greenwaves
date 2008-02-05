@@ -42,7 +42,7 @@ end
 class Route  
   # a route is a list of links which are followed by using
   # the given connectors
-  def initialize path # ordered hash of link to connector
+  def initialize path # ordered hash (facets/dictionary) of link to connector
     raise "Minimal route has a start and exit link, received #{path.inspect}!" if path.length < 2
     @seq = path
   end
@@ -64,7 +64,7 @@ class Route
   # for use in the vissim OVER format in route decisions
   def to_vissim
     str = ''
-    for link in links
+    for link in links[1..-2]
       conn = @seq[link]
       str += "#{conn.number if conn} #{link.number} "
     end
