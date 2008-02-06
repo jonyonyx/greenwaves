@@ -1,0 +1,39 @@
+$SIGNAL_GROUPS
+$
+A	1
+At	2
+B1	3
+B2	4
+
+$STAGES
+$
+Stage_1	A At
+red	B1 B2
+Stage_2 B1 B2
+red	A At
+
+$STARTING_STAGE
+$
+Stage_1
+
+$INTERSTAGE1
+Length [s]	: 6
+From Stage	: 1
+To Stage	: 2
+$	redend	grend
+A	-127	0
+At	-127	0
+B1	6	127
+B2	6	127
+
+$INTERSTAGE2
+Length [s]	: 6
+From Stage	: 2
+To Stage	: 1
+$	redend	grend
+B1	-127	0
+B2	-127	0
+A	6	127
+At	6	127
+
+$END

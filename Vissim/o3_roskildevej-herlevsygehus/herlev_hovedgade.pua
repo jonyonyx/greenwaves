@@ -1,0 +1,61 @@
+$SIGNAL_GROUPS
+$
+A	1
+B	2
+Bt	3
+BV	4
+BtV	5
+Ath	6
+
+$STAGES
+$
+Stage_1	A
+red	B Bt BV BtV Ath
+Stage_2 B Bt
+red	A BV BtV Ath
+Stage_3 BV BtV
+red	A Ath B Bt 
+Stage_4 Ath
+red	A B BV Bt BtV
+
+$STARTING_STAGE
+$
+Stage_1
+
+$INTERSTAGE1
+Length [s]	: 6
+From Stage	: 1
+To Stage	: 2
+$	redend	grend
+A	-127	0
+B	6	127
+Bt	6	127
+
+$INTERSTAGE2
+Length [s]	: 6
+From Stage	: 2
+To Stage	: 3
+$	redend	grend
+B	-127	0
+Bt	-127	0
+BV	6	127
+BtV	6	127
+
+$INTERSTAGE3
+Length [s]	: 6
+From Stage	: 3
+To Stage	: 4
+$	redend	grend
+BV	-127	0
+BtV	-127	0
+Ath	6	127
+
+$INTERSTAGE4
+Length [s]	: 0
+From Stage	: 4
+To Stage	: 1
+$	redend	grend
+Ath	-127	0
+A	0	127
+
+$END
