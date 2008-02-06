@@ -15,9 +15,9 @@ Z4|S2|L||11100010|0#
 Z5|S2|T|END|11000011|0#
 
 KONSTANTEN
-STAGE1_TIME|40|||||||||Primary directions - P1-P3#
-STAGE2_TIME|10|||||||||Left-turning - morning, day, afternoon - traffic actuated - assume always fully booked#
-STAGE3_TIME|30|||||||||Secondary directions - morning, day, afternoon#
+STAGE1_TIME|40|||||||||Primary directions#
+STAGE2_TIME|10|||||||||Left-turning - traffic actuated - assume always fully booked#
+STAGE3_TIME|30|||||||||Secondary directions#
 
 ARRAYS
 
