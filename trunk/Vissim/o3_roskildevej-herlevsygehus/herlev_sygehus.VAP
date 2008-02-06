@@ -4,19 +4,52 @@ CONST
             STAGE1_TIME = 40,
             STAGE2_TIME = 10,
             STAGE3_TIME = 30,
-            BASE_CYCLE_TIME = 80;
+            BASE_CYCLE_TIME = 80,
+            DN = 3,
+            DS = 14,
+            PANIC_LEVEL = 6;
 
 /* ARRAYS */ 
+ARRAY 
+            UBOUND_CNT_CRIT[ 2, 8 ] = [[5, 10, 15, 20, 0, 0, 0, 0], [5, 10, 15, 20, 0, 0, 0, 0]],
+            LBOUND_CNT_CRIT[ 2, 8 ] = [[4, 8, 12, 16, 0, 0, 0, 0], [4, 8, 12, 16, 0, 0, 0, 0]];
 
 /* SUBROUTINES */ 
 
 SUBROUTINE DOGS;  /* DOGS.vv */
-D01S00Z001: DOGS_LEVEL := 0;
-D01S00Z002: IF cycle_sec = CURRENT_CYCLE_TIME THEN
-D01S01Z002:   SetT(1)
+D01S00Z001: IF cycle_sec = CURRENT_CYCLE_TIME THEN
+D01S01Z001:   DN_CNT := Rear_ends(DN); DS_CNT := Rear_ends(DS);
+D01S02Z001:   Clear_rear_ends(DN); Clear_rear_ends(DS);
+D01S03Z001:   IF (DN_CNT > UBOUND_CNT_CRIT[1,1]) OR (DS_CNT > UBOUND_CNT_CRIT[2,1]) THEN
+D01S05Z001:     IF (DN_CNT > UBOUND_CNT_CRIT[1,2]) OR (DS_CNT > UBOUND_CNT_CRIT[2,2]) THEN
+D01S07Z001:       IF (DN_CNT > UBOUND_CNT_CRIT[1,3]) OR (DS_CNT > UBOUND_CNT_CRIT[2,3]) THEN
+D01S09Z001:         DOGS_LEVEL := PANIC_LEVEL
+                  ELSE
+D01S07Z002:         IF (DN_CNT < LBOUND_CNT_CRIT[1,3]) AND (DS_CNT < LBOUND_CNT_CRIT[2,3]) THEN
+D01S08Z002:           DOGS_LEVEL := 2
+                    ELSE
+D01S07Z003:           DOGS_LEVEL := 3
+                    END
+                  END
+                ELSE
+D01S05Z002:       IF (DN_CNT < LBOUND_CNT_CRIT[1,2]) AND (DS_CNT < LBOUND_CNT_CRIT[2,2]) THEN
+D01S06Z002:         DOGS_LEVEL := 1
+                  ELSE
+D01S05Z003:         DOGS_LEVEL := 2
+                  END
+                END
+              ELSE
+D01S03Z002:     IF (DN_CNT < LBOUND_CNT_CRIT[1,1]) AND (DS_CNT < LBOUND_CNT_CRIT[2,1]) THEN
+D01S04Z002:       DOGS_LEVEL := 0
+                ELSE
+D01S03Z003:       DOGS_LEVEL := 1
+                END
+              END
             ELSE
-D01S00Z003:   SetT(cycle_sec_plus1)
-            END
+D01S00Z003:   SetT(cycle_sec_plus1);
+              GOTO D01PROG_ENDE
+            END;
+D01S03Z005: SetT(1)
 D01PROG_ENDE: .
 /*----------------------------------------------------------------------------*/
 

@@ -1,9 +1,14 @@
 PROGRAM DOGS; /* D:\greenwaves\Vissim\o3_roskildevej-herlevsygehus\DOGS.vv */
 
 CONST 
-            TOTAL_TIME = 80;
+            BASE_CYCLE_TIME = 80,
+            DN = 3,
+            DS = 14;
 
 /* ARRAYS */ 
+ARRAY 
+            UBOUND_CNT_CRIT[ 2, 8 ] = [[5, 10, 15, 20, 0, 0, 0, 0], [5, 10, 15, 20, 0, 0, 0, 0]],
+            LBOUND_CNT_CRIT[ 2, 8 ] = [[4, 8, 12, 16, 0, 0, 0, 0], [4, 8, 12, 16, 0, 0, 0, 0]];
 
 /* SUBROUTINES */ 
 
@@ -12,14 +17,31 @@ CONST
 /* EXPRESSIONS */ 
             cycle_sec := T;
             cycle_sec_plus1 := cycle_sec + 1;
+            GREEN_EXT := DOGS_LEVEL * 10;
+            CURRENT_CYCLE_TIME := BASE_CYCLE_TIME + GREEN_EXT;
 
 /* MAIN PROGRAM */ 
 
-S00Z001:    GREEN_BASE_EXT := 10;
-S00Z002:    IF IF cycle_sec = TOTAL_TIME THEN
-S01Z002:      SetT(1)
+S00Z001:    IF cycle_sec = CURRENT_CYCLE_TIME THEN
+S01Z001:      DN_CNT := Rear_ends(DN); DS_CNT := Rear_ends(DS);
+S02Z001:      Clear_rear_ends(DN); Clear_rear_ends(DS);
+S03Z001:      IF DN_CNT > UBOUND_CNT_CRIT[0,0] OR DS_CNT > UBOUND_CNT_CRIT[0,1] THEN
+S04Z001:        IF DN_CNT > UBOUND_CNT_CRIT[1,0] OR DS_CNT > UBOUND_CNT_CRIT[1,1] THEN
+S05Z001:          IF DN_CNT > UBOUND_CNT_CRIT[2,0] OR DS_CNT > UBOUND_CNT_CRIT[2,1] THEN
+S06Z002:            DOGS_LEVEL := 3
+                  ELSE
+S05Z002:            DOGS_LEVEL := 2
+                  END
+                ELSE
+S04Z002:          DOGS_LEVEL := 1
+                END
+              ELSE
+S03Z002:        DOGS_LEVEL := 0
+              END
             ELSE
-S00Z003:      SetT(cycle_sec_plus1)
-            END
+S00Z002:      SetT(cycle_sec_plus1);
+              GOTO PROG_ENDE
+            END;
+S03Z004:    SetT(1)
 PROG_ENDE:    .
 /*----------------------------------------------------------------------------*/
