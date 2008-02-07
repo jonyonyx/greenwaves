@@ -4877,7 +4877,7 @@ PRIORITY_RULE NUMBER 10126 NAME "" LABEL  0.00 0.00
 ------------------------------
 
 SCJ 1  NAME "O3/KAS"  TYPE VAP  CYCLE_TIME 80.0  OFFSET 0.0    VARIABLE_CYCLE
-  PROGRAM_FILE "vap214.exe"
+  PROGRAM_FILE "vap216.dll"
    IMPORT  FILE "herlev_sygehus.vap" "herlev_sygehus.pua"   PROGRAM 1
   RECORD_FILE ""  CONFIG_FILE ""
 

@@ -49,7 +49,7 @@ D01S03Z003:       DOGS_LEVEL := 1
 D01S00Z003:   SetT(cycle_sec_plus1);
               GOTO D01PROG_ENDE
             END;
-D01S03Z005: SetT(1)
+D01S03Z005: TRACE(VARIABLE(DN_CNT)); TRACE(VARIABLE(DS_CNT)); TRACE(VARIABLE(DOGS_LEVEL)); NOTRACE; SetT(1)
 D01PROG_ENDE: .
 /*----------------------------------------------------------------------------*/
 
