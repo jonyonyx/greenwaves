@@ -3,7 +3,8 @@ PROGRAM herlev_sygehus; /* D:\greenwaves\Vissim\o3_roskildevej-herlevsygehus\her
 CONST 
             STAGE1_TIME = 40,
             STAGE2_TIME = 10,
-            STAGE3_TIME = 30;
+            STAGE3_TIME = 30,
+            OFFSET = 66;
 
 /* ARRAYS */ 
 
@@ -19,16 +20,26 @@ CONST
 /* MAIN PROGRAM */ 
 
 S00Z001:    DOGS_LEVEL := Marker_get(1); TIME := Marker_get(2);
-S00Z002:    IF TIME = stage1_end THEN
-S01Z002:      Is(1,2);
+S00Z002:    IF NOT SYNC THEN
+S01Z002:      IF TIME = (OFFSET-1) THEN
+S02Z002:        SYNC := 1;
+                GOTO PROG_ENDE
+              ELSE
+                GOTO PROG_ENDE
+              END
+            END;
+S00Z003:    current_cycle_time := 80 + 10 * DOGS_LEVEL; local_cycle_sec := (TIME - OFFSET)  % current_cycle_time + 1;
+S00Z004:    SetT(local_cycle_sec); TRACE(ALL);
+S00Z005:    IF T = stage1_end THEN
+S01Z005:      Is(1,2);
               GOTO PROG_ENDE
             END;
-S00Z003:    IF TIME = stage2_end THEN
-S01Z003:      Is(2,3);
+S00Z006:    IF T = stage2_end THEN
+S01Z006:      Is(2,3);
               GOTO PROG_ENDE
             END;
-S00Z004:    IF TIME = stage3_end THEN
-S01Z004:      Is(3,1)
+S00Z007:    IF T = stage3_end THEN
+S01Z007:      Is(3,1)
             END
 PROG_ENDE:    .
 /*----------------------------------------------------------------------------*/
