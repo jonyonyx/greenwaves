@@ -1,0 +1,31 @@
+VISVAP VERSION 2.14 - 01
+Z0|S0|T|START|00100011|0#
+Z1|S0|U|DOGS|10100011|0#
+Z2|S0|B|T = stage1_end|10110011|0#
+Z3|S0|B|T = stage2_end|10110011|0#
+Z4|S0|B|T = stage3_end|10110011|0#
+Z5|S0|L||10010011|0#
+Z1|S1|Z|Herlev Hovedgade - DOGS Master|00000011|0#
+Z2|S1|A|Is(1,2)|01010011|0#
+Z3|S1|A|Is(2,3)|01010011|0#
+Z4|S1|A|Is(3,1)|01010011|0#
+Z5|S1|L||01010001|0#
+Z2|S2|L||01100010|0#
+Z3|S2|L||11100010|0#
+Z4|S2|L||11100010|0#
+Z5|S2|T|END|11000011|0#
+
+KONSTANTEN
+STAGE1_TIME|20|||||||||Primary directions#
+STAGE2_TIME|32|||||||||Left-turning - traffic actuated - assume always fully booked#
+STAGE3_TIME|6|||||||||Secondary directions#
+
+ARRAYS
+
+AUSDRUECKE
+stage1_end|STAGE1_TIME + 2 * DOGS_LEVEL|#
+stage2_end|stage1_end + Interstage_length(1,2) + STAGE2_TIME + 8 * DOGS_LEVEL|#
+stage3_end|stage2_end + Interstage_length(2,3) + STAGE3_TIME|#
+
+UPROG
+DOGS|DOGS.vv|The generic DOGS logic routine#

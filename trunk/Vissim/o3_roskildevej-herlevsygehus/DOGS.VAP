@@ -3,7 +3,8 @@ PROGRAM DOGS; /* D:\greenwaves\Vissim\o3_roskildevej-herlevsygehus\DOGS.vv */
 CONST 
             BASE_CYCLE_TIME = 80,
             DN = 3,
-            DS = 14;
+            DS = 14,
+            PANIC_LEVEL = 6;
 
 /* ARRAYS */ 
 ARRAY 
@@ -22,26 +23,45 @@ ARRAY
 
 /* MAIN PROGRAM */ 
 
-S00Z001:    IF cycle_sec = CURRENT_CYCLE_TIME THEN
-S01Z001:      DN_CNT := Rear_ends(DN); DS_CNT := Rear_ends(DS);
-S02Z001:      Clear_rear_ends(DN); Clear_rear_ends(DS);
-S03Z001:      IF DN_CNT > UBOUND_CNT_CRIT[0,0] OR DS_CNT > UBOUND_CNT_CRIT[0,1] THEN
-S04Z001:        IF DN_CNT > UBOUND_CNT_CRIT[1,0] OR DS_CNT > UBOUND_CNT_CRIT[1,1] THEN
-S05Z001:          IF DN_CNT > UBOUND_CNT_CRIT[2,0] OR DS_CNT > UBOUND_CNT_CRIT[2,1] THEN
-S06Z002:            DOGS_LEVEL := 3
+S00Z001:    Marker_put(1,DOGS_LEVEL);
+S00Z002:    Marker_put(2,cycle_sec);
+S00Z003:    IF cycle_sec = CURRENT_CYCLE_TIME THEN
+S01Z003:      DN_CNT := Rear_ends(DN); DS_CNT := Rear_ends(DS);
+S02Z003:      Clear_rear_ends(DN); Clear_rear_ends(DS);
+S03Z003:      IF (DN_CNT > UBOUND_CNT_CRIT[1,1]) OR (DS_CNT > UBOUND_CNT_CRIT[2,1]) THEN
+S05Z003:        IF (DN_CNT > UBOUND_CNT_CRIT[1,2]) OR (DS_CNT > UBOUND_CNT_CRIT[2,2]) THEN
+S07Z003:          IF (DN_CNT > UBOUND_CNT_CRIT[1,3]) OR (DS_CNT > UBOUND_CNT_CRIT[2,3]) THEN
+S09Z003:            DOGS_LEVEL := PANIC_LEVEL;
+S03Z007:            TRACE(VARIABLE(DN_CNT)); TRACE(VARIABLE(DS_CNT)); TRACE(VARIABLE(DOGS_LEVEL)); NOTRACE; SetT(1)
                   ELSE
-S05Z002:            DOGS_LEVEL := 2
+S07Z004:            IF (DN_CNT < LBOUND_CNT_CRIT[1,3]) AND (DS_CNT < LBOUND_CNT_CRIT[2,3]) THEN
+S08Z004:              DOGS_LEVEL := 2;
+                      GOTO S03Z007
+                    ELSE
+S07Z005:              DOGS_LEVEL := 3;
+                      GOTO S03Z007
+                    END
                   END
                 ELSE
-S04Z002:          DOGS_LEVEL := 1
+S05Z004:          IF (DN_CNT < LBOUND_CNT_CRIT[1,2]) AND (DS_CNT < LBOUND_CNT_CRIT[2,2]) THEN
+S06Z004:            DOGS_LEVEL := 1;
+                    GOTO S03Z007
+                  ELSE
+S05Z005:            DOGS_LEVEL := 2;
+                    GOTO S03Z007
+                  END
                 END
               ELSE
-S03Z002:        DOGS_LEVEL := 0
+S03Z004:        IF (DN_CNT < LBOUND_CNT_CRIT[1,1]) AND (DS_CNT < LBOUND_CNT_CRIT[2,1]) THEN
+S04Z004:          DOGS_LEVEL := 0;
+                  GOTO S03Z007
+                ELSE
+S03Z005:          DOGS_LEVEL := 1;
+                  GOTO S03Z007
+                END
               END
             ELSE
-S00Z002:      SetT(cycle_sec_plus1);
-              GOTO PROG_ENDE
-            END;
-S03Z004:    SetT(1)
+S00Z004:      SetT(cycle_sec_plus1)
+            END
 PROG_ENDE:    .
 /*----------------------------------------------------------------------------*/
