@@ -20,10 +20,10 @@ From Stage	: 1
 To Stage	: 2
 $	redend	grend
 A	-127	0
-B	6	127
+B	4	127
 
 $INTERSTAGE2
-Length [s]	: 6
+Length [s]	: 8
 From Stage	: 2
 To Stage	: 1
 $	redend	grend

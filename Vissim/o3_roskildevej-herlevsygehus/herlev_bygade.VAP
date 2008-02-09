@@ -1,0 +1,33 @@
+PROGRAM herlev_bygade; /* D:\greenwaves\Vissim\o3_roskildevej-herlevsygehus\herlev_bygade.vv */
+
+CONST 
+            STAGE1_TIME = 50,
+            STAGE2_TIME = 16;
+
+/* ARRAYS */ 
+
+/* SUBROUTINES */ 
+
+/* PARAMETERS DEPENDENT ON SCJ-PROGRAM */ 
+            
+/* EXPRESSIONS */ 
+            stage1_end := STAGE1_TIME + 10 * DOGS_LEVEL;
+            stage2_end := stage1_end + Interstage_length(1,2) + STAGE2_TIME;
+
+/* MAIN PROGRAM */ 
+
+S00Z001:    TIME := Marker_get(2);
+S00Z002:    IF NOT TIME THEN
+S01Z002:      SetT(1);
+              GOTO PROG_ENDE
+            END;
+S00Z003:    DOGS_LEVEL := Marker_get(1); SetT(TIME); TRACE(VARIABLE(TIME));
+S00Z004:    IF T = stage1_end THEN
+S01Z004:      Is(1,2);
+              GOTO PROG_ENDE
+            END;
+S00Z005:    IF T = stage2_end THEN
+S01Z005:      Is(2,1)
+            END
+PROG_ENDE:    .
+/*----------------------------------------------------------------------------*/
