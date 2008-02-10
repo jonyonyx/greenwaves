@@ -185,10 +185,46 @@ class Link < VissimElem
     end
     true
   end
+  def traffic_composition
+    # choose a composition (all links have cars!)
+    # please refer to the -- Traffic Compositions: -- section
+    # in the .inp file for the numbers
+    # note: make sure there is a 1:1 correspondance between
+    # traffic compositions and vehicle classes (poor data design by ptv)
+    if has_buses
+      if has_trucks
+        1 # buses and trucks
+      else
+        3 # buses, no trucks
+      end
+    else
+      if has_trucks
+        # trucks, no buses
+        2
+      else
+        # no buses, no trucks
+        1001
+      end
+    end    
+  end
+  def vehicle_classes
+    # see note in method traffic_composition
+    case traffic_composition
+    when 1
+      [1001,1002,1003]
+    when 2
+      [1001,1002]
+    when 3
+      [1001,1003]
+    else
+      [1001]
+    end
+  end
   def to_s
     str = super
-    str += ' ' + format('%f', proportion) if @rel_inflow > 0.0
+    #str += ' ' + format('%f', proportion) if @rel_inflow > 0.0
     str += ' ' + @direction if @direction
+    #str += ' ' + vehicle_classes.inspect
     str
   end
 end
