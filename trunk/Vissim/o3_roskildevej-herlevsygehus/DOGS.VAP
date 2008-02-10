@@ -18,14 +18,13 @@ ARRAY
 /* EXPRESSIONS */ 
             cycle_sec := T;
             cycle_sec_plus1 := cycle_sec + 1;
-            GREEN_EXT := DOGS_LEVEL * 10;
-            CURRENT_CYCLE_TIME := BASE_CYCLE_TIME + GREEN_EXT;
+            CURRENT_CYCLE_TIME := BASE_CYCLE_TIME + DOGS_LEVEL * 10;
 
 /* MAIN PROGRAM */ 
 
 S00Z001:    IF cycle_sec THEN
 S01Z001:      Marker_put(1,DOGS_LEVEL);
-S01Z002:      Marker_put(2,cycle_sec_plus1);
+S01Z002:      Marker_put(2,cycle_sec);
 S01Z003:      IF cycle_sec = CURRENT_CYCLE_TIME THEN
 S02Z003:        DN_CNT := Rear_ends(DN); DS_CNT := Rear_ends(DS);
 S03Z003:        Clear_rear_ends(DN); Clear_rear_ends(DS);
@@ -37,7 +36,7 @@ S12Z003:                IF (DN_CNT > UBOUND_CNT_CRIT[1,5]) OR (DS_CNT > UBOUND_C
 S14Z003:                  IF (DN_CNT > UBOUND_CNT_CRIT[1,6]) OR (DS_CNT > UBOUND_CNT_CRIT[2,6]) THEN
 S16Z003:                    IF (DN_CNT > UBOUND_CNT_CRIT[1,7]) OR (DS_CNT > UBOUND_CNT_CRIT[2,7]) THEN
 S18Z003:                      DOGS_LEVEL := PANIC_LEVEL;
-S04Z007:                      TRACE(VARIABLE(DN_CNT)); TRACE(VARIABLE(DS_CNT)); TRACE(VARIABLE(DOGS_LEVEL)); NOTRACE; SetT(1)
+S04Z007:                      SetT(1)
                             ELSE
 S16Z004:                      IF (DN_CNT < LBOUND_CNT_CRIT[1,7]) AND (DS_CNT < LBOUND_CNT_CRIT[2,7]) THEN
 S17Z004:                        DOGS_LEVEL := 6;
@@ -105,7 +104,8 @@ S04Z005:            DOGS_LEVEL := 1;
 S01Z004:        SetT(cycle_sec_plus1)
               END
             ELSE
-              GOTO S01Z004
+S00Z002:      SetT(1);
+S00Z003:      TRACE(ALL)
             END
 PROG_ENDE:    .
 /*----------------------------------------------------------------------------*/
