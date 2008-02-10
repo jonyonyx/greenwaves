@@ -1,15 +1,16 @@
 VISVAP VERSION 2.14 - 01
 Z0|S0|T|START|00100011|0#
 Z1|S0|B|cycle_sec|10110011|0#
-Z2|S0|L||10100010|0#
-Z3|S0|L||10100010|0#
-Z4|S0|L||10010001|0#
-Z5|S0|Z|False-path taken in first second|00000011|0#
+Z2|S0|A|SetT(1)|10100011|0#
+Z3|S0|A|TRACE(ALL)|10100011|0#
+Z4|S0|L||10100010|0#
+Z5|S0|L||10010001|0#
+Z6|S0|Z|Initialization ^^|00000011|0#
 Z1|S1|A|Marker_put(1,DOGS_LEVEL)|01100011|0#
 Z2|S1|A|Marker_put(2,cycle_sec)|10100011|0#
 Z3|S1|B|cycle_sec = CURRENT_CYCLE_TIME|10110011|0#
-Z4|S1|A|SetT(cycle_sec_plus1)|11100011|0#
-Z5|S1|L||10010001|0#
+Z4|S1|A|SetT(cycle_sec_plus1)|10100011|0#
+Z5|S1|L||11010001|0#
 Z6|S1|Z||00000011|0#
 Z1|S2|Z|Emit the current level to slave controllers.\nThey may read it in the next cycle second.|00000011|0#
 Z2|S2|Z|Synchronize SC clocks. \nPass the next cycle second since slaves can't read\nit before in the next cycle second.|00000011|0#
@@ -26,7 +27,7 @@ Z3|S4|B|(DN_CNT > UBOUND_CNT_CRIT[1,1]) OR \n(DS_CNT > UBOUND_CNT_CRIT[2,1])|011
 Z4|S4|B|(DN_CNT < LBOUND_CNT_CRIT[1,1]) AND \n(DS_CNT < LBOUND_CNT_CRIT[2,1])|10110011|0#
 Z5|S4|A|DOGS_LEVEL := 1|10100011|0#
 Z6|S4|L||10110010|0#
-Z7|S4|A|TRACE(VARIABLE(DN_CNT));\nTRACE(VARIABLE(DS_CNT));\nTRACE(VARIABLE(DOGS_LEVEL));\nNOTRACE;\nSetT(1)|10100011|0#
+Z7|S4|A|SetT(1)|10100011|0#
 Z8|S4|L||11000100|0#
 Z3|S5|L||01010001|0#
 Z4|S5|A|DOGS_LEVEL := 0|01100011|0#
@@ -101,7 +102,6 @@ LBOUND_CNT_CRIT[2]|||9|14|18|23|27|32|36|41|#
 AUSDRUECKE
 cycle_sec|T|#
 cycle_sec_plus1|cycle_sec + 1|#
-GREEN_EXT|DOGS_LEVEL * 10|Always extend by a factor of 10 seconds#
-CURRENT_CYCLE_TIME|BASE_CYCLE_TIME + GREEN_EXT|#
+CURRENT_CYCLE_TIME|BASE_CYCLE_TIME + DOGS_LEVEL * 10|#
 
 UPROG

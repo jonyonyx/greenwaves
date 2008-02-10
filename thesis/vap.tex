@@ -111,8 +111,8 @@ For the interstage definitions, in INTERSTAGE1, we have redend for A to be -127,
 It is always up to the interstage designer to ensure that no right-of-way conflicts are present in the stage definitions. PTV supplies a support tool, which solves this issue, called CROSSIG though it was not employed in this project. CROSSIG is capable of generating .PUA files; in this project they were written manually, however.
 
 \subsection{DOGS}
-As VAP does not permit the writing of a program, which supervise all signal controllers at the same time, it was necessary to dedicate a signal controller as the master controller.
+As VAP does not permit the writing of a program, which supervise all signal controllers at the same time, it was necessary to dedicate a signal controller as the master controller. To fully separate the master/slave concept it was chosen to install a virtual signal controller, whose only purpose is to run the DOGS program.
 
-The master controller, which in Herlev is Herlev Hovedgade, runs the DOGS program and determines the current level by inspecting the northern- and southern detectors according to the specification outlined in section \ref{dogs}. In addition this controller also runs the master clock and the current DOGS level and cycle second is sent to all slave controllers every cycle second.
+The master controller, which for the purpose of offset has a virtual location on Herlev Hovedgade, runs the DOGS program and determines the current level by inspecting the northern- and southern detectors according to the specification outlined in section \ref{dogs}. In addition this controller also runs the master clock and the current DOGS level and master cycle second is sent to all slave controllers every cycle second.
 
-The slaves must listen for communication from the master controller and set the green time of the various stages according to the current dogs level and cycle second as received from the master.
+The slave signal controller - even the one on Herlev Hovedgade - must listen for communication from the master controller and set the green time of the various stages according to the current dogs level and cycle second as received from the master.

@@ -3,106 +3,11 @@ PROGRAM herlev_hovedgade; /* D:\greenwaves\Vissim\o3_roskildevej-herlevsygehus\h
 CONST 
             STAGE1_TIME = 20,
             STAGE2_TIME = 32,
-            STAGE3_TIME = 6,
-            BASE_CYCLE_TIME = 80,
-            DN = 3,
-            DS = 14,
-            PANIC_LEVEL = 8;
+            STAGE3_TIME = 6;
 
 /* ARRAYS */ 
-ARRAY 
-            UBOUND_CNT_CRIT[ 2, 8 ] = [[10, 15, 20, 25, 30, 35, 40, 50], [10, 15, 20, 25, 30, 35, 40, 50]],
-            LBOUND_CNT_CRIT[ 2, 8 ] = [[9, 14, 18, 23, 27, 32, 36, 41], [9, 14, 18, 23, 27, 32, 36, 41]];
 
 /* SUBROUTINES */ 
-
-SUBROUTINE DOGS;  /* DOGS.vv */
-D01S00Z001: IF cycle_sec THEN
-D01S01Z001:   Marker_put(1,DOGS_LEVEL);
-D01S01Z002:   Marker_put(2,cycle_sec);
-D01S01Z003:   IF cycle_sec = CURRENT_CYCLE_TIME THEN
-D01S02Z003:     DN_CNT := Rear_ends(DN); DS_CNT := Rear_ends(DS);
-D01S03Z003:     Clear_rear_ends(DN); Clear_rear_ends(DS);
-D01S04Z003:     IF (DN_CNT > UBOUND_CNT_CRIT[1,1]) OR (DS_CNT > UBOUND_CNT_CRIT[2,1]) THEN
-D01S06Z003:       IF (DN_CNT > UBOUND_CNT_CRIT[1,2]) OR (DS_CNT > UBOUND_CNT_CRIT[2,2]) THEN
-D01S08Z003:         IF (DN_CNT > UBOUND_CNT_CRIT[1,3]) OR (DS_CNT > UBOUND_CNT_CRIT[2,3]) THEN
-D01S10Z003:           IF (DN_CNT > UBOUND_CNT_CRIT[1,4]) OR (DS_CNT > UBOUND_CNT_CRIT[2,4]) THEN
-D01S12Z003:             IF (DN_CNT > UBOUND_CNT_CRIT[1,5]) OR (DS_CNT > UBOUND_CNT_CRIT[2,5]) THEN
-D01S14Z003:               IF (DN_CNT > UBOUND_CNT_CRIT[1,6]) OR (DS_CNT > UBOUND_CNT_CRIT[2,6]) THEN
-D01S16Z003:                 IF (DN_CNT > UBOUND_CNT_CRIT[1,7]) OR (DS_CNT > UBOUND_CNT_CRIT[2,7]) THEN
-D01S18Z003:                   DOGS_LEVEL := PANIC_LEVEL;
-D01S04Z007:                   TRACE(VARIABLE(DN_CNT)); TRACE(VARIABLE(DS_CNT)); TRACE(VARIABLE(DOGS_LEVEL)); NOTRACE; SetT(1)
-                            ELSE
-D01S16Z004:                   IF (DN_CNT < LBOUND_CNT_CRIT[1,7]) AND (DS_CNT < LBOUND_CNT_CRIT[2,7]) THEN
-D01S17Z004:                     DOGS_LEVEL := 6;
-                                GOTO D01S04Z007
-                              ELSE
-D01S16Z005:                     DOGS_LEVEL := 7;
-                                GOTO D01S04Z007
-                              END
-                            END
-                          ELSE
-D01S14Z004:                 IF (DN_CNT < LBOUND_CNT_CRIT[1,6]) AND (DS_CNT < LBOUND_CNT_CRIT[2,6]) THEN
-D01S15Z004:                   DOGS_LEVEL := 5;
-                              GOTO D01S04Z007
-                            ELSE
-D01S14Z005:                   DOGS_LEVEL := 6;
-                              GOTO D01S04Z007
-                            END
-                          END
-                        ELSE
-D01S12Z004:               IF (DN_CNT < LBOUND_CNT_CRIT[1,5]) AND (DS_CNT < LBOUND_CNT_CRIT[2,5]) THEN
-D01S13Z004:                 DOGS_LEVEL := 4;
-                            GOTO D01S04Z007
-                          ELSE
-D01S12Z005:                 DOGS_LEVEL := 5;
-                            GOTO D01S04Z007
-                          END
-                        END
-                      ELSE
-D01S10Z004:             IF (DN_CNT < LBOUND_CNT_CRIT[1,4]) AND (DS_CNT < LBOUND_CNT_CRIT[2,4]) THEN
-D01S11Z004:               DOGS_LEVEL := 3;
-                          GOTO D01S04Z007
-                        ELSE
-D01S10Z005:               DOGS_LEVEL := 4;
-                          GOTO D01S04Z007
-                        END
-                      END
-                    ELSE
-D01S08Z004:           IF (DN_CNT < LBOUND_CNT_CRIT[1,3]) AND (DS_CNT < LBOUND_CNT_CRIT[2,3]) THEN
-D01S09Z004:             DOGS_LEVEL := 2;
-                        GOTO D01S04Z007
-                      ELSE
-D01S08Z005:             DOGS_LEVEL := 3;
-                        GOTO D01S04Z007
-                      END
-                    END
-                  ELSE
-D01S06Z004:         IF (DN_CNT < LBOUND_CNT_CRIT[1,2]) AND (DS_CNT < LBOUND_CNT_CRIT[2,2]) THEN
-D01S07Z004:           DOGS_LEVEL := 1;
-                      GOTO D01S04Z007
-                    ELSE
-D01S06Z005:           DOGS_LEVEL := 2;
-                      GOTO D01S04Z007
-                    END
-                  END
-                ELSE
-D01S04Z004:       IF (DN_CNT < LBOUND_CNT_CRIT[1,1]) AND (DS_CNT < LBOUND_CNT_CRIT[2,1]) THEN
-D01S05Z004:         DOGS_LEVEL := 0;
-                    GOTO D01S04Z007
-                  ELSE
-D01S04Z005:         DOGS_LEVEL := 1;
-                    GOTO D01S04Z007
-                  END
-                END
-              ELSE
-D01S01Z004:     SetT(cycle_sec_plus1)
-              END
-            ELSE
-              GOTO D01S01Z004
-            END
-D01PROG_ENDE: .
-/*----------------------------------------------------------------------------*/
 
 /* PARAMETERS DEPENDENT ON SCJ-PROGRAM */ 
             
@@ -110,24 +15,30 @@ D01PROG_ENDE: .
             stage1_end := STAGE1_TIME + 2 * DOGS_LEVEL;
             stage2_end := stage1_end + Interstage_length(1,2) + STAGE2_TIME + 8 * DOGS_LEVEL;
             stage3_end := stage2_end + Interstage_length(2,3) + STAGE3_TIME;
-            cycle_sec := T;
-            cycle_sec_plus1 := cycle_sec + 1;
-            GREEN_EXT := DOGS_LEVEL * 10;
-            CURRENT_CYCLE_TIME := BASE_CYCLE_TIME + GREEN_EXT;
 
 /* MAIN PROGRAM */ 
 
-S00Z001:    IF T = stage1_end THEN
-S01Z001:      Is(1,2)
-            ELSE
-S00Z002:      IF T = stage2_end THEN
-S01Z002:        Is(2,3)
+S00Z001:    DOGS_LEVEL := Marker_get(1); TIME := Marker_get(2);
+S00Z002:    IF NOT SYNC THEN
+S01Z002:      IF TIME = 1 THEN
+S02Z002:        SYNC := 1;
+                GOTO PROG_ENDE
               ELSE
-S00Z003:        IF T = stage3_end THEN
-S01Z003:          Is(3,1)
-                END
+                GOTO PROG_ENDE
               END
             END;
-S02Z004:    GOSUB DOGS
+S00Z003:    local_cycle_sec := TIME;
+S00Z004:    SetT(local_cycle_sec); TRACE(ALL);
+S00Z005:    IF T = stage1_end THEN
+S01Z005:      Is(1,2);
+              GOTO PROG_ENDE
+            END;
+S00Z006:    IF T = stage2_end THEN
+S01Z006:      Is(2,3);
+              GOTO PROG_ENDE
+            END;
+S00Z007:    IF T = stage3_end THEN
+S01Z007:      Is(3,1)
+            END
 PROG_ENDE:    .
 /*----------------------------------------------------------------------------*/
