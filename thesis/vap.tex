@@ -108,7 +108,7 @@ In section \$STAGES it is defined that stage A should be green while B should is
 
 For the interstage definitions, in INTERSTAGE1, we have redend for A to be -127, which means that A is green before the interstage, and grend (green end) is 0 meaning it should be red when the interstage has completed. For stage B, which is red before the interstage is run due to the \$STAGES definition, the redend (=green start) occurs 6 seconds into the interstage and grend set to 127 means that B should remain green after the interstage.
 
-It is always up to the interstage designer to ensure that no right-of-way conflicts are present in the stage definitions. PTV supplies a support tool, which solves this issue, called CROSSIG though it was not employed in this project. CROSSIG is capable of generating .PUA files; in this project they were written manually, however.
+It is always up to the interstage designer to ensure that no right-of-way conflicts are present in the stage definitions. PTV supplies a support tool, which solves this issue, called CROSSIG. CROSSIG is capable of generating .PUA files; in this project CROSSIG was not available, however, and they were written manually instead.
 
 \subsection{DOGS}
 As VAP does not permit the writing of a program, which supervise all signal controllers at the same time, it was necessary to dedicate a signal controller as the master controller. To fully separate the master/slave concept it was chosen to install a virtual signal controller, whose only purpose is to run the DOGS program.

@@ -39,33 +39,14 @@ Input_rows[1..-1].each_with_index do |row,n|
   
   #... for each link generate input in this period
   for link in Links
-    # choose a composition (all links have cars!)
-    
-    # please refer to the -- Traffic Compositions: -- section
-    # in the .inp file for the numbers
-    if link.has_buses
-      if link.has_trucks
-        comp = 1 # buses and trucks
-      else
-        comp = 3 # buses, no trucks
-      end
-    else
-      if link.has_trucks
-        # trucks, no buses
-        comp = 2
-      else
-        # no buses, no trucks
-        comp = 1001
-      end
-    end
-    
+           
     flow = row['Q']    
     # link inputs in Vissim is defined in veh/h
     link_contrib = flow * (60/Res) * link.proportion * Input_factor
     
     output_string = output_string +  "INPUT #{input_num}\n" +
       "      NAME \"Direction #{link.direction} on #{link.name} (#{input_begin_time}-#{input_end_time})\" LABEL  0.00 0.00\n" +
-      "      LINK #{link.number} Q #{link_contrib} COMPOSITION #{comp}\n" +
+      "      LINK #{link.number} Q #{link_contrib} COMPOSITION #{link.traffic_composition}\n" +
       "      TIME FROM #{elapsed} UNTIL #{elapsed+step}\n"
     input_num = input_num + 1
   end

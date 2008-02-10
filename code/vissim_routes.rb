@@ -66,7 +66,7 @@ for i in (0...routes.length)
       # found identical route
       # the shortest one is always the best, since the other includes 
       # a rest stop
-      identical_routes << [r1,r2].max
+      identical_routes << [r1,r2].min
     end
     
   end
@@ -89,30 +89,93 @@ puts "Pruned #{identical_routes.length} of #{identical_routes.length + routes.le
 #       FRACTION     1
 #       OVER 10266 48130429 49131059 48130424 10139
 
+def comp_to_s(comp)
+  case comp
+  when 1
+    'Cars, buses, trucks'
+  when 2
+    'Cars, trucks'
+  when 3    
+    'Cars, buses'
+  when 1001
+    'Cars only'
+  when 1002
+    'Trucks only'
+  when 1003
+    'Buses only'
+  end
+end
+
+def find_composition(veh_classes)
+  case veh_classes.length
+  when 1
+    1001 # just cars (all routes have cars)
+  when 2
+    if veh_classes.include? 1002
+      2 # cars and trucks
+    else
+      3 # cars and buses
+    end
+  when 3
+    1 # all vehicle classes - there are only 3
+  end
+end
+
 # generate a routing decision for each link
 output_string = ''
+last_input = nil
+last_comp = nil
 i = 1
-for link in Input_links#.find_all{|l| l.number == 48130426} # herlev sydgående
-  output_string += "ROUTING_DECISION #{i} NAME \"\" LABEL  0.00 0.00\n"
-  # AT must be AFTER the input point
-  # link inputs are always defined in the end of the link
-  output_string += "     LINK #{link.number} AT 50.000\n"
-  output_string += "     TIME FROM 0.0 UNTIL 99999.0\n"
-  output_string += "     NODE 0\n"
-  output_string += "      VEHICLE_CLASSES ALL\n"
+# sort by input (start) link number and then traffic composition
+# of exit (end) link
+
+for input in Input_links
+  # make a new decision point for each vehicle class of the input
+  # which is also a vehicle class at the exit link
   
-  # routing decisions have one or more routes to choose from
-  j = 1
-  for route in routes.find_all{|r| r.start.number == link.number}.sort
-    output_string += "     ROUTE     #{j}  DESTINATION LINK #{route.exit.number}  AT   5.000\n"
+  # find all routes starting at input, sorted by traffic type and then length
+  for route in routes.find_all{|r| r.start == input}.sort{|r1,r2| r1.exit.traffic_composition == r2.exit.traffic_composition ? r1 <=> r2 : r1.exit.traffic_composition <=> r2.exit.traffic_composition}
+    exit = route.exit
+    exit_classes = exit.vehicle_classes
+      
+    # find the best composition between input and exit vehicle classes
+    common_classes = input.vehicle_classes & exit_classes
+      
+    comp = find_composition(common_classes)
+    
+    puts "Generating '#{comp_to_s(comp)}' route from #{input} to #{exit}" if last_input
+    
+    unless input == last_input and comp == last_comp
+      #puts "Generated #{j-1} '#{comp_to_s(last_comp)}' routes from #{last_input}" if last_input
+      j = 1 # new decision point, reset route choice counter
+    
+      last_input = input        
+      last_comp = comp
+      # make a new route decision point when a new starting location
+      # or traffic composition for the route (exit link) is found.
+      # first make sure only the appropriate vehicles take this route
+      # by inspecting the vehicle types of the exit link
+      output_string += "ROUTING_DECISION #{i} NAME \"Vehicle composition '#{comp_to_s(comp)}' from #{input}\" LABEL  0.00 0.00\n"
+      # AT must be AFTER the input point
+      # link inputs are always defined in the end of the link
+      output_string += "     LINK #{input.number} AT 50.000\n"
+      output_string += "     TIME FROM 0.0 UNTIL 99999.0\n"
+      output_string += "     NODE 0\n"
+      output_string += "      VEHICLE_CLASSES #{comp}\n"
+      # routing decisions have one or more routes to choose from
+      i += 1 # move to next routing decision index
+    end
+  
+    output_string += "     ROUTE     #{j}  DESTINATION LINK #{route.exit.number}  AT   50.000\n"
     output_string += "     FRACTION 1\n"
     output_string += "     OVER #{route.to_vissim}\n"
     j += 1
-  end  
+    
+  end
 
-  puts "Generated #{j-1} routes starting from #{link}"
-  i += 1
 end
+
+#puts output_string
 
 Clipboard.set_data output_string
 puts "Please find the Routing Decisions on your clipboard."
