@@ -1,6 +1,6 @@
 \section{Vissim Network Modelling}
 \label{modelling}
-The Vissim network used throughout the project is derived from a network originally started COWI and later reworked by CTT students.
+The Vissim network used throughout the project is derived from a network originally started COWI and later reworked by DTU Transport students.
 
 COWI's version included O3 from Jyllingevej to the intersection with highway 3 and even further north. In addition highway 3, which runs almost parallel with O3 in this area, was included as well as the minor roads in between.
 The network was setup with dynamic assignment of traffic.
@@ -38,3 +38,33 @@ It was decided that input from minor roads should turn onto the arterial and cho
 To represent turn-out traffic routes choices are inserted for the major inputs only. Thus, from either end of the arterial, there is a route, which turns out, at each intersection in addition to a route going straight-through. 
 
 The proportions for turn-out routes are choosen identical to those of the relative input size for the minor links, which are chosen after the arterial. This coincides with the total traffic input so that 80\% of the traffic goes straight through and 20\% turns out.
+
+\subsection{Signal Plans}
+Signal plans define the stage sequence, green duration and how changes between adjacent stages should happen with respect to colors in the from and to stages. For cycle-based signal plans the cycle time must be equal to the sum of green and interstage time from the beginning of the first stage until it begins again.
+
+A single stage defines the signal head colors of one or more signal group, which, in turn, is a group of signal heads operating synchronously.
+
+The simplest signal controller consist of two stages. In  Figure \ref{fig:simple_intersection} the arrows indicate the directions being served green.
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.5]{simple_intersection.png} 
+\end{center}
+\caption{A simple intersection}
+\label{fig:simple_intersection}
+\end{figure}
+
+DOGS rely on existing signal and modify the duration of the stage or stages, which serve green in the direction of the arterial. Thus DOGS assume that the stage sequence and interstages are \textit{optimized} so that the time lost in stage changes is minimized and \textit{safe} so that vehicles in eg. left-turning movements have time to leave the intersection before the conflicting direction receives green.
+
+For this project DRD has supplied a number of signal plans for each intersection, developed by TTS. Throughout the plans signal groups in one direction (usually the major one) are named A and B in the perpendicular direction. Names such as At, AV, AtV indicates signal group for the throughgoing, leftgoing (V = venstre (danish) = left) and a combination for the final name variant. Lower case a's and b's indicate a signal group for pedestrians in the major and minor direction resp.
+
+For some intersections a number of alternative plans were supplied. Considering the scope of this project only a single plan was chosen for each intersection and time of day. Generally plans involving pedestrian or bicyclist actuated stages were avoided so as to maximize the potential for traffic signal optimization. It was confirmed by TTS that these types of stages, which are taken in a stochastic manner ie. when a button is pressed, can be devastating to the coordination of traffic signals.
+
+As a final simplifying step it was chosen not to provide signal heads for pedestrians and bicyclists as these types of road users are not being simulated. Pedestrian stages will mostly follow the parallel stages anyway and if this is not the case the stage, which is being denied in favor of the pedestrian stage, will simply receive red for the duration.
+
+The final plans, which are used in the simulation, can be seen in appendix \ref{app:signalplans}.
+
+The actual implementation was done in VAP by running the interstages at the cycle second according to the signal plan, for more details refer to section \ref{vap}.
+
+\subsection{Route Fractions from Traffic Counts}
+\label{routefractions}

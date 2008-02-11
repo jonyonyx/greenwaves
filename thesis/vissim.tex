@@ -6,7 +6,7 @@ Vissim is capable of dynamic traffic assignment (DTA) as well as static input. D
 
 Vissim can perform this form of traffic input given zones, which are confined and non-overlapping areas of the network, and a matrix describing the relative traffic from each zone to each other zone.
 
-In this project DTA was abandoned on recommendation from CTT professor Otto Anker Nielsen due to the dynamic nature of the traffic signals since, in his experience, odd phenomenon may occur such as unpredictable gridlocks, when adjacent links are fully saturated.
+In this project DTA was abandoned on recommendation from DTU Transport professor Otto Anker Nielsen due to the dynamic nature of the traffic signals since, in his experience, odd phenomenon may occur such as unpredictable gridlocks, when adjacent links are fully saturated.
 
 Instead static input was chosen. In static input traffic enters on specific links and traverse the network until an exit link has been reached. Static input is used in combination with routing decisions, which are usually placed on the input links such that each vehicle entering will immediately be assigned a route through the network. For a description of link input sizes and routes used in the simulations, please refer to section \ref{modelling}.
 
@@ -53,34 +53,50 @@ ROUTING_DECISION <number> NAME "<description>" LABEL  0.00 0.00
      LINK <origin_link> AT 50.000
      TIME FROM 0.0 UNTIL 99999.0
      NODE 0
-      VEHICLE_CLASSES ALL
+      VEHICLE_CLASSES <composition>
      ROUTE     1  DESTINATION LINK <dest_link1>  AT   5.000
-     FRACTION 1
+     FRACTION <fraction1>
      OVER <connector> <link> ... <connector>
      ROUTE     2  DESTINATION LINK <dest_link2>  AT   5.000
-     FRACTION 1
+     FRACTION <fraction2>
      OVER <connector> <link> ... <connector>
 \end{verbatim}
 
-The \textit{origin\_link} denotes the position of the decision point. Beyond the line \verb|VEHICLE_CLASS ALL| is a number of lines with route alternatives. The \verb|OVER...| lines describe the path taken from \textit{origin\_link} to \textit{dest\_link}. The first connector must be downstream of - and connected to - the decision point link. Likewise the final connector must be upstream and connected to the destination and the same applies to internal links.
+The \textit{origin\_link} denotes the position of the decision point. The line \textit{VEHICLE\_CLASS...} impose a limit of the vehicles, which are required to select on of the routes of this routing decision. A composition may be a single vehicle type (eg. Car) or a combination (eg. Car, Truck). Next comes a number of lines with route alternatives. The \textit{OVER...} lines describe the path taken from \textit{origin\_link} to \textit{dest\_link}. The first connector must be downstream of - and connected to - the decision point link. Likewise the final connector must be upstream and connected to the destination and the same applies to internal links.
+
+The fractions define the relative distribution of vehicles of the given class or classes, which should take each route. Route fractions can be measured by monitoring license plates at input and exit links, however this is not allowed in Denmark and thus they must be calculated from traffic counts ie. measured turning probabilities in the intersections of the network. DRD supplied traffic counts for this project and the conversion into route fraction is further discussed in section \ref{routefractions}.
 
 In order to enumerate all relevant routes it is necessary to parse the \textit{.inp} file and generate an internal representation of the network as a graph. A route discovery routine was implemented:
 
 \begin{verbatim}
-def discover link, path=[[link,nil]], &callback
-  for adj_link,conn in link.adjacent
-    # avoid loops by checking if the path contain this link
-    next if path.map{|l,c|l}.include?(adj_link) 
-    
-    # assume there exist a valid route using this connector to 
-    # reach adj_link; if this is not true, nothing is returned anyhow.
-    if adj_link.exit?
-      # found an exit link for this path
-      yield Route.new(path + [[adj_link,conn]]) 
-    else
-      # look further
-      discover(adj_link,path + [[adj_link,conn]],&callback)
-    end
-  end
-end
+ 1: def discover link, path=[[link,nil]], &callback
+ 2:   for adj_link,conn in link.adjacent
+ 3:     # avoid loops by checking if the path contain this link
+ 4:     next if path.map{|l,c|l}.include?(adj_link) 
+ 5:     
+ 6:     # assume there exist a valid route using this connector to 
+ 7:     # reach adj_link; if this is not true, nothing is returned anyhow.
+ 8:     if adj_link.exit?
+ 9:       # found an exit link for this path
+10:       yield Route.new(path + [[adj_link,conn]]) 
+11:    else
+12:       # look further
+13:       discover(adj_link,path + [[adj_link,conn]],&callback)
+14:     end
+15:   end
+16: end
 \end{verbatim}
+
+The discovery routine uses recursion to explore the network and find exit links, which are connected to \verb|link| by a path of links and connectors.
+
+In the initial call only the starting link is given along with a callback, which is invoked by each call of \verb|yield|. 
+
+(The \verb|discover| routine is a so-called generator of Ruby and the first invocation might look like this: \verb+discover(start_link){|route| routes.add(route)}+ where the block is enclosed by \{\} and all routes found from \verb|start_link| are simply stored for later in an array.)
+
+A Vissim route is a sequence of connectors and links and must start and end with the first connector, which is outgoing from the start link, and the connector, which is incoming to the exit link, resp.
+
+In the discovery routine, for each step of the path, a pair is stored which denote the link and by which connector it was reached. This connector thus connects the current link with previous link and therefore the initial path has only one pair where the connector is not defined (nil).
+
+In line 4 a check is made if the adjacent link, which is currently being explored, has already been visited in which case it should be skipped to avoid a loop. In line 8 it is checked wether the adjacent link leads out of the network. If it does we have found a route from the start link otherwise we descend into the recursion and explore the adjacent links of this link.
+
+The \verb|Route.new| invocation, which is performed when an exit link is found, instantiates a new Route object, which enables additional options such as printing the mentioned sequence of connectors links for Vissim, which is more cumbersome with just the raw path.
