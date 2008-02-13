@@ -16,7 +16,7 @@ Links = VissimFun.get_links('herlev','input')
 
 # fetch historical traffic input data in 15m granularity
 DBI.connect(CS) do |dbh|  
-  Input_rows = dbh.select_all "SELECT HOUR(Time) AS H, MINUTE(Time) AS M, AVG(Detected) AS Q FROM [data] 
+  Input_rows = dbh.select_all "SELECT HOUR(Time) AS H, MINUTE(Time) AS M, AVG(Detected) AS Q FROM [data$] 
          WHERE DoW IN ('Mon','Tue','Wed','Thu','Fri') AND
                Time BETWEEN \#1899/12/30 07:00:00\# AND \#1899/12/30 08:00:00\#
          GROUP BY Time"  
