@@ -5,29 +5,46 @@ B	2
 
 $STAGES
 $
-Stage_1	A
+Stage_1
+red	A B
+Stage_2	A
 red	B
-Stage_2 B
+Stage_3	B
 red	A
 
 $STARTING_STAGE
 $
-Stage_1
+Stage_2
 
 $INTERSTAGE1
-Length [s]	: 6
-From Stage	: 1
-To Stage	: 2
-$	redend	grend
-A	-127	0
-B	4	127
+From Stage : 	2
+To Stage   : 	1
+Length [s] : 	4
+$   redend  grend
+A  -127   0
+
 
 $INTERSTAGE2
-Length [s]	: 8
-From Stage	: 2
-To Stage	: 1
-$	redend	grend
-B	-127	0
-A	6	127
+From Stage : 	1
+To Stage   : 	3
+Length [s] : 	2
+$   redend  grend
+B  4   127
 
-$END
+
+$INTERSTAGE3
+From Stage : 	3
+To Stage   : 	1
+Length [s] : 	4
+$   redend  grend
+B  -127   0
+
+
+$INTERSTAGE4
+From Stage : 	1
+To Stage   : 	2
+Length [s] : 	2
+$   redend  grend
+A  4   127
+
+
