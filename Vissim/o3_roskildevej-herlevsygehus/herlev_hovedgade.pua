@@ -1,19 +1,21 @@
 $SIGNAL_GROUPS
 $
 A	1
-B	2
-Bt	3
-BV	4
-BtV	5
-Ath	6
+Ath	2
+B	3
+Bt	4
+BV	5
+BtV	6
 
 $STAGES
 $
 Stage_1	A
-red	B Bt BV BtV Ath
-Stage_2 B Bt
-red	A BV BtV Ath
-Stage_3 Ath BV BtV
+red	Ath B Bt BV BtV
+Stage_2	B Bt
+red	A Ath BV BtV
+Stage_3	BV BtV
+red	A Ath B Bt
+Stage_4	Ath BV BtV
 red	A B Bt
 
 $STARTING_STAGE
@@ -21,33 +23,39 @@ $
 Stage_1
 
 $INTERSTAGE1
-Length [s]	: 10
-From Stage	: 1
-To Stage	: 2
+From Stage: 1
+To Stage: 2
+Length [s]: 10
 $	redend	grend
 A	-127	0
-B	9	127
-Bt	9	127
+B	8	127
+Bt	8	127
 
 $INTERSTAGE2
-Length [s]	: 6
-From Stage	: 2
-To Stage	: 3
+From Stage: 2
+To Stage: 3
+Length [s]: 6
 $	redend	grend
 B	-127	0
 Bt	-127	0
 BV	4	127
 BtV	4	127
-Ath	4	127
 
 $INTERSTAGE3
-Length [s]	: 6
-From Stage	: 3
-To Stage	: 1
+From Stage: 3
+To Stage: 4
+Length [s]: 0
 $	redend	grend
-Ath	-127	0
+Ath	0	127
+
+$INTERSTAGE4
+From Stage: 4
+To Stage: 1
+Length [s]: 6
+$	redend	grend
 BV	-127	0
 BtV	-127	0
+Ath	-127	2
 A	4	127
 
 $END
