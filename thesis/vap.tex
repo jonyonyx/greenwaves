@@ -54,7 +54,7 @@ function UpdateController(cycle_second){
 VAP is suitable, however, for implementation of DOGS due to its simple decision system as described in section \ref{dogs}. In this section I will describe how the DOGS logic was implementated in VAP.
 
 \subsection*{Interstage Definitions - PUA}
-Before we move on to DOGS in VAP it is fundamental to explain the \verb|Interstage| (abbr. \verb|Is|) concept.
+Before we move on to DOGS in VAP it is fundamental to explain the \verb|Interstage| (abbr. \verb|Is|) concept. Interstage definitions are mandatory in Vissim whenever a VAP program is to control a signal.
 
 An interstage is basically the lighting scheme to be used during stage transition. Usually, when switching from stage A to B the lights of A switch to amber and then red while B switch from red to red and amber and then green.
 
@@ -93,14 +93,14 @@ From Stage	 :   1
 To Stage	   :   2
 $    redend   grend
 A    -127     0
-B       6     127
+B       4     127
 $INTERSTAGE2
 Length [s]	: 6
 From Stage	: 2
 To Stage	: 1
 $    redend   grend
 B    -127     0
-A       6     127
+A       4     127
 $END
 \end{verbatim}
 
@@ -108,7 +108,20 @@ In section \$STAGES it is defined that stage A should be green while B should is
 
 For the interstage definitions, in INTERSTAGE1, we have redend for A to be -127, which means that A is green before the interstage, and grend (green end) is 0 meaning it should be red when the interstage has completed. For stage B, which is red before the interstage is run due to the \$STAGES definition, the redend (=green start) occurs 6 seconds into the interstage and grend set to 127 means that B should remain green after the interstage.
 
-It is always up to the interstage designer to ensure that no right-of-way conflicts are present in the stage definitions. PTV supplies a support tool, which solves this issue, called CROSSIG. CROSSIG is capable of generating .PUA files; in this project CROSSIG was not available, however, and they were written manually instead.
+It is always up to the interstage designer to ensure that no right-of-way conflicts are present in the stage definitions. PTV supplies a support tool, which solves this issue, called CROSSIG. CROSSIG is capable of generating .PUA files; in this project CROSSIG was not available, however, and they were generated automatically from the signal plans, which are listed in appendix \ref{app:signalplans}.
+
+\subsection*{Interstage rules}
+The signal plans, for which interstage definitions are to be built, are formatted so that each named signal group (head) has a row with $C$-cells, where $C$ is the cycle time. Each cell can be amber, green, yellow or red. Thus a complete signal timing plan is visually represented as one or more such rows in a stack.
+
+In order to generate the interstage definitions (.PUA files in Vissim) it is necessary with a definition of an interstage itself. A stage is said to \textit{run} while the signal groups of the stage is settled in the green state. We define that when a stage is running an interstage cannot run and vice versa. Thus every cycle second must specify the current stage or interstage.
+
+An instage runs whenever one or more signal groups receive new colors until the changes of color have settled. This could for instance be the green end for group A, which is the start of an interstage cycle second the group begins to show yellow, until the perpendicular group, B, has settled its green light, which could include amber time. In the sample .PUA file above we see the implementation of this exact scenario: A ends its green time in interstage second 1 and B begins its amber-green time 4 seconds later, while group A is showing yellow. Group B shows amber for 2 seconds and thus the total length of the interstage is 6 seconds. 
+
+It is important to note that, while stages must have a temporal extend to make sense, interstages may have zero length. Such interstages occur when light switch directly from red to green (respecting safety) and from green to red without the ordinary amber and yellow time respectively. Amber and yellow times are defined in the Vissim network file (.INP) and cannot be controller in the interstage definitions. Amber and yellow time is automatically appended by Vissim to the green- and red end times when the VAP controller runs an interstage.
+
+A safety period, where all heads are red, is sometimes introduced in order to allow the intersection to be cleared. This can be modelled either as a stage with no green signal groups or included into the interstage definition by prolonging red end times and interstage length by the length of the safety period. The latter solution is preferred since it is directly supported in the PUA format and also avoids the introduction of an all-red stage and a number of extra interstages to and from the all-red stage.
+
+
 
 \subsection{DOGS}
 As VAP does not permit the writing of a program, which supervise all signal controllers at the same time, it was necessary to dedicate a signal controller as the master controller. To fully separate the master/slave concept it was chosen to install a virtual signal controller, whose only purpose is to run the DOGS program.
