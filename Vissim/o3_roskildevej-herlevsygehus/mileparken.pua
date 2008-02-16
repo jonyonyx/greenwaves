@@ -33,57 +33,43 @@ To Stage   : 	2
 Length [s] : 	8
 $   redend  grend
 At  -127   0
-
+A  -127   4
+Av  5   127
+Ath  5   127
 
 $INTERSTAGE2
-From Stage : 	1
-To Stage   : 	2
-Length [s] : 	8
-$   redend  grend
-
-$INTERSTAGE3
 From Stage : 	2
 To Stage   : 	3
-Length [s] : 	8
+Length [s] : 	0
 $   redend  grend
 Atv  0   127
-
 B1h  0   127
 
-
-$INTERSTAGE4
+$INTERSTAGE3
 From Stage : 	3
 To Stage   : 	4
-Length [s] : 	8
+Length [s] : 	0
 $   redend  grend
 Av  -127   0
-
 Ath  -127   0
-
 Atv  -127   0
 
-
-$INTERSTAGE5
+$INTERSTAGE4
 From Stage : 	4
 To Stage   : 	5
 Length [s] : 	5
 $   redend  grend
 B1h  -127   0
+B1  3   127
+B2  3   127
 
-
-$INTERSTAGE6
-From Stage : 	4
-To Stage   : 	5
-Length [s] : 	5
-$   redend  grend
-
-$INTERSTAGE7
+$INTERSTAGE5
 From Stage : 	5
 To Stage   : 	
 Length [s] : 	9
 $   redend  grend
 B1  -127   0
-
 B2  -127   0
-
+A  7   127
+At  7   127
 
