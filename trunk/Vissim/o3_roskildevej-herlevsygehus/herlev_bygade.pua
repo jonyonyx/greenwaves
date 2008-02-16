@@ -25,7 +25,7 @@ B	4	127
 
 $INTERSTAGE2
 From Stage: 2
-To Stage: 
+To Stage: 1
 Length [s]: 8
 $	redend	grend
 B	-127	0

@@ -3,7 +3,8 @@ PROGRAM herlev_hovedgade; /* D:\greenwaves\Vissim\o3_roskildevej-herlevsygehus\h
 CONST 
             STAGE1_TIME = 20,
             STAGE2_TIME = 32,
-            STAGE3_TIME = 6;
+            STAGE3_TIME = 4,
+            STAGE4_TIME = 2;
 
 /* ARRAYS */ 
 
@@ -15,6 +16,7 @@ CONST
             stage1_end := STAGE1_TIME + 2 * DOGS_LEVEL;
             stage2_end := stage1_end + Interstage_length(1,2) + STAGE2_TIME + 8 * DOGS_LEVEL;
             stage3_end := stage2_end + Interstage_length(2,3) + STAGE3_TIME;
+            stage4_end := stage3_end + Interstage_length(3,4) + STAGE4_TIME;
 
 /* MAIN PROGRAM */ 
 
@@ -38,7 +40,11 @@ S01Z006:      Is(2,3);
               GOTO PROG_ENDE
             END;
 S00Z007:    IF T = stage3_end THEN
-S01Z007:      Is(3,1)
+S01Z007:      Is(3,4);
+              GOTO PROG_ENDE
+            END;
+S00Z008:    IF T = stage4_end THEN
+S01Z008:      Is(4,1)
             END
 PROG_ENDE:    .
 /*----------------------------------------------------------------------------*/
