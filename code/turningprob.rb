@@ -17,7 +17,7 @@ end
 
 for row in Count_rows
   puts "'#{row['Intersection']}' #{row['From'][0..0]}: "  + 
-       format("%f %f %f",row['L'],row['T'],row['R'])
+       format('%f %f %f',row['L'],row['T'],row['R'])
   sum = row['L']+row['T']+row['R']
   raise "Warning: this rows turning probabilities summed to #{sum}!" if (sum-1.0).abs > 0.01
 end

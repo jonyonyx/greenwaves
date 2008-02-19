@@ -68,3 +68,69 @@ The actual implementation was done in VAP by running the interstages at the cycl
 
 \subsection{Route Fractions from Traffic Counts}
 \label{routefractions}
+The Vissim manual is very clear that static routes should be used over turning decisions, mainly because congestion may cause a decision to turn to be overruled whereas a vehicle on a fixed route will wait for the congestion to clear.
+
+In the beginning of each input link a routing decision is placed so that every vehicle in the network is following a route. The question remains how many should follow each route.
+
+DRD supplied traffic counts for all intersections with the exception of Ejby Torvevej, which is blinded from east and is estimated by DRD to contribute very little.
+
+The counting period was 7.00-9.00 in the mornings and 15.00-17.00 in the afternoons in 15-minutes intervals. The counts involved, for each approach, the turning movements of cars (including vans) and trucks. 
+
+Traffic counts only show how flow traverses the individual intersection. In order to gain relative route distributions from these traffic counts a linear programming (LP) model by Jesper Larsen was implemented. The solutions to the model will give the relative fraction 
+
+Routes are modelled as strings of turning decisions. Each time an intersection is reached a it must be decided which direction to take next, for example left, right of through (whichever is applicable). Such decision happen at a \textit{decision point}.
+
+The model consist of a few constraints which much be satisfied by assigning values to $\mathbf{r}$, the relative route loads.
+
+\begin{table}[!ht]
+\begin{center}
+\begin{tabular}{ll}
+\hline
+$k = 1...m$ & Route indexes \\
+$l = 1...n$ & Decision point indexes  \\
+$j = 1...c_l$ & Indexes of direction alternatives at the $l$'th decision point  \\
+$D$ & Decision points. Columns represent routes and rows the decisions  \\
+$P$ & Relative input distribution between adjacent decision points  \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Notation for turning probabilities to route fraction model}
+\end{table}
+
+\begin{eqnarray}
+D_{l,j} \cdot r_k = y_l \cdot p_j & \forall l,j,k \\
+y_l = \sum_{i = 1}^{n}{P_{i,l} \cdot y_i} & \forall l
+\end{eqnarray}
+
+Where $m$ is the number of routes and $n$ is the longest string of choices. The matrix P indicates how the input to the decision point at row $i$ is distributed to decision points $l$. Thus P contains the turning probabilities from our traffic counts and may look like Figure \ref{fig:flow_dist_principle}. Below is the matrix form of this model.
+
+\begin{eqnarray}
+\mathbf{D} \cdot \mathbf{r} = \mathbf{y} \cdot \mathbf{p} \\
+\mathbf{y} = \mathbf{P} \cdot \mathbf{y}
+\end{eqnarray}
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.6]{trafficcount_to_routes_sketch.png} 
+\end{center}
+\caption{Flow distribution principle}
+\label{fig:flow_dist_principle}
+\end{figure}
+
+In Table \ref{tbl:flow_dist_principle} is a selection of the $P$-matrix which corresponds to this network layout and turning probabilities.
+
+The downstream input is calculated by summing the upstream inputs multiplied by the turning percentages for the directions facing the decision point. For example $y_5 = 0.6 y_2 + 0.9 y_3$. In this case $y_2$ is an input link (same as 1, 5 and 6) with direct input defined per-hour i Vissim and $y_3$ is derived from the upstream inputs and turning probabilities name input and left-turning probability on link 5 and input and through-going probability on link 6.
+
+\begin{table}[!ht]
+\begin{center}
+\begin{tabular}{l|ccc}
+ 	& 4 & 5 & 6 \\ \hline
+1	& $0.3$ & 0 & $0.7$ \\
+2	& $0.6$ & 0 & $0.4$ \\
+3	& $0.1$ & $0.9$ & 0
+\end{tabular}
+\end{center}
+\caption{Example of input distribution using turning percentages. Rows are donors and columns are recipients. The row-sums must be $1.0$ to illustrate that all input is distributed and is not \textit{lost} in the intersection and no decision point must distribute input to itself.}
+\label{tbl:flow_dist_principle}
+\end{table}
+
