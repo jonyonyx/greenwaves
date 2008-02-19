@@ -24,8 +24,6 @@ end
 
 #puts Input_rows[0]['Q']
 #exit(0)
-  
-Time_fmt = '%02d:%02d:00'
     
 elapsed = 0.0 # simulation seconds
 step = 15*60

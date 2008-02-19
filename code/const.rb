@@ -12,6 +12,7 @@ Base_dir = 'D:\\greenwaves\\'
 Herlev_dir = Base_dir + 'data\\DOGS Herlev 2007\\'
 Glostrup_dir = Base_dir + 'data\\DOGS Glostrup 2007\\'
 Vissim_dir = Base_dir + 'Vissim\\o3_roskildevej-herlevsygehus\\'
+Time_fmt = '%02d:%02d:00'
 Res = 15 # resolution in minutes of inputs
 
 ##
