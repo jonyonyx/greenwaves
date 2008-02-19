@@ -65,8 +65,8 @@ for i in (0...routes.length)
     if r1.start == r2.start and r1.exit == r2.exit
       # found identical route
       # the shortest one is always the best, since the other includes 
-      # a rest stop
-      identical_routes << [r1,r2].min
+      # a rest stop so store the one to remove
+      identical_routes << [r1,r2].max
     end
     
   end
