@@ -117,7 +117,3 @@ class Vissim
   end
 end
 
-
-#puts Links[25060312].exit?
-#puts Links[25060312].adjacent
-#exit(0)

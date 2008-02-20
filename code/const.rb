@@ -71,6 +71,9 @@ class Route
     end
     str += connectors.last.number.to_s # last connector, omit the link (implicit = exit link)
   end
+  def to_dpstring
+    connectors[1..-1].find_all{|conn| conn.is_dp}.map{|conn| conn.name}.join(' > ')
+  end
   def to_s
     "#{start} > ... (#{length-2}) > #{exit}"
   end  
@@ -230,13 +233,19 @@ class Link < VissimElem
   end
 end
 class Connector < VissimElem
-  attr_reader :from,:to,:lanes
+  attr_reader :from,:to,:lanes,:is_dp,:from_direction,:intersection,:turning_motion
   def initialize number,name,from,to,lanes
     super number,'NAME' => name
     @from,@to,@lanes = from,to,lanes
     if name =~ /([NSEW])(\d+)([LTR])/
-      
+      @is_dp = true
+      @from_direction = $1
+      @intersection = $2.to_i
+      @turning_motion = $3
     end
+  end
+  def <=>(c2)
+   @intersection == c2.intersection ? @from_direction <=> c2.from_direction : @intersection <=> c2.intersection
   end
 end
 class VissimFun
@@ -264,6 +273,36 @@ class VissimFun
       end
     end
     links
+  end
+end
+def comp_to_s(comp)
+  case comp
+  when 1
+    'Cars, buses, trucks'
+  when 2
+    'Cars, trucks'
+  when 3    
+    'Cars, buses'
+  when 1001
+    'Cars only'
+  when 1002
+    'Trucks only'
+  when 1003
+    'Buses only'
+  end
+end
+def find_composition(veh_classes)
+  case veh_classes.length
+  when 1
+    1001 # just cars (all routes have cars)
+  when 2
+    if veh_classes.include? 1002
+      2 # cars and trucks
+    else
+      3 # cars and buses
+    end
+  when 3
+    1 # all vehicle classes - there are only 3
   end
 end
 
