@@ -18,9 +18,6 @@ for dec in decisions
   dec.traversed_by(routes.find_all{|r| r.decisions.include?(dec)})
 end
 
-puts "Routes: #{routes.length}"
-puts "Decisions: #{decisions.length}"
-
 #exit(0)
 
 Count_xls = "../data/counts/counts.xls"
@@ -47,11 +44,12 @@ for row in P_rows
     dec.p = row[dec.turning_motion] # turning_motion must equal L(eft), T(hrough) or R(ight)
     sum += dec.p
   end
-  raise "Warning: the sum of turning probabilities for decision group #{from}#{isnum} was #{sum}!" if (sum-1.0).abs > 0.01
+  raise "Warning: the sum of turning probabilities for decision point #{from}#{isnum} was #{sum}!" if (sum-1.0).abs > 0.01
 end
-
 
 for dec in decisions.sort
-  #puts "#{dec}: #{routes.map{|r| dec.traversed_by?(r) ? 1 : 0}.join(' ')}"
-  puts "#{dec} #{dec.p}"
+  puts "#{dec}: #{routes.map{|r| dec.traversed_by?(r) ? 1 : 0}.join(' ')} = y * #{dec.p}"
 end
+
+puts "Decisions (rows): #{decisions.length}"
+puts "Routes (columns): #{routes.length}"

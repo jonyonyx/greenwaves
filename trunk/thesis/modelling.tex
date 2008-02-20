@@ -88,9 +88,8 @@ The model consist of a few constraints which much be satisfied by assigning valu
 \hline
 $k = 1...m$ & Route indexes \\
 $l = 1...n$ & Decision point indexes  \\
-$j = 1...c_l$ & Indexes of direction alternatives at the $l$'th decision point  \\
 $D$ & Decision points. Columns represent routes and rows the decisions  \\
-$P$ & Relative input distribution between adjacent decision points  \\
+$A$ & Binary decision point adjacency matrix  \\
 \hline
 \end{tabular}
 \end{center}
@@ -98,8 +97,8 @@ $P$ & Relative input distribution between adjacent decision points  \\
 \end{table}
 
 \begin{eqnarray}
-D_{l,j} \cdot r_k = y_l \cdot p_j & \forall l,j,k \\
-y_l = \sum_{i = 1}^{n}{P_{i,l} \cdot y_i} & \forall l
+\sum_{j = 1}^{m}{D_{l,j} \cdot r_j} = y_l \cdot p_l & \forall l \\
+y_l = \sum_{i = 1}^{n}{A_{i,l} \cdot p_i \cdot y_i} & \forall l
 \end{eqnarray}
 
 Where $m$ is the number of routes and $n$ is the longest string of choices. The matrix P indicates how the input to the decision point at row $i$ is distributed to decision points $l$. Thus P contains the turning probabilities from our traffic counts and may look like Figure \ref{fig:flow_dist_principle}. Below is the matrix form of this model.
