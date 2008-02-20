@@ -12,7 +12,7 @@ Input_factor = 1 # factor used to boost all input sizes
 
 puts "BEGIN"
     
-Links = VissimFun.get_links('herlev','input')
+Links = get_links('herlev','input')
 
 # fetch historical traffic input data in 15m granularity
 DBI.connect(CS) do |dbh|  

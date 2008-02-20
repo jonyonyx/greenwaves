@@ -35,7 +35,7 @@ end
 
 def get_routes(vissim, area_name)
 
-  area_links = VissimFun.get_links(area_name)
+  area_links = get_links(area_name)
 
   input_links = area_links.find_all{|l| l.input? }
   exit_links = area_links.find_all{|l| l.exit? }
