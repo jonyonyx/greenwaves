@@ -53,7 +53,7 @@ class Route
   # return a list of connectors used respecting the link order
   # skipping the connector of the start link, which is known to be nil
   def connectors
-    @seq.values
+    @seq.values[1..-1]
   end
   def links
     @seq.keys
@@ -71,8 +71,11 @@ class Route
     end
     str += connectors.last.number.to_s # last connector, omit the link (implicit = exit link)
   end
+  def decisions
+    connectors.map{|conn| conn.dec} - [nil]
+  end
   def to_dpstring
-    connectors[1..-1].find_all{|conn| conn.is_dp}.map{|conn| conn.name}.join(' > ')
+    decisions.join(' > ')
   end
   def to_s
     "#{start} > ... (#{length-2}) > #{exit}"
@@ -232,48 +235,65 @@ class Link < VissimElem
     str
   end
 end
+class Decision
+  attr_reader :from,:intersection,:turning_motion,:traversed_by_routes  
+  attr_accessor :p # probability of reaching this decision
+  def initialize from,intersection,turning_motion
+    @from,@intersection,@turning_motion = from,intersection,turning_motion    
+    @p = 0.0
+  end
+  def <=>(dp2)
+    @intersection == dp2.intersection ? 
+    (@from == dp2.from ? @turning_motion <=> dp2.turning_motion : @from <=> dp2.from) : 
+    @intersection <=> dp2.intersection
+  end
+  def to_s
+    "#{@intersection}#{@from}#{@turning_motion}"
+  end
+  def traversed_by routes
+    @traversed_by_routes = routes
+  end
+  def traversed_by? route
+    return false unless @traversed_by_routes
+    @traversed_by_routes.include? route
+  end
+end
 class Connector < VissimElem
-  attr_reader :from,:to,:lanes,:is_dp,:from_direction,:intersection,:turning_motion
+  attr_reader :from,:to,:lanes,:dec
   def initialize number,name,from,to,lanes
     super number,'NAME' => name
     @from,@to,@lanes = from,to,lanes
     if name =~ /([NSEW])(\d+)([LTR])/
-      @is_dp = true
-      @from_direction = $1
-      @intersection = $2.to_i
-      @turning_motion = $3
+      @dec = Decision.new($1,$2.to_i,$3)
     end
   end
   def <=>(c2)
-   @intersection == c2.intersection ? @from_direction <=> c2.from_direction : @intersection <=> c2.intersection
+    @intersection == c2.intersection ? @from_direction <=> c2.from_direction : @intersection <=> c2.intersection
   end
 end
-class VissimFun
-  def VissimFun.get_links area_name, type_filter = nil
+def get_links area_name, type_filter = nil    
+  type_filter = type_filter.downcase if type_filter
     
-    type_filter = type_filter.downcase if type_filter
-    
-    links_map = {}
-    ObjectSpace.each_object(Link) do |link|
-      links_map[link.number] = link
-    end
-    
-    links = []
-    Csvtable.enumerate("#{Vissim_dir}#{area_name}_links.csv") do |row|     
-      number = row['NUMBER'].to_i
-            
-      if links_map.has_key?(number)
-        # enrich the existing object with data from the csv file
-        link = links_map[number]
-        link.update row
-        links << link
-      else
-        next if type_filter and not row['TYPE'].downcase == type_filter
-        links << Link.new(number,row)
-      end
-    end
-    links
+  links_map = {}
+  ObjectSpace.each_object(Link) do |link|
+    links_map[link.number] = link
   end
+    
+  links = []
+  Csvtable.enumerate("#{Vissim_dir}#{area_name}_links.csv") do |row|     
+    number = row['NUMBER'].to_i
+            
+    if links_map.has_key?(number)
+      # enrich the existing object with data from the csv file
+      link = links_map[number]
+      link.update row
+      links << link
+    else
+      next if type_filter and not row['TYPE'].downcase == type_filter
+      links << Link.new(number,row)
+    end
+  end
+  links
 end
 def comp_to_s(comp)
   case comp
