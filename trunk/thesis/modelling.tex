@@ -134,3 +134,7 @@ The downstream input is calculated by summing the upstream inputs multiplied by 
 \label{tbl:flow_dist_principle}
 \end{table}
 
+In Vissim the concept of a decision point, as required by this model, does not exist. Rather the decision point is scattered over 2 or more connectors attached to each link facing an intersection. In order to overcome this these connectors were grouped by a naming convention which identifies which decision point they belong to and which turning motion they will cause a vehicle to take, should the connector be taken. The names are the concatenation of the direction from which traffic arrives (ie. north, south, east or west), the number of the intersection the decision belongs to (intersections are numbered increasingly from north to south) and finally the turning motion (ie. left, through or right). 
+
+As an example the decision point at Herlev Sygehus (intersection 1), which faces traffic from north consist of three connectors, are called \verb|N1L|, \verb|N1T| and \verb|N1R|.
+

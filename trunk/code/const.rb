@@ -234,6 +234,9 @@ class Connector < VissimElem
   def initialize number,name,from,to,lanes
     super number,'NAME' => name
     @from,@to,@lanes = from,to,lanes
+    if name =~ /([NSEW])(\d+)([LTR])/
+      
+    end
   end
 end
 class VissimFun
