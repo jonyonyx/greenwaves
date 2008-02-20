@@ -1,5 +1,21 @@
 require 'const'
+require 'vissim'
+require 'vissim_routes'
 require 'dbi'
+
+vissim = Vissim.new("#{Vissim_dir}tilpasset_model.inp")
+
+#for conn in vissim.conn_map.values.find_all{|conn| conn.is_dp}.sort
+#  puts "#{conn.intersection} #{conn.from_direction} #{conn.turning_motion}"
+#end
+
+routes = get_routes(vissim,'herlev')
+
+for route in routes
+  puts route.to_dpstring
+end
+
+exit(0)
 
 Count_xls = "../data/counts/counts.xls"
 CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{Count_xls};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
