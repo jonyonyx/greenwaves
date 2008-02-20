@@ -77,7 +77,6 @@ class Vissim
         i += 1
       end
       
-      
       yield ctrl
     end
   end
