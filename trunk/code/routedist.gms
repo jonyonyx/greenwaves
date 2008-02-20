@@ -8,46 +8,52 @@ option limcol=100;            // limit number of columns in .lst file
 //--------------------------------------------------------------------
 
 Sets
-       	i   	"functional constraints"
-	/	a, b 		/ 
-
-	j	"beams"
-	/ 	1, 2, 3, 4	/
+       	d   	"decision points"
+	/	1*6		/
+	
+	t	"turning decisions at decision points"
+	/	1*12		/
+	
+       	r   	"routes"
+	/	1*8		/
 ;
+
+Alias (d,d1);
+Alias (d,d2);
 
 Parameters
+       	y(d) "flow to input decision points"
+	/	1	150
+		2	30
+		3	25
+		4	100	/
 
-       	b(i)	"limits"
-	/	a	0.4
-		b	0.5	/
-
-	c(j)	"values"
-	/	1	-2.7
-		2	6
-		3	-6
-		4	6	/
-	
+	P(d1,d2) "contributions to adjacent dp's"
+	/	1 . 5 = 0.8
+		2 . 5 = 0.5
+		3 . 6 = 0.6
+		4 . 6 = 0.9	/
 ;
 
-Table a(i,j) "radiation values"
-		1	2	3	4
-	a	0.3	0.5	-0.5	0.6
-	b	0.1	0.5	-0.5	0.4
+Table
+	D(d,r) "decision points 
+;
 
 Variables
-	x(j)  "radiation from beam j"
+	x(r)  "load on route r"
      	z     "result"
 ;
 
 Positive Variable x;
 
 Equations
-	result		"resulting radiation"
-	constraints(i)	"constraint matrix"
+	result		"relative route loads"
+	turningprob(d)	"respect turning probabilities"
+	flowbal(d)	"maintain flow balance between dp's"
 ;
 
-result ..		z =e= sum(j, x(j)*c(j));
-constraints(i)..	sum(j, a(i,j)*x(j)) =l= b(i);
+result ..		z =e= 0;
+turningprob(d)..	sum(r, a(i,j)*x(j)) =l= b(i);
 
 Model problem /all/ ;
 
