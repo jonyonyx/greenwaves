@@ -14,6 +14,7 @@ Glostrup_dir = Base_dir + 'data\\DOGS Glostrup 2007\\'
 Vissim_dir = Base_dir + 'Vissim\\o3_roskildevej-herlevsygehus\\'
 Time_fmt = '%02d:%02d:00'
 Res = 15 # resolution in minutes of inputs
+RED,YELLOW,GREEN,AMBER = 'R','Y','G','A'
 
 ##
 # Wrapper for csv data files
@@ -123,20 +124,13 @@ class SignalController < VissimElem
   def sorted_groups
     @groups.values.sort{|g1,g2| g1.green_start(@cycle_time) <=> g2.green_start(@cycle_time)}
   end
-  # any group part of an active stage in the given cycle second
-  def stage_active?(cycle_sec)
-    @groups.values.any? do |grp|
-      #puts "#{grp}: #{grp.active_seconds.to_a.join(',')}"
-      grp.active_seconds === cycle_sec
-    end
-  end
-  # is this group a part of an interstage in the given cycle second
-  def interstage?(cycle_sec)
+  # is any group in the middle of a switch
+  def interstage_active?(cycle_sec)
+    # all-red phases are considered interstage
+    return true if @groups.values.all?{|grp| grp.color(cycle_sec) == RED}
     
-  end
-  # a stage is a set of signal groups, which are green at the same time
-  def stages
-    
+    # ordinary interstages
+    @groups.values.any?{|grp| [YELLOW,AMBER].include? grp.color(cycle_sec)}
   end
   def to_s
     str = super + "\n"    
@@ -163,8 +157,20 @@ class SignalGroup < VissimElem
   def add head
     @heads << head
   end
+  def color(cycle_sec)
+    return GREEN if active_seconds === cycle_sec
+    return AMBER if (@red_end+1..@red_end+1+@tred_amber) === cycle_sec
+    return YELLOW if (@green_end..@green_end+@tamber) === cycle_sec
+    return RED
+  end
   def active_seconds
-    ([red_end + 1, green_end].min..[red_end + 1, green_end].max)
+    green_start = @red_end + @tred_amber + 1
+    if green_start < green_end
+      (green_start..green_end)
+    else
+      # (green_end+1..green_start) defines the red time
+      (1..green_end) # todo: handle the case of green time which wraps around
+    end
   end
   def to_s
     format("%s\t%d %d %d %d",super,@red_end,@green_end,@tred_amber, @tamber)
