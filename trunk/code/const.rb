@@ -101,7 +101,7 @@ class VissimElem
   def eql?(other); self.class == other.class and @number == other.number; end
 end
 class SignalController < VissimElem
-  attr_reader :controller_type,:cycle_time,:offset,:groups
+  attr_reader :controller_type,:cycle_time,:offset,:groups,:program
   def initialize number, attributes
     super
     update attributes
@@ -112,9 +112,38 @@ class SignalController < VissimElem
     @controller_type = attributes['TYPE']
     @cycle_time = attributes['CYCLE_TIME'].to_f
     @offset = attributes['OFFSET'].to_f
+    @program = attributes['PROGRAM']
   end
   def add group
     @groups[group.number] = group
+  end
+  def stage_active?(cycle_sec)
+    @groups.values.any?{|grp| grp.active?(cycle_sec)}
+  end
+  def sorted_groups
+    @groups.values.sort{|g1,g2| g1.green_start(@cycle_time) <=> g2.green_start(@cycle_time)}
+  end
+  # any group part of an active stage in the given cycle second
+  def stage_active?(cycle_sec)
+    @groups.values.any? do |grp|
+      #puts "#{grp}: #{grp.active_seconds.to_a.join(',')}"
+      grp.active_seconds === cycle_sec
+    end
+  end
+  # is this group a part of an interstage in the given cycle second
+  def interstage?(cycle_sec)
+    
+  end
+  # a stage is a set of signal groups, which are green at the same time
+  def stages
+    
+  end
+  def to_s
+    str = super + "\n"    
+    for grpnum in @groups.keys.sort
+      str += "   #{@groups[grpnum]}\n"
+    end
+    str
   end
 end
 class SignalGroup < VissimElem
@@ -126,13 +155,19 @@ class SignalGroup < VissimElem
   end
   def update attributes
     super
-    @red_end = attributes['RED_END'].to_f
-    @green_end = attributes['GREEN_END'].to_f
-    @tred_amber = attributes['TRED_AMBER'].to_f
-    @tamber = attributes['TAMBER'].to_f
+    @red_end = attributes['RED_END'].to_i
+    @green_end = attributes['GREEN_END'].to_i
+    @tred_amber = attributes['TRED_AMBER'].to_i
+    @tamber = attributes['TAMBER'].to_i
   end
   def add head
     @heads << head
+  end
+  def active_seconds
+    ([red_end + 1, green_end].min..[red_end + 1, green_end].max)
+  end
+  def to_s
+    format("%s\t%d %d %d %d",super,@red_end,@green_end,@tred_amber, @tamber)
   end
 end
 class SignalHead < VissimElem

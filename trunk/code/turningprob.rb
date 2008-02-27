@@ -20,8 +20,8 @@ end
 
 #exit(0)
 
-Count_xls = "../data/counts/counts.xls"
-CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{Count_xls};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
+Plans_file = "../data/counts/counts.xls"
+CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{Plans_file};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
 
 DBI.connect(CS) do |dbh|  
   P_rows = dbh.select_all "SELECT Number, [From], 
