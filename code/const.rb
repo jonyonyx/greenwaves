@@ -18,6 +18,7 @@ RED,YELLOW,GREEN,AMBER = 'R','Y','G','A'
 MINOR = 'Minor'
 MAJOR = 'Major'
 NONE = 'None'
+DOGS_TIME = 10 # default dogs time extension factor (per intensity level)
 
 ##
 # Wrapper for csv data files
@@ -198,7 +199,7 @@ class SignalGroup < VissimElem
   end
   def color(cycle_sec)
     return GREEN if active_seconds === cycle_sec
-    return AMBER if (@red_end+1..@red_end+1+@tred_amber) === cycle_sec
+    return AMBER if (@red_end+1..@red_end+@tred_amber) === cycle_sec
     return YELLOW if (@green_end..@green_end+@tamber) === cycle_sec
     return RED
   end
