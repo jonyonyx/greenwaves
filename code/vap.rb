@@ -7,7 +7,8 @@ CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{Plans_file};Extende
 DBI.connect(CS) do |dbh|  
   P_rows = dbh.select_all "SELECT 
         PLAN.Intersection, PLAN.PROGRAM,
-        Groupname As NAME, 
+        NAME,
+        NUMBER, 
         [DOGS Priority] As PRIORITY,
         80 As CYCLE_TIME,
         OFFSET,
@@ -28,7 +29,6 @@ for row in P_rows
   isnum = row['Number']
   prog = row['PROGRAM']
   if not sc or not sc.name == isname or not sc.program == prog
-    grpnum = 1
     sc = SignalController.new(isnum, 
       'NAME' => isname, 
       'PROGRAM' => prog,
@@ -37,8 +37,7 @@ for row in P_rows
     scs << sc
   end
   
-  sc.add SignalGroup.new(grpnum,row)
-  grpnum += 1
+  sc.add SignalGroup.new(row['NUMBER'].to_i,row)
 end
 class CodePrinter
   def initialize 
@@ -120,9 +119,12 @@ def gen_vap sc
   # checks for interstage runs
   for i in (0...uniq_stages.length)
     cur, nxt = uniq_stages[i], uniq_stages[(i+1) % uniq_stages.length]
-    cp.add "IF T = stage#{cur}_end THEN"
-    cp.add "   Is(#{cur},#{nxt})"
-    cp.add 'END;',false
+    # check that from-stage is running - may not be due to dogs level change!
+    cp.add "IF Stage_active(#{cur}) THEN" 
+    cp.add "   IF T = stage#{cur}_end THEN"
+    cp.add "      Is(#{cur},#{nxt})"
+    cp.add "   END", false
+    cp.add "END#{i < uniq_stages.length-1 ? ';' : ''}",false
   end
   cp.add_verb 'PROG_ENDE:    .'
   
@@ -208,8 +210,8 @@ def gen_pua sc
   cp.write("#{Vissim_dir}\\#{sc.name.downcase.gsub(' ','_')}.pua")
 end
 
-for sc in scs[1..1]
-  #gen_vap sc
+for sc in scs#[3..3]
+  gen_vap sc
   gen_pua sc
   puts "Processed #{sc.name} #{sc.program}"
 end
