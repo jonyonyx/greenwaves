@@ -15,6 +15,9 @@ Vissim_dir = Base_dir + 'Vissim\\o3_roskildevej-herlevsygehus\\'
 Time_fmt = '%02d:%02d:00'
 Res = 15 # resolution in minutes of inputs
 RED,YELLOW,GREEN,AMBER = 'R','Y','G','A'
+MINOR = 'Minor'
+MAJOR = 'Major'
+NONE = 'None'
 
 ##
 # Wrapper for csv data files
@@ -101,6 +104,21 @@ class VissimElem
   def hash; @number + type.hash; end
   def eql?(other); self.class == other.class and @number == other.number; end
 end
+class Stage < VissimElem
+  attr_reader :groups
+  def initialize number, groups
+    super number,{}
+    @groups = groups
+  end
+  def to_s
+    @number.to_s
+  end
+  def priority
+    group_priorities = @groups.map{|grp| grp.priority}.uniq
+    raise "Warning: mixed group priorities in same stage #{@groups.map{|grp| "#{grp.name} => #{grp.priority}"}}" if group_priorities.length > 1
+    group_priorities.first 
+  end
+end
 class SignalController < VissimElem
   attr_reader :controller_type,:cycle_time,:offset,:groups,:program
   def initialize number, attributes
@@ -118,19 +136,39 @@ class SignalController < VissimElem
   def add group
     @groups[group.number] = group
   end
-  def stage_active?(cycle_sec)
-    @groups.values.any?{|grp| grp.active?(cycle_sec)}
-  end
-  def sorted_groups
-    @groups.values.sort{|g1,g2| g1.green_start(@cycle_time) <=> g2.green_start(@cycle_time)}
-  end
-  # is any group in the middle of a switch
   def interstage_active?(cycle_sec)
     # all-red phases are considered interstage
     return true if @groups.values.all?{|grp| grp.color(cycle_sec) == RED}
     
-    # ordinary interstages
+    # check for ordinary interstages
     @groups.values.any?{|grp| [YELLOW,AMBER].include? grp.color(cycle_sec)}
+  end
+  def stages
+    last_stage = nil
+    last_interstage = nil
+    stagear = []
+    for t in (1..@cycle_time)
+      if interstage_active?(t)
+        if last_interstage
+          last_interstage = last_interstage.succ unless stagear.last == last_interstage
+        else
+          last_interstage = 'a'
+        end
+        stagear << last_interstage
+      else
+        # check if any colors have changed
+#        unless last_stage
+#          last_stage = Stage.new(1,@groups.values.find_all{|grp| grp.active_seconds === t})
+#        end
+        if @groups.values.all?{|grp| grp.color(t) == grp.color(t-1)}
+          stagear << last_stage
+        else
+          last_stage = Stage.new(last_stage ? last_stage.number+1 : 1,@groups.values.find_all{|grp| grp.active_seconds === t})
+          stagear << last_stage
+        end
+      end
+    end
+    stagear
   end
   def to_s
     str = super + "\n"    
@@ -141,7 +179,7 @@ class SignalController < VissimElem
   end
 end
 class SignalGroup < VissimElem
-  attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads
+  attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads,:priority
   def initialize(number,attributes)
     super
     update attributes
@@ -153,6 +191,7 @@ class SignalGroup < VissimElem
     @green_end = attributes['GREEN_END'].to_i
     @tred_amber = attributes['TRED_AMBER'].to_i
     @tamber = attributes['TAMBER'].to_i
+    @priority = attributes['PRIORITY']
   end
   def add head
     @heads << head
@@ -173,7 +212,7 @@ class SignalGroup < VissimElem
     end
   end
   def to_s
-    format("%s\t%d %d %d %d",super,@red_end,@green_end,@tred_amber, @tamber)
+    super #format("%s\t%d %d %d %d",super,@red_end,@green_end,@tred_amber, @tamber)
   end
 end
 class SignalHead < VissimElem
