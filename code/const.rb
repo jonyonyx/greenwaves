@@ -1,9 +1,9 @@
 # 
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
- 
-require 'csv'
+
 require 'Win32API'
+require 'dbi'
 require 'win32/clipboard' 
 include Win32
 require 'facets'
@@ -18,33 +18,11 @@ RED,YELLOW,GREEN,AMBER = 'R','Y','G','A'
 MINOR = 'Minor'
 MAJOR = 'Major'
 NONE = 'None'
-DOGS_TIME = 10 # default dogs time extension factor (per intensity level)
+DOGS_TIME = 10
 
-##
-# Wrapper for csv data files
-class Csvtable < Array
-  attr_reader :header
-  def initialize csvfile
-    reader = CSV.open(csvfile,'r',';')
-    @header = reader.shift
-    
-    reader.each{|row| self << row}
-    
-    reader.close
-  end
-  def self.enumerate csvfile
-    reader = CSV.open(csvfile,'r',';')
-    header = reader.shift
-    
-    reader.each do |row|
-      row_map = {} # NB: case sensitive
-      row.each_with_index{|e,i| row_map[header[i]] = e.to_s}
-      yield row_map
-    end
-    
-    reader.close
-  end
-end
+DATAFILE = "../data/data.xls"
+CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
+
 class Route  
   # a route is a list of links which are followed by using
   # the given connectors
@@ -158,9 +136,9 @@ class SignalController < VissimElem
         stagear << last_interstage
       else
         # check if any colors have changed
-#        unless last_stage
-#          last_stage = Stage.new(1,@groups.values.find_all{|grp| grp.active_seconds === t})
-#        end
+        #        unless last_stage
+        #          last_stage = Stage.new(1,@groups.values.find_all{|grp| grp.active_seconds === t})
+        #        end
         if @groups.values.all?{|grp| grp.color(t) == grp.color(t-1)}
           stagear << last_stage
         else
@@ -263,9 +241,9 @@ class Link < VissimElem
     @adjacent[adj_link] = conn
   end
   # is this link an exit (from the network) link?
-  def exit?; @link_type == 'EXIT' or @adjacent.empty?; end
+  def exit?; @link_type == 'OUT' or @adjacent.empty?; end
   def input?
-    return true if @link_type == 'INPUT'
+    return true if @link_type == 'IN'
     # look for links, which have self on the adjacent list
     # if none are found, this is an input link
     ObjectSpace.each_object(Link) do |link|
@@ -317,39 +295,57 @@ class Link < VissimElem
   end
 end
 class Decision
-  attr_reader :from,:intersection,:turning_motion,:traversed_by_routes  
+  attr_reader :from,:intersection,:turning_motion,:flow,:successors
   attr_accessor :p # probability of reaching this decision
   def initialize from,intersection,turning_motion
     @from,@intersection,@turning_motion = from,intersection,turning_motion    
     @p = 0.0
+    @flow = 0.0
+    @successors = []
   end
-  def <=>(dp2)
-    @intersection == dp2.intersection ? 
-    (@from == dp2.from ? @turning_motion <=> dp2.turning_motion : @from <=> dp2.from) : 
-    @intersection <=> dp2.intersection
+  def <=>(d2)
+    @intersection == d2.intersection ? 
+    (@from == d2.from ? @turning_motion <=> d2.turning_motion : @from <=> d2.from) : 
+    @intersection <=> d2.intersection
+  end
+  # assigns flow to this decision
+  # from dec which is the predecessor decision supplying flow to this decision
+  def assign dec
+    @flow += dec.flow * @p
+  end
+  def add_succ dec
+    @successors << dec unless @successors.include?(dec)
+  end
+  # a decision is an input if it has no predecessors
+  # input decisions are assigned flow
+  def input?
+    ObjectSpace.each_object(Decision) do |dec|
+      return false if dec.successors.include?(self)
+    end
+    return true
   end
   def to_s
     "#{@intersection}#{@from}#{@turning_motion}"
   end
-  def traversed_by routes
-    @traversed_by_routes = routes
-  end
-  def traversed_by? route
-    return false unless @traversed_by_routes
-    @traversed_by_routes.include? route
-  end
 end
 class Connector < VissimElem
   attr_reader :from,:to,:lanes,:dec
+  @@decision_map = {}
   def initialize number,name,from,to,lanes
     super number,'NAME' => name
     @from,@to,@lanes = from,to,lanes
     if name =~ /([NSEW])(\d+)([LTR])/
+      # only one connector object represents each physical connector
       @dec = Decision.new($1,$2.to_i,$3)
     end
   end
   def <=>(c2)
     @intersection == c2.intersection ? @from_direction <=> c2.from_direction : @intersection <=> c2.intersection
+  end
+end
+def exec_query sql
+  DBI.connect(CS) do |dbh|  
+    return dbh.select_all(sql)
   end
 end
 def get_links area_name, type_filter = nil    
@@ -361,7 +357,8 @@ def get_links area_name, type_filter = nil
   end
     
   links = []
-  Csvtable.enumerate("#{Vissim_dir}#{area_name}_links.csv") do |row|     
+  
+  for row in exec_query("SELECT NUMBER, NAME, DIRECTION, TYPE FROM [links$] WHERE Area = '#{area_name}'")
     number = row['NUMBER'].to_i
             
     if links_map.has_key?(number)
@@ -408,6 +405,5 @@ def find_composition(veh_classes)
 end
 
 if $0 == __FILE__ 
-  h = {}
-  puts h.methods
+  puts get_links('Herlev')
 end

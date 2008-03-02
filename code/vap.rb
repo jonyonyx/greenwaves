@@ -1,11 +1,6 @@
 require 'const'
-require 'dbi'
 
-Plans_file = "../data/data.xls"
-CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{Plans_file};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
-
-DBI.connect(CS) do |dbh|  
-  P_rows = dbh.select_all "SELECT 
+P_rows = exec_query "SELECT 
         PLAN.Intersection, PLAN.PROGRAM,
         NAME,
         NUMBER, 
@@ -19,7 +14,6 @@ DBI.connect(CS) do |dbh|
        FROM [plans$] As PLAN
        INNER JOIN [offsets$] As OFFSET 
         ON PLAN.Intersection = OFFSET.Intersection AND PLAN.Program = OFFSET.Program"
-end
 
 scs = []
 

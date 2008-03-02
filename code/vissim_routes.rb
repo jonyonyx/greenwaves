@@ -92,8 +92,8 @@ if $0 == __FILE__
   #       OVER 10266 48130429 49131059 48130424 10139
 
   vissim = Vissim.new("#{Vissim_dir}tilpasset_model.inp")
-  routes = get_routes(vissim,'herlev')
-
+  routes = get_routes(vissim,'Herlev')
+  
   # generate a routing decision for each link
   output_string = ''
   last_input = nil
