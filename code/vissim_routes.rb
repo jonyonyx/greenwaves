@@ -43,10 +43,8 @@ def get_routes(vissim, area_name)
   exit_numbers = exit_links.map{|l| l.number}
 
   routes = []
-  for link in input_links.map{|l| vissim.links_map[l.number]}.compact#[8..8]
-    #puts "discovering from #{link}"
+  for link in input_links.map{|l| vissim.links_map[l.number]}.compact
     discover(link) do |route|
-      #puts route.to_s
       routes << route if exit_numbers.include?(route.exit.number)
     end
   end
@@ -76,22 +74,20 @@ end
 if $0 == __FILE__ 
 
   puts "BEGIN"
-
-  # Example of routing decision
-
-  #ROUTING_DECISION 3 NAME "" LABEL  0.00 0.00
-  #     LINK 47131394  AT 50.246
-  #     TIME  FROM 0.0 UNTIL 99999.0
-  #     NODE 0
-  #      VEHICLE_CLASSES ALL
-  #     ROUTE     2  DESTINATION LINK 48131218  AT  142.668
-  #       FRACTION     1
-  #       OVER 10267 48130431 10927 20094 10930 48130432 10274
-  #     ROUTE     1  DESTINATION LINK 25060312  AT   57.012
-  #       FRACTION     1
-  #       OVER 10266 48130429 49131059 48130424 10139
-
+  
   vissim = Vissim.new("#{Vissim_dir}tilpasset_model.inp")
+  
+  routes = get_routes(vissim,nil)
+  
+  busroutes = routes.find_all{|r| not (r.exit.buses & r.start.buses).empty?}
+  
+  puts "Found #{routes.length} routes and #{busroutes.length} busroutes"
+  for route in busroutes
+    puts "#{route.start.buses.join(' ')} on #{route.start} to #{route.exit} #{route.exit.buses.join(' ')}"
+  end
+  
+  exit(0)
+
   routes = get_routes(vissim,'Herlev')
   
   # generate a routing decision for each link
@@ -145,10 +141,7 @@ if $0 == __FILE__
       j += 1
     
     end
-
   end
-
-  #puts output_string
 
   Clipboard.set_data output_string
   puts "Please find the Routing Decisions on your clipboard."
