@@ -208,7 +208,8 @@ class SignalHead < VissimElem
   end
 end
 class Link < VissimElem
-  attr_reader :from,:has_buses,:has_trucks,:link_type,:rel_inflow,:adjacent
+  attr_reader :from,:has_trucks,:link_type,:rel_inflow,:adjacent
+  attr_accessor :buses
   # total proportion request by all elems of each type
   @@total_inflow = 0.0
   def initialize number,attributes    
@@ -222,7 +223,6 @@ class Link < VissimElem
   def update attributes
     super
     @from = attributes['FROM']
-    @has_buses = attributes['HAS_BUSES'] == 'Y' # are buses inserted on this link?
     @has_trucks = attributes['HAS_TRUCKS'] == 'Y' # are trucks inserted on this link?
     @link_type = attributes['TYPE']
         
@@ -359,18 +359,28 @@ def get_links area_name, type_filter = nil
     
   links = []
   
-  for row in exec_query("SELECT NUMBER, NAME, [FROM], TYPE FROM [links$] #{area_name ? "WHERE Area = '#{area_name}'" : ''}")
-    number = row['NUMBER'].to_i
+  sql = "SELECT 
+          NUMBER, 
+          NAME, 
+          [FROM], 
+          TYPE
+        FROM [links$] As LINKS
+        #{area_name ? "WHERE Area = '#{area_name}'" : ''}"
+  
+  for row in exec_query sql
+    number = row['NUMBER'].to_i    
             
     if links_map.has_key?(number)
       # enrich the existing object with data from the csv file
       link = links_map[number]
       link.update row
-      links << link
     else
       next if type_filter and not row['TYPE'].downcase == type_filter
-      links << Link.new(number,row)
+      links = Link.new(number,row)
     end
+    # any buses enter on this link?
+    link.buses = exec_query("SELECT Bus FROM [buses$] WHERE [#{row['TYPE']} Link] = #{number}").flatten
+    links << link
   end
   links
 end
