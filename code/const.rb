@@ -19,7 +19,8 @@ MINOR = 'Minor'
 MAJOR = 'Major'
 NONE = 'None'
 DOGS_TIME = 10
-
+Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
+  
 DATAFILE = "../data/data.xls"
 CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
 
@@ -207,7 +208,7 @@ class SignalHead < VissimElem
   end
 end
 class Link < VissimElem
-  attr_reader :direction,:has_buses,:has_trucks,:link_type,:rel_inflow,:adjacent
+  attr_reader :from,:has_buses,:has_trucks,:link_type,:rel_inflow,:adjacent
   # total proportion request by all elems of each type
   @@total_inflow = 0.0
   def initialize number,attributes    
@@ -220,7 +221,7 @@ class Link < VissimElem
   end
   def update attributes
     super
-    @direction = attributes['DIRECTION']
+    @from = attributes['FROM']
     @has_buses = attributes['HAS_BUSES'] == 'Y' # are buses inserted on this link?
     @has_trucks = attributes['HAS_TRUCKS'] == 'Y' # are trucks inserted on this link?
     @link_type = attributes['TYPE']
@@ -358,7 +359,7 @@ def get_links area_name, type_filter = nil
     
   links = []
   
-  for row in exec_query("SELECT NUMBER, NAME, DIRECTION, TYPE FROM [links$] WHERE Area = '#{area_name}'")
+  for row in exec_query("SELECT NUMBER, NAME, [FROM], TYPE FROM [links$] #{area_name ? "WHERE Area = '#{area_name}'" : ''}")
     number = row['NUMBER'].to_i
             
     if links_map.has_key?(number)

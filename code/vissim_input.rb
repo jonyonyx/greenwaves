@@ -6,52 +6,127 @@ require 'const'
 require 'dbi'
 
 Acc_xls = "#{Herlev_dir}aggr.xls"
-CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{Acc_xls};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
+Aggr_CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{Acc_xls};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
 
-Input_factor = 1 # factor used to boost all input sizes
+puts "BEGIN"    
 
-puts "BEGIN"
-    
-Links = get_links('herlev','input')
+Links = get_links(nil, 'IN')
 
 # fetch historical traffic input data in 15m granularity
-DBI.connect(CS) do |dbh|  
-  Input_rows = dbh.select_all "SELECT HOUR(Time) AS H, MINUTE(Time) AS M, AVG(Detected) AS Q FROM [data$] 
-         WHERE DoW IN ('Mon','Tue','Wed','Thu','Fri') AND
-               Time BETWEEN \#1899/12/30 07:00:00\# AND \#1899/12/30 08:00:00\#
-         GROUP BY Time"  
-end
+#DBI.connect(Aggr_CS) do |dbh|  
+#  Input_rows = dbh.select_all "SELECT HOUR(Time) AS H, MINUTE(Time) AS M, AVG(Detected) AS Q FROM [data$] 
+#         WHERE DoW IN ('Mon','Tue','Wed','Thu','Fri') AND
+#               Time BETWEEN \#1899/12/30 07:00:00\# AND \#1899/12/30 09:00:00\#
+#         GROUP BY Time"  
+#end
 
-#puts Input_rows[0]['Q']
+Input_rows = exec_query "SELECT COUNTS.Intersection, LINKS.Number, HOUR([Period End]) As H, MINUTE([Period End]) As M, 
+              [Total Cars] As Cars,
+              [Total Trucks] As Trucks
+              FROM [counts$] As COUNTS
+              INNER JOIN [links$] As LINKS 
+              ON  COUNTS.Intersection = LINKS.Intersection AND 
+                  COUNTS.From = LINKS.From
+              WHERE LINKS.Type = 'IN' 
+              ORDER BY [Period End], LINKS.Number"
+
+Insect_info = exec_query "SELECT Name, [Count Date] FROM [intersections$]"
+
+#for row in Insect_info
+#  puts row.inspect
+#end
+#
 #exit(0)
-    
-elapsed = 0.0 # simulation seconds
-step = 15*60
+Step = Res*60 
+Time_fmt2 = '%H:%M:%S'
+HM_min_tuple = exec_query("SELECT HOUR(MIN([Period End])), MINUTE(MIN([Period End])) FROM [counts$]").first
+HM_max_tuple = exec_query("SELECT HOUR(MAX([Period End])), MINUTE(MAX([Period End])) FROM [counts$]").first
+T_start = Time.parse(HM_min_tuple.join(':')) - Step
+T_end = Time.parse(HM_max_tuple.join(':'))
 
-input_num = 1
-output_string = ''
-# iterate over the detected data by period...
-Input_rows[1..-1].each_with_index do |row,n|
-  input_begin_time = format(Time_fmt,Input_rows[n]['H'],Input_rows[n]['M'])
-  input_end_time = format(Time_fmt,row['H'],row['M'])
-  
-  #... for each link generate input in this period
-  for link in Links
-           
-    flow = row['Q']    
-    # link inputs in Vissim is defined in veh/h
-    link_contrib = flow * (60/Res) * link.proportion * Input_factor
-    
-    output_string = output_string +  "INPUT #{input_num}\n" +
-      "      NAME \"Direction #{link.direction} on #{link.name} (#{input_begin_time}-#{input_end_time})\" LABEL  0.00 0.00\n" +
-      "      LINK #{link.number} Q #{link_contrib} COMPOSITION #{link.traffic_composition}\n" +
-      "      TIME FROM #{elapsed} UNTIL #{elapsed+step}\n"
-    input_num = input_num + 1
+class Input
+  def initialize t_start, t_end
+    @t_start = t_start
+    @t_end = t_end
+    @inputs = []
   end
-  elapsed = elapsed + step
+  def add link, veh_type, t_end, quantity, desc = nil
+    @inputs << {'LINK' => link, 'TYPE' => veh_type, 'COMP' => Type_map[veh_type], 'TEND' => t_end, 'Q' => quantity, 'DESC' => desc}
+  end
+  def to_vissim
+    str = ''
+    @inputs.each_with_index do |input, input_num|  
+      link = input['LINK']
+      
+      if input['TEND']        
+        t = input['TEND']
+        t_begin = t - Step
+        q = input['Q']
+      else
+        # no TEND indicates this is a bus input
+        t = @t_end
+        t_begin = @t_start
+        # bus frequencies are given by the hour so scale it
+        q = input['Q'] * (t.hour - t_begin.hour) # assume t_begin .. t_end in the same day
+      end
+      str += "INPUT #{input_num+1}\n" +
+        "      NAME \"#{input['DESC'] ? input['DESC'] : input['TYPE']} from #{link.from} on #{link.name} (#{t_begin.strftime(Time_fmt2)}-#{t.strftime(Time_fmt2)})\" LABEL  0.00 0.00\n" +
+        "      LINK #{link.number} Q #{q} COMPOSITION #{input['COMP']}\n" +
+        "      TIME FROM #{t_begin - @t_start} UNTIL #{t - @t_start}\n"
+    end
+    str
+  end
 end
+
+I = Input.new(T_start, T_end)
+
+# iterate over the detected data by period...
+for row in Input_rows
+  
+  t = Time.parse("#{row['H']}:#{row['M']}")  
+  link_number = row['Number'].to_i
+  
+  link = Links.find{|l| l.number == link_number}
+  raise "Warning: unable to locate link with number #{link_number}" unless link
+  
+  isname = row['Intersection']
+  
+  isrow = Insect_info.find{|r| r['Name'] == isname}
+  
+  raise "Warning: unable to find counting date for intersection '#{isname}'" unless isrow
+  
+  count_date = Time.parse(isrow['Count Date'].to_s)
+      
+  # number of years which has passed since the traffic count
+  years_passed = Time.now.year - count_date.year
+  
+  # produce an input per vehicle type
+  for veh_type in ['Cars','Trucks']
+    flow = row[veh_type]
+    next unless flow > 0.0
+    
+    # link inputs in Vissim is defined in veh/h
+    # also scale the input according to the time which has passed
+    link_contrib = flow * (60/Res) * 1.015 ** years_passed 
+    
+    I.add link, veh_type, t, link_contrib  
+  end
+end
+
+# generate bus inputs
+Bus_rows = exec_query "SELECT Bus, [From Link], Frequency FROM [buses$]"
+
+for row in Bus_rows
+  link_number = row['From Link']
+  link = Links.find{|l| l.number == link_number}
+  raise "Warning: unable to locate link with number #{link_number}" unless link
+  I.add link, "Buses", nil, row['Frequency'], "Bus #{row['Bus']}"
+end
+
+output_string = I.to_vissim
 
 Clipboard.set_data output_string
+puts output_string
 
 puts "Link Input Data has been placed on your clipboard."
 
