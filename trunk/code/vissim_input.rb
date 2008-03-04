@@ -5,20 +5,9 @@
 require 'const'
 require 'dbi'
 
-Acc_xls = "#{Herlev_dir}aggr.xls"
-Aggr_CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{Acc_xls};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
-
 puts "BEGIN"    
 
 Links = get_links(nil, 'IN')
-
-# fetch historical traffic input data in 15m granularity
-#DBI.connect(Aggr_CS) do |dbh|  
-#  Input_rows = dbh.select_all "SELECT HOUR(Time) AS H, MINUTE(Time) AS M, AVG(Detected) AS Q FROM [data$] 
-#         WHERE DoW IN ('Mon','Tue','Wed','Thu','Fri') AND
-#               Time BETWEEN \#1899/12/30 07:00:00\# AND \#1899/12/30 09:00:00\#
-#         GROUP BY Time"  
-#end
 
 Input_rows = exec_query "SELECT COUNTS.Intersection, LINKS.Number, HOUR([Period End]) As H, MINUTE([Period End]) As M, 
               [Total Cars] As Cars,
@@ -114,12 +103,14 @@ for row in Input_rows
 end
 
 # generate bus inputs
-Bus_rows = exec_query "SELECT Bus, [From Link], Frequency FROM [buses$]"
+Busplan = exec_query "SELECT Bus, [IN Link], Frequency FROM [buses$]"
 
-for row in Bus_rows
-  link_number = row['From Link']
+for row in Busplan
+  link_number = row['IN Link']
   link = Links.find{|l| l.number == link_number}
   raise "Warning: unable to locate link with number #{link_number}" unless link
+  
+  # add a bus input for each bus even though it is on the same link
   I.add link, "Buses", nil, row['Frequency'], "Bus #{row['Bus']}"
 end
 

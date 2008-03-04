@@ -209,7 +209,6 @@ class SignalHead < VissimElem
 end
 class Link < VissimElem
   attr_reader :from,:has_trucks,:link_type,:rel_inflow,:adjacent
-  attr_accessor :buses
   # total proportion request by all elems of each type
   @@total_inflow = 0.0
   def initialize number,attributes    
@@ -258,21 +257,14 @@ class Link < VissimElem
     # in the .inp file for the numbers
     # note: make sure there is a 1:1 correspondance between
     # traffic compositions and vehicle classes (poor data design by ptv)
-    if has_buses
-      if has_trucks
-        1 # buses and trucks
-      else
-        3 # buses, no trucks
-      end
+    
+    if has_trucks
+      # trucks, no buses
+      2
     else
-      if has_trucks
-        # trucks, no buses
-        2
-      else
-        # no buses, no trucks
-        1001
-      end
-    end    
+      # no buses, no trucks
+      1001
+    end
   end
   def vehicle_classes
     # see note in method traffic_composition
@@ -344,8 +336,8 @@ class Connector < VissimElem
     @intersection == c2.intersection ? @from_direction <=> c2.from_direction : @intersection <=> c2.intersection
   end
 end
-def exec_query sql
-  DBI.connect(CS) do |dbh|  
+def exec_query sql, conn_str = CS
+  DBI.connect(conn_str) do |dbh|  
     return dbh.select_all(sql)
   end
 end
@@ -371,33 +363,23 @@ def get_links area_name, type_filter = nil
     number = row['NUMBER'].to_i    
             
     if links_map.has_key?(number)
-      # enrich the existing object with data from the csv file
+      # enrich the existing object with data from the database
       link = links_map[number]
       link.update row
     else
       next if type_filter and not row['TYPE'].downcase == type_filter
-      links = Link.new(number,row)
+      link = Link.new(number,row)
     end
-    # any buses enter on this link?
-    link.buses = exec_query("SELECT Bus FROM [buses$] WHERE [#{row['TYPE']} Link] = #{number}").flatten
     links << link
   end
   links
 end
 def comp_to_s(comp)
   case comp
-  when 1
-    'Cars, buses, trucks'
   when 2
     'Cars, trucks'
-  when 3    
-    'Cars, buses'
-  when 1001
-    'Cars only'
-  when 1002
-    'Trucks only'
   when 1003
-    'Buses only'
+    'Buses'
   end
 end
 def find_composition(veh_classes)
@@ -415,6 +397,44 @@ def find_composition(veh_classes)
   end
 end
 
+class Numeric
+  def square ; self * self ; end
+end
+
+class Array
+  def sum ; self.inject(0){|a,x|x+a} ; end
+  def mean ; self.sum.to_f/self.size ; end
+  def median
+    case self.size % 2
+    when 0 then self.sort[self.size/2-1,2].mean
+    when 1 then self.sort[self.size/2].to_f
+    end if self.size > 0
+  end
+  # not quite correct version of quantile
+  def quantile p
+    i = (size*p).ceil - 1
+    #puts i
+    sort[i]
+  end
+  def histogram ; self.sort.inject({}){|a,x|a[x]=a[x].to_i+1;a} ; end
+  def mode
+    map = self.histogram
+    max = map.values.max
+    map.keys.select{|x|map[x]==max}
+  end
+  def squares ; self.inject(0){|a,x|x.square+a} ; end
+  def variance ; self.squares.to_f/self.size - self.mean.square; end
+  def deviation ; Math::sqrt( self.variance ) ; end
+  def permute ; self.dup.permute! ; end
+  def permute!
+    (1...self.size).each do |i| ; j=rand(i+1)
+      self[i],self[j] = self[j],self[i] if i!=j
+    end;self
+  end
+  def sample n=1 ; (0...n).collect{ self[rand(self.size)] } ; end
+end
+
 if $0 == __FILE__ 
-  puts get_links('Herlev')
+  a=%w{34 29 26 32 35 38 31 34 30 29 32 31}.collect{|x|x.to_i}
+  puts a.bins(4).inspect
 end

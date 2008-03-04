@@ -4,12 +4,14 @@ CONST
             BASE_CYCLE_TIME = 80,
             DN = 3,
             DS = 14,
-            PANIC_LEVEL = 8;
+            PANIC_LEVEL = 8,
+			SMOOTHING_FACTOR = 0.5,
+			DOGS_ENABLED = 1;
 
 /* ARRAYS */ 
-ARRAY 
-            UBOUND_CNT_CRIT[ 2, 8 ] = [[10, 15, 20, 25, 30, 35, 40, 50], [10, 15, 20, 25, 30, 35, 40, 50]],
-            LBOUND_CNT_CRIT[ 2, 8 ] = [[9, 14, 18, 23, 27, 32, 36, 41], [9, 14, 18, 23, 27, 32, 36, 41]];
+ARRAY 	/* Bounds are estimated for a counting period of BASE_CYCLE_TIME seconds */
+        UBOUND_CNT_CRIT [2,8] = [[19, 22, 24, 27, 29, 32, 35, 37], [32, 34, 36, 38, 40, 43, 45, 47]],
+        LBOUND_CNT_CRIT [2,8] = [[17, 20, 22, 24, 26, 29, 32, 33], [29, 31, 32, 34, 36, 39, 41, 42]];
 
 /* SUBROUTINES */ 
 
@@ -26,7 +28,16 @@ S00Z001:    IF cycle_sec THEN
 S01Z001:      Marker_put(1,DOGS_LEVEL);
 S01Z002:      Marker_put(2,cycle_sec);
 S01Z003:      IF cycle_sec = CURRENT_CYCLE_TIME THEN
-S02Z003:        DN_CNT := Rear_ends(DN); DS_CNT := Rear_ends(DS);
+S01Z413:        IF NOT DN_CNT THEN
+S01Z513:          DN_CNT := 0; DS_CNT := 0 /* Initialization to keep Vissim from nagging */
+			    END;
+				/* When DOGS_LEVEL > 0 the counting period is extended along with the green time 
+				   and the counts from the detections must be corrected before comparing to the {U,L}BOUND_CNT_CRIT threshold values */
+S02G003:		DOGS_CORRECTION_FACTOR := BASE_CYCLE_TIME / CURRENT_CYCLE_TIME;
+				/* "Disable" DOGS by faking zero demand in either end. This will cause DOGS to use the base program exclusively. */
+				/* NB: Exponential smoothening is applied below */
+S02Z003:        DN_CNT := DOGS_ENABLED * DOGS_CORRECTION_FACTOR * (DN_CNT + SMOOTHING_FACTOR * (Rear_ends(DN) - DN_CNT)); 
+S09Z003:		DS_CNT := DOGS_ENABLED * DOGS_CORRECTION_FACTOR * (DS_CNT + SMOOTHING_FACTOR * (Rear_ends(DS) - DS_CNT));
 S03Z003:        Clear_rear_ends(DN); Clear_rear_ends(DS);
 S04Z003:        IF (DN_CNT > UBOUND_CNT_CRIT[1,1]) OR (DS_CNT > UBOUND_CNT_CRIT[2,1]) THEN
 S06Z003:          IF (DN_CNT > UBOUND_CNT_CRIT[1,2]) OR (DS_CNT > UBOUND_CNT_CRIT[2,2]) THEN
