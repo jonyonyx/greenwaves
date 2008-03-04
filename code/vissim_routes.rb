@@ -78,27 +78,54 @@ if $0 == __FILE__
   vissim = Vissim.new("#{Vissim_dir}tilpasset_model.inp")
   
   routes = get_routes(vissim,nil)
-  
-  busroutes = routes.find_all{|r| not (r.exit.buses & r.start.buses).empty?}
-  
-  puts "Found #{routes.length} routes and #{busroutes.length} busroutes"
-  for route in busroutes
-    puts "#{route.start.buses.join(' ')} on #{route.start} to #{route.exit} #{route.exit.buses.join(' ')}"
+
+  class RoutingDecision
+    attr_reader :input_link, :composition
+    @@count = 0
+    def initialize input_link, composition, desc = nil
+      @desc = desc
+      @input_link = input_link
+      @composition = composition
+      @routes = []
+      @@count += 1
+      @i = @@count
+    end
+    def add_route route, fraction
+      raise "Warning: starting link (#{route.start}) of route was different 
+             from the input link of the routing decision(#{@input_link})!" unless route.start == @input_link
+      
+      @routes << {'ROUTE' => route, 'FRACTION' => fraction}
+    end
+    def to_vissim
+      str = "ROUTING_DECISION #{@i} NAME \"#{@desc ? @desc : comp_to_s(@composition)} from #{@input_link}\" LABEL  0.00 0.00\n"
+      # AT must be AFTER the input point
+      # link inputs are always defined in the end of the link
+      str += "     LINK #{@input_link.number} AT 50.000\n"
+      str += "     TIME FROM 0.0 UNTIL 99999.0\n"
+      str += "     NODE 0\n"
+      str += "      VEHICLE_CLASSES #{@composition}\n"
+        
+      @routes.each_with_index do |route_info,j|
+        route = route_info['ROUTE']
+        str += "     ROUTE     #{j+1}  DESTINATION LINK #{route.exit.number}  AT   50.000\n"
+        str += "     FRACTION #{route_info['FRACTION']}\n"
+        str += "     OVER #{route.to_vissim}\n"
+      end
+      str
+    end
   end
   
-  exit(0)
-
-  routes = get_routes(vissim,'Herlev')
   
   # generate a routing decision for each link
-  output_string = ''
-  last_input = nil
-  last_comp = nil
-  i = 1
   # sort by input (start) link number and then traffic composition
   # of exit (end) link
-
-  for input in routes.map{|r|r.start}.uniq # collect the set of starting links
+  decisions = []
+  
+  routingdec = nil
+  
+  input_links = routes.map{|r|r.start}.uniq # collect the set of starting links
+  
+  for input in input_links
     # make a new decision point for each vehicle class of the input
     # which is also a vehicle class at the exit link
   
@@ -112,38 +139,62 @@ if $0 == __FILE__
       
       comp = find_composition(common_classes)
     
-      puts "Generating '#{comp_to_s(comp)}' route from #{input} to #{exit}" if last_input
+      #puts "Generating '#{comp_to_s(comp)}' route from #{input} to #{exit}"
     
-      unless input == last_input and comp == last_comp
-        #puts "Generated #{j-1} '#{comp_to_s(last_comp)}' routes from #{last_input}" if last_input
-        j = 1 # new decision point, reset route choice counter
-    
-        last_input = input        
-        last_comp = comp
+      if routingdec.nil? or input != routingdec.input_link or comp != routingdec.composition        
         # make a new route decision point when a new starting location
         # or traffic composition for the route (exit link) is found.
         # first make sure only the appropriate vehicles take this route
         # by inspecting the vehicle types of the exit link
-        output_string += "ROUTING_DECISION #{i} NAME \"'#{comp_to_s(comp)}' from #{input}\" LABEL  0.00 0.00\n"
-        # AT must be AFTER the input point
-        # link inputs are always defined in the end of the link
-        output_string += "     LINK #{input.number} AT 50.000\n"
-        output_string += "     TIME FROM 0.0 UNTIL 99999.0\n"
-        output_string += "     NODE 0\n"
-        output_string += "      VEHICLE_CLASSES #{comp}\n"
         # routing decisions have one or more routes to choose from
-        i += 1 # move to next routing decision index
+        
+        routingdec = RoutingDecision.new(input, comp)
+        decisions << routingdec
       end
-  
-      output_string += "     ROUTE     #{j}  DESTINATION LINK #{route.exit.number}  AT   50.000\n"
-      output_string += "     FRACTION 1\n"
-      output_string += "     OVER #{route.to_vissim}\n"
-      j += 1
+      
+      routingdec.add_route(route, 1) # TODO: calculate the proper fraction
     
     end
   end
+  
+  output_links = routes.map{|r|r.exit}.uniq # collect the set of exit links
+  
+  busplan = exec_query "SELECT BUS, [IN Link], [OUT Link] As OUT, Frequency As FREQ FROM [buses$]"
+  businputs = busplan.map{|row| row['IN Link'].to_i}.uniq
+  
+  busroutemap = {}
+  for input_num in businputs
+    busroutemap[input_num] = busplan.find_all{|r| r['IN Link'].to_i == input_num}
+  end
+  
+  for input_num,businfo in busroutemap
+    input = input_links.find{|l| l.number == input_num}
+    output_nums = businfo.map{|i| i['OUT'].to_i}
+    outputs = output_links.find_all{|l| output_nums.include? l.number}
+    
+    busnames = businfo.map{|i| i['BUS']}
+    
+    routingdec = RoutingDecision.new(input, 1003, "Bus#{busnames.length > 1 ? 'es' : ''} #{busnames.join(', ')}")
+    
+    freq_sum = businfo.inject(0){|sum,i| sum + i['FREQ']}
+    
+    for output in outputs
+      # find the route which connects this input and output link
+      route = routes.find{|r| r.start == input and r.exit == output}
+    
+      busfreq = businfo.find{|i| i['OUT'].to_i == output.number}['FREQ']
+      
+      # 
+      routingdec.add_route(route, busfreq / freq_sum) # 
+    end
+    decisions << routingdec
+  end
 
-  Clipboard.set_data output_string
+  str = decisions.find_all{|dec| dec.composition == 1003}.map{|rd| rd.to_vissim}.join("\n")
+  
+  puts str
+
+  Clipboard.set_data str
   puts "Please find the Routing Decisions on your clipboard."
 
   puts "END"
