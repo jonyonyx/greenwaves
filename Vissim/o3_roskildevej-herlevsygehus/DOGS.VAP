@@ -5,8 +5,8 @@ CONST
             DN = 3,
             DS = 14,
             PANIC_LEVEL = 8,
-			SMOOTHING_FACTOR = 0.5,
-			DOGS_ENABLED = 1;
+	    SMOOTHING_FACTOR = 0.5,
+	    DOGS_ENABLED = 0;
 
 /* ARRAYS */ 
 ARRAY 	/* Bounds are estimated for a counting period of BASE_CYCLE_TIME seconds */

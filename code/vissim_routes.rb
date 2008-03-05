@@ -190,7 +190,7 @@ if $0 == __FILE__
     decisions << routingdec
   end
 
-  str = decisions.find_all{|dec| dec.composition == 1003}.map{|rd| rd.to_vissim}.join("\n")
+  str = decisions.find_all{|dec| dec.composition != 1003}.map{|rd| rd.to_vissim}.join("\n")
   
   puts str
 

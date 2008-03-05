@@ -7,6 +7,8 @@ require 'dbi'
 
 puts "BEGIN"    
 
+INPUT_FACTOR = 1.0
+
 Links = get_links(nil, 'IN')
 
 Input_rows = exec_query "SELECT COUNTS.Intersection, LINKS.Number, HOUR([Period End]) As H, MINUTE([Period End]) As M, 
@@ -58,6 +60,9 @@ class Input
         # bus frequencies are given by the hour so scale it
         q = input['Q'] * (t.hour - t_begin.hour) # assume t_begin .. t_end in the same day
       end
+      
+      q = q * INPUT_FACTOR
+      
       str += "INPUT #{input_num+1}\n" +
         "      NAME \"#{input['DESC'] ? input['DESC'] : input['TYPE']} from #{link.from} on #{link.name} (#{t_begin.strftime(Time_fmt2)}-#{t.strftime(Time_fmt2)})\" LABEL  0.00 0.00\n" +
         "      LINK #{link.number} Q #{q} COMPOSITION #{input['COMP']}\n" +
