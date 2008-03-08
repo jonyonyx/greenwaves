@@ -6,6 +6,7 @@ require 'const'
 puts "BEGIN"
 
 DOGS_LEVELS = 8
+DOGS_LEVELDOWN_BUFFER = 0.1 # percentage of threshold value for current level
 BASE_CYCLE_TIME = 80 # seconds
 
 Acc_xls = "#{Herlev_dir}aggr.xls"

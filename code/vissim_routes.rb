@@ -16,39 +16,25 @@ require 'facets/dictionary'
 
 # now have both the connectors and links
 
-def discover link, path=Dictionary[link,nil], &callback
-  for adj_link,conn in link.adjacent
+def discover start, dest = nil, path=Dictionary[start,nil], &callback
+  for adj,conn in start.adjacent
     # avoid loops by checking if the path contain this link
-    next if path.has_key?(adj_link) 
+    next if path.has_key?(adj) 
     
     # assume there exist a valid route using this connector to reach adj_link;
     # if this is not true, nothing is returned anyhow.
-    if adj_link.exit?
+    if adj == dest or adj.exit?
       # found an exit link for this path
-      yield Route.new(path.merge(adj_link => conn)) 
+      yield Route.new(path.merge(adj => conn)) 
     else
       # copy the path to avoid backreferences among routes
-      discover(adj_link,path.merge(adj_link => conn),&callback) # look further
+      discover(adj, dest, path.merge(adj => conn),&callback) # look further
     end
   end
 end
 
-def get_routes(vissim, area_name)
 
-  area_links = get_links(area_name)
-
-  input_links = area_links.find_all{|l| l.input? }
-  exit_links = area_links.find_all{|l| l.exit? }
-
-  exit_numbers = exit_links.map{|l| l.number}
-
-  routes = []
-  for link in input_links.map{|l| vissim.links_map[l.number]}.compact
-    discover(link) do |route|
-      routes << route if exit_numbers.include?(route.exit.number)
-    end
-  end
-
+def prune_identical routes
   # arterial optimization: prune "identical" routes ie same start and end
 
   identical_routes = [] # the identical routes with fewer lanes to remove
@@ -71,6 +57,77 @@ def get_routes(vissim, area_name)
   routes - identical_routes  
 end
 
+def find_routes start,dest  
+  routes = []
+  puts "Finding routes from #{start} to #{dest}"
+  discover(start,dest) do |r|
+    routes << r if r.exit == dest # skip past routes with true exits
+  end
+  routes = prune_identical routes
+  puts "Discovered #{routes.length} routes from #{start} to #{dest}"
+  routes
+end
+
+def get_routes(vissim, area_name)
+
+  area_links = get_links(area_name)
+
+  input_links = area_links.find_all{|l| l.input? }
+  exit_links = area_links.find_all{|l| l.exit? }
+
+  exit_numbers = exit_links.map{|l| l.number}
+
+  routes = []
+  for link in input_links.map{|l| vissim.links_map[l.number]}.compact
+    discover(link) do |route|
+      routes << route if exit_numbers.include?(route.exit.number)
+    end
+  end
+  prune_identical routes
+end
+
+class RoutingDecision
+  attr_reader :input_link, :composition, :i
+  @@count = 0
+  def initialize input_link, composition, desc = nil
+    @desc = desc
+    @input_link = input_link
+    @composition = composition
+    @routes = []
+    @@count += 1
+    @i = @@count
+  end
+  def add_route route, fraction
+    raise "Warning: starting link (#{route.start}) of route was different 
+             from the input link of the routing decision(#{@input_link})!" unless route.start == @input_link
+      
+    @routes << {'ROUTE' => route, 'FRACTION' => fraction}
+  end
+  def <=> rd
+    @i <=> rd.i
+  end
+  def to_vissim
+    str = "ROUTING_DECISION #{@i} NAME \"#{@desc ? @desc : comp_to_s(@composition)} from #{@input_link}\" LABEL  0.00 0.00\n"
+    # AT must be AFTER the input point
+    # link inputs are always defined in the end of the link
+    str += "     LINK #{@input_link.number} AT 5.000\n"
+    str += "     TIME FROM 0.0 UNTIL 99999.0\n"
+    str += "     NODE 0\n"
+    str += "      VEHICLE_CLASSES #{@composition}\n"
+        
+    @routes.each_with_index do |route_info,j|
+      route = route_info['ROUTE']
+      str += "     ROUTE     #{j+1}  DESTINATION LINK #{route.exit.number}  AT   7.500\n"
+      str += "     FRACTION #{route_info['FRACTION']}\n"
+      str += "     OVER #{route.to_vissim}\n"
+    end
+    str
+  end
+  def to_s
+    to_vissim
+  end
+end  
+
 if $0 == __FILE__ 
 
   puts "BEGIN"
@@ -79,41 +136,6 @@ if $0 == __FILE__
   
   routes = get_routes(vissim,nil)
 
-  class RoutingDecision
-    attr_reader :input_link, :composition
-    @@count = 0
-    def initialize input_link, composition, desc = nil
-      @desc = desc
-      @input_link = input_link
-      @composition = composition
-      @routes = []
-      @@count += 1
-      @i = @@count
-    end
-    def add_route route, fraction
-      raise "Warning: starting link (#{route.start}) of route was different 
-             from the input link of the routing decision(#{@input_link})!" unless route.start == @input_link
-      
-      @routes << {'ROUTE' => route, 'FRACTION' => fraction}
-    end
-    def to_vissim
-      str = "ROUTING_DECISION #{@i} NAME \"#{@desc ? @desc : comp_to_s(@composition)} from #{@input_link}\" LABEL  0.00 0.00\n"
-      # AT must be AFTER the input point
-      # link inputs are always defined in the end of the link
-      str += "     LINK #{@input_link.number} AT 50.000\n"
-      str += "     TIME FROM 0.0 UNTIL 99999.0\n"
-      str += "     NODE 0\n"
-      str += "      VEHICLE_CLASSES #{@composition}\n"
-        
-      @routes.each_with_index do |route_info,j|
-        route = route_info['ROUTE']
-        str += "     ROUTE     #{j+1}  DESTINATION LINK #{route.exit.number}  AT   50.000\n"
-        str += "     FRACTION #{route_info['FRACTION']}\n"
-        str += "     OVER #{route.to_vissim}\n"
-      end
-      str
-    end
-  end
   
   
   # generate a routing decision for each link

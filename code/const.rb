@@ -24,6 +24,12 @@ Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
 DATAFILE = "../data/data.xls"
 CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
 
+def to_clipboard str, print = false
+  puts str if print
+  Clipboard.set_data str
+  puts "String data has been copied to your clipboard."
+end
+
 class Route  
   # a route is a list of links which are followed by using
   # the given connectors
@@ -287,11 +293,73 @@ class Link < VissimElem
     str
   end
 end
+class DecisionPoint
+  attr_reader :from,:intersection,:decisions
+  def initialize from,intersection
+    @from,@intersection = from,intersection
+    @decisions = []
+    @link = nil
+  end
+  # locates the common origin link for the decisions in this decision point
+  # do this by finding a link from which there is a route to all decision 
+  # destination links
+  def link
+    
+    #puts "in link, decisions: #{@decisions.join(' ')}"
+    
+    connectors = []    
+    ObjectSpace.each_object(Connector) {|c| connectors << c}
+    
+    dec_pred_links = {}
+    
+    if "#{@from}#{@intersection}" == "S3"
+      puts "halløj!"
+    end
+    
+    for dec in @decisions      
+      pred_links = []
+      dec_pred_links[dec] = pred_links
+      # go backwards collecting predecessor links, assuming only one route
+      # from the common origin link to the position of each decision
+      conn = dec.connector
+      begin
+        pred_link = conn.from
+        break if pred_links.include? pred_link # avoid loops
+        pred_links << pred_link
+        conn = connectors.find{|c| c.to == pred_link}
+      end while conn and not conn.dec
+    end
+    
+#    for dec,pred_links in dec_pred_links
+#      puts "#{dec}: #{pred_links.join(', ')}"
+#    end
+    all_pred_links = dec_pred_links.values.flatten.uniq
+    all_pred_links.find{|pred_link| @decisions.all?{|dec| dec_pred_links[dec].include? pred_link}}    
+    
+  end
+  def add decision
+    @decisions << decision
+  end  
+  def check_prob_assigned
+    sum = @decisions.map{|dec| dec.p}.sum
+    raise "Warning: the sum of turning probabilities for decision point #{@from}#{@intersection} was #{sum}! 
+           Maybe you forgot to mark a connector?" if (sum-1.0).abs > 0.01
+  end
+  def to_s
+    str = "Decision point #{@from}#{@intersection}:"
+    for dec in @decisions
+      successors = dec.successors
+      str += "\n\t#{dec.turning_motion} #{format('split: %02f',dec.p)}, successors: #{successors.empty? ? '(none)' : successors.join(' ')}"
+    end
+    str
+  end
+end
 class Decision
-  attr_reader :from,:intersection,:turning_motion,:flow,:successors
+  attr_reader :from,:intersection,:turning_motion,:flow,:successors,:connector
   attr_accessor :p # probability of reaching this decision
-  def initialize from,intersection,turning_motion
+  def initialize from,intersection,turning_motion, connector
     @from,@intersection,@turning_motion = from,intersection,turning_motion    
+    @connector = connector
     @p = 0.0
     @flow = 0.0
     @successors = []
@@ -307,6 +375,7 @@ class Decision
     @flow += dec.flow * @p
   end
   def add_succ dec
+    raise "Warning: nil successors are not allowed" unless dec
     @successors << dec unless @successors.include?(dec)
   end
   # a decision is an input if it has no predecessors
@@ -329,7 +398,7 @@ class Connector < VissimElem
     @from,@to,@lanes = from,to,lanes
     if name =~ /([NSEW])(\d+)([LTR])/
       # only one connector object represents each physical connector
-      @dec = Decision.new($1,$2.to_i,$3)
+      @dec = Decision.new($1,$2.to_i,$3,self)
     end
   end
   def <=>(c2)
