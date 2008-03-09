@@ -1,23 +1,24 @@
 require 'const'
 require 'vissim'
 require 'vissim_routes'
-require 'dbi'
 
-vissim = Vissim.new("#{Vissim_dir}tilpasset_model.inp")
+def get_vissim_routes
 
-routes = get_routes(vissim,nil)
+  vissim = Vissim.new("#{Vissim_dir}tilpasset_model.inp")
 
-# join decisions to their successors
-for route in routes
-  decisions = route.decisions
-  for i in (0...decisions.length-1)
-    decisions[i].add_succ decisions[i+1]
+  routes = get_routes(vissim)
+
+  # join decisions to their successors
+  for route in routes
+    decisions = route.decisions
+    for i in (0...decisions.length-1)
+      decisions[i].add_succ decisions[i+1]
+    end
   end
-end
 
-decisions = routes.collect{|r|r.decisions}.flatten.uniq 
+  decisions = routes.collect{|r|r.decisions}.flatten.uniq 
 
-Turning_sql = "SELECT Number, [From], 
+  turning_sql = "SELECT Number, [From], 
         SUM([Cars Left]) As CARS_L,
         SUM([Cars Through]) As CARS_T,
         SUM([Cars Right]) As CARS_R,
@@ -26,58 +27,79 @@ Turning_sql = "SELECT Number, [From],
        WHERE Number IN (1,2,3,4,5)
        GROUP BY Number,[From]"
 
-decision_points = []
+  decision_points = []
 
-for row in exec_query(Turning_sql)
-  isnum = row['Number'].to_i
-  from = row['From'][0..0] # extract the first letter of the From
+  for row in exec_query(turning_sql)
+    isnum = row['Number'].to_i
+    from = row['From'][0..0] # extract the first letter of the From
     
-  dp = DecisionPoint.new(from,isnum)
-  for dec in decisions.find_all{|d| d.intersection == isnum and d.from == from}
-    # set the probability of making this turning decisions 
-    # as given in the traffic counts
-    # turning_motion must equal L(eft), T(hrough) or R(ight)
-    dec.p = row['CARS_' + dec.turning_motion] / row['CARS_TOT'] 
-    dp.add dec
+    dp = DecisionPoint.new(from,isnum)
+    for dec in decisions.find_all{|d| d.intersection == isnum and d.from == from}
+      # set the probability of making this turning decisions 
+      # as given in the traffic counts
+      # turning_motion must equal L(eft), T(hrough) or R(ight)
+      dec.p = row['CARS_' + dec.turning_motion] / row['CARS_TOT'] 
+      dp.add dec
+    end
+    dp.check_prob_assigned # throws a warning if not all flow is assigned to decisions
+    decision_points << dp
   end
-  dp.check_prob_assigned # throws a warning if not all flow is assigned to decisions
-  decision_points << dp
-end
 
+  routing_decisions = RoutingDecisions.new
 
-#decision_points[0].link
-#exit(0)
-
-routing_decisions = []
-
-# 
-for dp in decision_points
-  puts "finding link for #{dp}"
-  dp_link = dp.link # the common starting point for decision in this point
-  rd = RoutingDecision.new(dp_link,1001)  
-  puts "found dp link: #{dp_link}"
+  for dp in decision_points
+    dp_link = dp.link # the common starting point for decision in this point
+    rd = RoutingDecision.new(dp_link,1001)
   
-  # add routes to the decision point
-  for d_end in dp.decisions
-    dest = d_end.connector.to
-    puts "Route from #{dp_link} over #{d_end.connector} with fraction #{d_end.p}"
+    # add routes to the decision point
+    for d_end in dp.decisions
+      dest = d_end.connector.to
+      #puts "Route from #{dp_link} over #{d_end.connector} with fraction #{d_end.p}"
     
-    local_routes = find_routes(dp_link,dest)
+      local_routes = find_routes(dp_link,dest)
     
-    raise "Warning: found multiple routes (#{local_routes.length}) from #{dp_link} to #{dest}" if local_routes.length > 1
+      raise "Warning: found multiple routes (#{local_routes.length}) from #{dp_link} to #{dest}" if local_routes.length > 1
     
-    route = local_routes.first
-    rd.add_route(route, d_end.p)
+      route = local_routes.first
+      rd.add_route(route, d_end.p)
+    end
+  
+    routing_decisions.add rd 
   end
   
-  routing_decisions << rd 
-end
-
-puts routing_decisions
-
-str = routing_decisions.sort.find_all{|rd| rd.composition != 1003}.map{|rd| rd.to_vissim}.join("\n")
+  # generate bus routes
+  input_links = routes.map{|r|r.start}.uniq # collect the set of starting links
+  output_links = routes.map{|r|r.exit}.uniq # collect the set of exit links
   
-puts str
+  busplan = exec_query "SELECT BUS, [IN Link], [OUT Link] As OUT, Frequency As FREQ FROM [buses$]"
+  businputs = busplan.map{|row| row['IN Link'].to_i}.uniq
+  
+  busroutemap = {}
+  for input_num in businputs
+    busroutemap[input_num] = busplan.find_all{|r| r['IN Link'].to_i == input_num}
+  end
+  
+  for input_num,businfo in busroutemap
+    input = input_links.find{|l| l.number == input_num}
+    output_nums = businfo.map{|i| i['OUT'].to_i}
+    outputs = output_links.find_all{|l| output_nums.include? l.number}
+    
+    busnames = businfo.map{|i| i['BUS']}
+    
+    rd = RoutingDecision.new(input, 1003, "Bus#{busnames.length > 1 ? 'es' : ''} #{busnames.join(', ')}")
+    
+    freq_sum = businfo.inject(0){|sum,i| sum + i['FREQ']}
+    
+    for output in outputs
+      # find the route which connects this input and output link
+      route = routes.find{|r| r.start == input and r.exit == output}
+    
+      busfreq = businfo.find{|i| i['OUT'].to_i == output.number}['FREQ']
+      
+      rd.add_route(route, busfreq / freq_sum)
+    end
+    routing_decisions.add rd
+  end
 
-Clipboard.set_data str
-puts "Please find the Routing Decisions on your clipboard."
+  routing_decisions
+end

@@ -2,33 +2,27 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-require 'Win32API'
 require 'dbi'
-require 'win32/clipboard' 
-include Win32
 require 'facets'
 
 Base_dir = 'D:\\greenwaves\\'
 Herlev_dir = Base_dir + 'data\\DOGS Herlev 2007\\'
 Glostrup_dir = Base_dir + 'data\\DOGS Glostrup 2007\\'
 Vissim_dir = Base_dir + 'Vissim\\o3_roskildevej-herlevsygehus\\'
-Time_fmt = '%02d:%02d:00'
+Time_fmt = '%H:%M:%S'
 Res = 15 # resolution in minutes of inputs
 RED,YELLOW,GREEN,AMBER = 'R','Y','G','A'
 MINOR = 'Minor'
 MAJOR = 'Major'
 NONE = 'None'
-DOGS_TIME = 10
+DOGS_TIME = 10 # number of seconds by which cycle time is increased for each dogs level
 Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
+EPS = 0.01
+INPUT_FACTOR = 1.0 # factor used to adjust link inputs
+ANNUAL_INCREASE = 1.015 # used in input generation for scaling
   
-DATAFILE = "../data/data.xls"
+DATAFILE = "../data/data.xls" # main data file containing counts, sgp's, you name it
 CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
-
-def to_clipboard str, print = false
-  puts str if print
-  Clipboard.set_data str
-  puts "String data has been copied to your clipboard."
-end
 
 class Route  
   # a route is a list of links which are followed by using
@@ -183,10 +177,20 @@ class SignalGroup < VissimElem
     @heads << head
   end
   def color(cycle_sec)
-    return GREEN if active_seconds === cycle_sec
-    return AMBER if (@red_end+1..@red_end+@tred_amber) === cycle_sec
-    return YELLOW if (@green_end..@green_end+@tamber) === cycle_sec
-    return RED
+    case cycle_sec
+    when active_seconds
+      GREEN 
+    when (@red_end+1..@red_end+@tred_amber)
+      AMBER
+    when (@green_end..@green_end+@tamber)
+      YELLOW
+    else
+      RED
+    end
+#    return GREEN if active_seconds === cycle_sec
+#    return AMBER if (@red_end+1..@red_end+@tred_amber) === cycle_sec
+#    return YELLOW if (@green_end..@green_end+@tamber) === cycle_sec
+#    return RED
   end
   def active_seconds
     green_start = @red_end + @tred_amber + 1
@@ -305,16 +309,10 @@ class DecisionPoint
   # destination links
   def link
     
-    #puts "in link, decisions: #{@decisions.join(' ')}"
-    
     connectors = []    
     ObjectSpace.each_object(Connector) {|c| connectors << c}
     
     dec_pred_links = {}
-    
-    if "#{@from}#{@intersection}" == "S3"
-      puts "halløj!"
-    end
     
     for dec in @decisions      
       pred_links = []
@@ -330,9 +328,6 @@ class DecisionPoint
       end while conn and not conn.dec
     end
     
-#    for dec,pred_links in dec_pred_links
-#      puts "#{dec}: #{pred_links.join(', ')}"
-#    end
     all_pred_links = dec_pred_links.values.flatten.uniq
     all_pred_links.find{|pred_link| @decisions.all?{|dec| dec_pred_links[dec].include? pred_link}}    
     
@@ -410,25 +405,15 @@ def exec_query sql, conn_str = CS
     return dbh.select_all(sql)
   end
 end
-def get_links area_name, type_filter = nil    
-  type_filter = type_filter.downcase if type_filter
+def get_links attributes = {}
+  type_filter = attributes['TYPE'].downcase if attributes.has_key?('TYPE')
     
   links_map = {}
-  ObjectSpace.each_object(Link) do |link|
-    links_map[link.number] = link
-  end
+  ObjectSpace.each_object(Link){|link| links_map[link.number] = link}
     
   links = []
-  
-  sql = "SELECT 
-          NUMBER, 
-          NAME, 
-          [FROM], 
-          TYPE
-        FROM [links$] As LINKS
-        #{area_name ? "WHERE Area = '#{area_name}'" : ''}"
-  
-  for row in exec_query sql
+    
+  for row in exec_query 'SELECT NUMBER, NAME, [FROM], TYPE FROM [links$] As LINKS'
     number = row['NUMBER'].to_i    
             
     if links_map.has_key?(number)
@@ -436,7 +421,7 @@ def get_links area_name, type_filter = nil
       link = links_map[number]
       link.update row
     else
-      next if type_filter and not row['TYPE'].downcase == type_filter
+      next if type_filter and row['TYPE'].downcase != type_filter
       link = Link.new(number,row)
     end
     links << link
@@ -445,6 +430,8 @@ def get_links area_name, type_filter = nil
 end
 def comp_to_s(comp)
   case comp
+  when 1001
+    'Cars'
   when 2
     'Cars, trucks'
   when 1003
@@ -466,18 +453,14 @@ def find_composition(veh_classes)
   end
 end
 
-class Numeric
-  def square ; self * self ; end
-end
-
 class Array
-  def sum ; self.inject(0){|a,x|x+a} ; end
-  def mean ; self.sum.to_f/self.size ; end
+  def sum ; inject{|a,x|x+a} ; end
+  def mean ; sum.to_f/size ; end
   def median
-    case self.size % 2
-    when 0 then self.sort[self.size/2-1,2].mean
-    when 1 then self.sort[self.size/2].to_f
-    end if self.size > 0
+    case size % 2
+    when 0 then sort[size/2-1,2].mean
+    when 1 then sort[size/2].to_f
+    end if size > 0
   end
   # not quite correct version of quantile
   def quantile p
@@ -485,25 +468,20 @@ class Array
     #puts i
     sort[i]
   end
-  def histogram ; self.sort.inject({}){|a,x|a[x]=a[x].to_i+1;a} ; end
+  def histogram ; sort.inject({}){|a,x|a[x]=a[x].to_i+1;a} ; end
   def mode
     map = self.histogram
     max = map.values.max
     map.keys.select{|x|map[x]==max}
   end
-  def squares ; self.inject(0){|a,x|x.square+a} ; end
-  def variance ; self.squares.to_f/self.size - self.mean.square; end
-  def deviation ; Math::sqrt( self.variance ) ; end
-  def permute ; self.dup.permute! ; end
+  def squares ; inject{|a,x|x**2+a} ; end
+  def variance ; squares.to_f/size - mean.square; end
+  def deviation ; Math::sqrt( variance ) ; end
+  def permute ; dup.permute! ; end
   def permute!
-    (1...self.size).each do |i| ; j=rand(i+1)
+    (1...size).each do |i| ; j=rand(i+1)
       self[i],self[j] = self[j],self[i] if i!=j
     end;self
   end
-  def sample n=1 ; (0...n).collect{ self[rand(self.size)] } ; end
-end
-
-if $0 == __FILE__ 
-  a=%w{34 29 26 32 35 38 31 34 30 29 32 31}.collect{|x|x.to_i}
-  puts a.bins(4).inspect
+  def sample n=1 ; (0...n).collect{ self[rand(size)] } ; end
 end

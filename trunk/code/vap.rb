@@ -204,8 +204,8 @@ def gen_pua sc
   cp.write("#{Vissim_dir}\\#{sc.name.downcase.gsub(' ','_')}.pua")
 end
 
-for sc in scs#[3..3]
+for sc in scs
   gen_vap sc
   gen_pua sc
-  puts "Processed #{sc.name} #{sc.program}"
+  puts "Generated VAP and PUA files for #{sc.name} #{sc.program}"
 end
