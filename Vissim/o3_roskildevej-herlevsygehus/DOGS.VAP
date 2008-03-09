@@ -6,12 +6,14 @@ CONST
             DS = 14,
             PANIC_LEVEL = 8,
 	    SMOOTHING_FACTOR = 0.5,
-	    DOGS_ENABLED = 0;
+	    DOGS_ENABLED = 1;
 
 /* ARRAYS */ 
 ARRAY 	/* Bounds are estimated for a counting period of BASE_CYCLE_TIME seconds */
         UBOUND_CNT_CRIT [2,8] = [[19, 22, 24, 27, 29, 32, 35, 37], [32, 34, 36, 38, 40, 43, 45, 47]],
-        LBOUND_CNT_CRIT [2,8] = [[17, 20, 22, 24, 26, 29, 32, 33], [29, 31, 32, 34, 36, 39, 41, 42]];
+        LBOUND_CNT_CRIT [2,8] = [[17, 20, 22, 24, 26, 29, 32, 33], [29, 31, 32, 34, 36, 39, 41, 42]],
+        UBOUND_OCC_CRIT [8] = [11, 29, 45, 58, 70, 80, 92, 96],
+        LBOUND_OCC_CRIT [8] = [8, 17, 35, 51, 65, 74, 86, 94];
 
 /* SUBROUTINES */ 
 
@@ -35,21 +37,23 @@ S01Z513:          DN_CNT := 0; DS_CNT := 0 /* Initialization to keep Vissim from
 				   and the counts from the detections must be corrected before comparing to the {U,L}BOUND_CNT_CRIT threshold values */
 S02G003:		DOGS_CORRECTION_FACTOR := BASE_CYCLE_TIME / CURRENT_CYCLE_TIME;
 				/* "Disable" DOGS by faking zero demand in either end. This will cause DOGS to use the base program exclusively. */
-				/* NB: Exponential smoothening is applied below */
+				/* NB: Exponential smoothening is applied manually for detected counts. Occup_rates are already smoothened. */
 S02Z003:        DN_CNT := DOGS_ENABLED * DOGS_CORRECTION_FACTOR * (DN_CNT + SMOOTHING_FACTOR * (Rear_ends(DN) - DN_CNT)); 
-S09Z003:		DS_CNT := DOGS_ENABLED * DOGS_CORRECTION_FACTOR * (DS_CNT + SMOOTHING_FACTOR * (Rear_ends(DS) - DS_CNT));
+S09Z003:		DS_CNT := DOGS_ENABLED * DOGS_CORRECTION_FACTOR * (DS_CNT + SMOOTHING_FACTOR * (Rear_ends(DS) - DS_CNT));    
+S10Z007:		DN_OCC := DOGS_ENABLED * Occup_rate(DN) * 100; /* Occupied rate percentage */    
+S11Z804:		DS_OCC := DOGS_ENABLED * Occup_rate(DS) * 100;
 S03Z003:        Clear_rear_ends(DN); Clear_rear_ends(DS);
-S04Z003:        IF (DN_CNT > UBOUND_CNT_CRIT[1,1]) OR (DS_CNT > UBOUND_CNT_CRIT[2,1]) THEN
-S06Z003:          IF (DN_CNT > UBOUND_CNT_CRIT[1,2]) OR (DS_CNT > UBOUND_CNT_CRIT[2,2]) THEN
-S08Z003:            IF (DN_CNT > UBOUND_CNT_CRIT[1,3]) OR (DS_CNT > UBOUND_CNT_CRIT[2,3]) THEN
-S10Z003:              IF (DN_CNT > UBOUND_CNT_CRIT[1,4]) OR (DS_CNT > UBOUND_CNT_CRIT[2,4]) THEN
-S12Z003:                IF (DN_CNT > UBOUND_CNT_CRIT[1,5]) OR (DS_CNT > UBOUND_CNT_CRIT[2,5]) THEN
-S14Z003:                  IF (DN_CNT > UBOUND_CNT_CRIT[1,6]) OR (DS_CNT > UBOUND_CNT_CRIT[2,6]) THEN
-S16Z003:                    IF (DN_CNT > UBOUND_CNT_CRIT[1,7]) OR (DS_CNT > UBOUND_CNT_CRIT[2,7]) THEN
+S04Z003:        IF (DN_CNT > UBOUND_CNT_CRIT[1,1]) OR (DS_CNT > UBOUND_CNT_CRIT[2,1]) OR (DN_OCC > UBOUND_OCC_CRIT[1]) OR (DS_OCC > UBOUND_OCC_CRIT[1]) THEN
+S06Z003:          IF (DN_CNT > UBOUND_CNT_CRIT[1,2]) OR (DS_CNT > UBOUND_CNT_CRIT[2,2]) OR (DN_OCC > UBOUND_OCC_CRIT[2]) OR (DS_OCC > UBOUND_OCC_CRIT[2]) THEN
+S08Z003:            IF (DN_CNT > UBOUND_CNT_CRIT[1,3]) OR (DS_CNT > UBOUND_CNT_CRIT[2,3]) OR (DN_OCC > UBOUND_OCC_CRIT[3]) OR (DS_OCC > UBOUND_OCC_CRIT[3]) THEN
+S10Z003:              IF (DN_CNT > UBOUND_CNT_CRIT[1,4]) OR (DS_CNT > UBOUND_CNT_CRIT[2,4]) OR (DN_OCC > UBOUND_OCC_CRIT[4]) OR (DS_OCC > UBOUND_OCC_CRIT[4]) THEN
+S12Z003:                IF (DN_CNT > UBOUND_CNT_CRIT[1,5]) OR (DS_CNT > UBOUND_CNT_CRIT[2,5]) OR (DN_OCC > UBOUND_OCC_CRIT[5]) OR (DS_OCC > UBOUND_OCC_CRIT[5]) THEN
+S14Z003:                  IF (DN_CNT > UBOUND_CNT_CRIT[1,6]) OR (DS_CNT > UBOUND_CNT_CRIT[2,6]) OR (DN_OCC > UBOUND_OCC_CRIT[6]) OR (DS_OCC > UBOUND_OCC_CRIT[6]) THEN
+S16Z003:                    IF (DN_CNT > UBOUND_CNT_CRIT[1,7]) OR (DS_CNT > UBOUND_CNT_CRIT[2,7]) OR (DN_OCC > UBOUND_OCC_CRIT[7]) OR (DS_OCC > UBOUND_OCC_CRIT[7]) THEN
 S18Z003:                      DOGS_LEVEL := PANIC_LEVEL;
 S04Z007:                      SetT(1)
                             ELSE
-S16Z004:                      IF (DN_CNT < LBOUND_CNT_CRIT[1,7]) AND (DS_CNT < LBOUND_CNT_CRIT[2,7]) THEN
+S16Z004:                      IF (DN_CNT < LBOUND_CNT_CRIT[1,7]) AND (DS_CNT < LBOUND_CNT_CRIT[2,7]) OR (DN_OCC < LBOUND_OCC_CRIT[7]) AND (DS_OCC < LBOUND_OCC_CRIT[7]) THEN
 S17Z004:                        DOGS_LEVEL := 6;
                                 GOTO S04Z007
                               ELSE
@@ -58,7 +62,7 @@ S16Z005:                        DOGS_LEVEL := 7;
                               END
                             END
                           ELSE
-S14Z004:                    IF (DN_CNT < LBOUND_CNT_CRIT[1,6]) AND (DS_CNT < LBOUND_CNT_CRIT[2,6]) THEN
+S14Z004:                    IF (DN_CNT < LBOUND_CNT_CRIT[1,6]) AND (DS_CNT < LBOUND_CNT_CRIT[2,6]) OR (DN_OCC < LBOUND_OCC_CRIT[6]) AND (DS_OCC < LBOUND_OCC_CRIT[6]) THEN
 S15Z004:                      DOGS_LEVEL := 5;
                               GOTO S04Z007
                             ELSE
@@ -67,7 +71,7 @@ S14Z005:                      DOGS_LEVEL := 6;
                             END
                           END
                         ELSE
-S12Z004:                  IF (DN_CNT < LBOUND_CNT_CRIT[1,5]) AND (DS_CNT < LBOUND_CNT_CRIT[2,5]) THEN
+S12Z004:                  IF (DN_CNT < LBOUND_CNT_CRIT[1,5]) AND (DS_CNT < LBOUND_CNT_CRIT[2,5]) OR (DN_OCC < LBOUND_OCC_CRIT[5]) AND (DS_OCC < LBOUND_OCC_CRIT[5]) THEN
 S13Z004:                    DOGS_LEVEL := 4;
                             GOTO S04Z007
                           ELSE
@@ -76,7 +80,7 @@ S12Z005:                    DOGS_LEVEL := 5;
                           END
                         END
                       ELSE
-S10Z004:                IF (DN_CNT < LBOUND_CNT_CRIT[1,4]) AND (DS_CNT < LBOUND_CNT_CRIT[2,4]) THEN
+S10Z004:                IF (DN_CNT < LBOUND_CNT_CRIT[1,4]) AND (DS_CNT < LBOUND_CNT_CRIT[2,4]) OR (DN_OCC < LBOUND_OCC_CRIT[4]) AND (DS_OCC < LBOUND_OCC_CRIT[4]) THEN
 S11Z004:                  DOGS_LEVEL := 3;
                           GOTO S04Z007
                         ELSE
@@ -85,7 +89,7 @@ S10Z005:                  DOGS_LEVEL := 4;
                         END
                       END
                     ELSE
-S08Z004:              IF (DN_CNT < LBOUND_CNT_CRIT[1,3]) AND (DS_CNT < LBOUND_CNT_CRIT[2,3]) THEN
+S08Z004:              IF (DN_CNT < LBOUND_CNT_CRIT[1,3]) AND (DS_CNT < LBOUND_CNT_CRIT[2,3]) OR (DN_OCC < LBOUND_OCC_CRIT[3]) AND (DS_OCC < LBOUND_OCC_CRIT[3]) THEN
 S09Z004:                DOGS_LEVEL := 2;
                         GOTO S04Z007
                       ELSE
@@ -94,7 +98,7 @@ S08Z005:                DOGS_LEVEL := 3;
                       END
                     END
                   ELSE
-S06Z004:            IF (DN_CNT < LBOUND_CNT_CRIT[1,2]) AND (DS_CNT < LBOUND_CNT_CRIT[2,2]) THEN
+S06Z004:            IF (DN_CNT < LBOUND_CNT_CRIT[1,2]) AND (DS_CNT < LBOUND_CNT_CRIT[2,2]) OR (DN_OCC < LBOUND_OCC_CRIT[2]) AND (DS_OCC < LBOUND_OCC_CRIT[2]) THEN
 S07Z004:              DOGS_LEVEL := 1;
                       GOTO S04Z007
                     ELSE
@@ -103,7 +107,7 @@ S06Z005:              DOGS_LEVEL := 2;
                     END
                   END
                 ELSE
-S04Z004:          IF (DN_CNT < LBOUND_CNT_CRIT[1,1]) AND (DS_CNT < LBOUND_CNT_CRIT[2,1]) THEN
+S04Z004:          IF (DN_CNT < LBOUND_CNT_CRIT[1,1]) AND (DS_CNT < LBOUND_CNT_CRIT[2,1]) OR (DN_OCC < LBOUND_OCC_CRIT[1]) AND (DS_OCC < LBOUND_OCC_CRIT[1]) THEN
 S05Z004:            DOGS_LEVEL := 0;
                     GOTO S04Z007
                   ELSE

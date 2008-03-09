@@ -59,18 +59,17 @@ end
 
 def find_routes start,dest  
   routes = []
-  puts "Finding routes from #{start} to #{dest}"
+  #puts "Finding routes from #{start} to #{dest}"
   discover(start,dest) do |r|
     routes << r if r.exit == dest # skip past routes with true exits
   end
   routes = prune_identical routes
-  puts "Discovered #{routes.length} routes from #{start} to #{dest}"
+  #puts "Discovered #{routes.length} routes from #{start} to #{dest}"
   routes
 end
 
-def get_routes(vissim, area_name)
-
-  area_links = get_links(area_name)
+def get_routes(vissim)
+  area_links = get_links
 
   input_links = area_links.find_all{|l| l.input? }
   exit_links = area_links.find_all{|l| l.exit? }
@@ -86,57 +85,17 @@ def get_routes(vissim, area_name)
   prune_identical routes
 end
 
-class RoutingDecision
-  attr_reader :input_link, :composition, :i
-  @@count = 0
-  def initialize input_link, composition, desc = nil
-    @desc = desc
-    @input_link = input_link
-    @composition = composition
-    @routes = []
-    @@count += 1
-    @i = @@count
-  end
-  def add_route route, fraction
-    raise "Warning: starting link (#{route.start}) of route was different 
-             from the input link of the routing decision(#{@input_link})!" unless route.start == @input_link
-      
-    @routes << {'ROUTE' => route, 'FRACTION' => fraction}
-  end
-  def <=> rd
-    @i <=> rd.i
-  end
-  def to_vissim
-    str = "ROUTING_DECISION #{@i} NAME \"#{@desc ? @desc : comp_to_s(@composition)} from #{@input_link}\" LABEL  0.00 0.00\n"
-    # AT must be AFTER the input point
-    # link inputs are always defined in the end of the link
-    str += "     LINK #{@input_link.number} AT 5.000\n"
-    str += "     TIME FROM 0.0 UNTIL 99999.0\n"
-    str += "     NODE 0\n"
-    str += "      VEHICLE_CLASSES #{@composition}\n"
-        
-    @routes.each_with_index do |route_info,j|
-      route = route_info['ROUTE']
-      str += "     ROUTE     #{j+1}  DESTINATION LINK #{route.exit.number}  AT   7.500\n"
-      str += "     FRACTION #{route_info['FRACTION']}\n"
-      str += "     OVER #{route.to_vissim}\n"
-    end
-    str
-  end
-  def to_s
-    to_vissim
-  end
-end  
+
 
 if $0 == __FILE__ 
 
+  # the following code will generate end-to-end routes
+  # and is not used for vissim route generation
   puts "BEGIN"
   
   vissim = Vissim.new("#{Vissim_dir}tilpasset_model.inp")
   
-  routes = get_routes(vissim,nil)
-
-  
+  routes = get_routes(vissim,nil)  
   
   # generate a routing decision for each link
   # sort by input (start) link number and then traffic composition
