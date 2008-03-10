@@ -1,13 +1,13 @@
-Forklaringer om ruter så snart jeg nævner det
+Forklaringer om ruter så snart jeg nævner det - OK!
 
 Nævn hvordan dogs data'ene fra nov. 2007 er benyttet
 
-Tæl det præcise antal ruter når du nævner det
+Tæl det præcise antal ruter når du nævner det - udgår!
 
 Læg mere vægt på mulighederne for fortolkning fra vissim netværket
 
-Slide om rutefordeling med ord / mat model + forklaring med skitse + hvordan er buffer impl
+Slide om rutefordeling med ord / mat model + forklaring med skitse + hvordan er buffer impl - udgår!
 
 Venstresvingende ved herlev hovedgade fra nord skifter bane på en underlig måde! (spørg evt. marie)
 
-Antal lastbiler på herlev hovedgade
+Antal lastbiler på herlev hovedgade - fixet!
