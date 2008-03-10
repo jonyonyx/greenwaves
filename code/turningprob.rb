@@ -36,7 +36,7 @@ def get_vissim_routes
   for row in exec_query(turning_sql)
     isnum = row['Number'].to_i
     from = row['From'][0..0] # extract the first letter of the From
-    
+        
     dp = DecisionPoint.new(from,isnum)
     for dec in decisions.find_all{|d| d.intersection == isnum and d.from == from}
       for veh_type in ['Cars','Trucks']
@@ -68,9 +68,10 @@ def get_vissim_routes
         local_routes = find_routes(dp_link,dest)
     
         raise "Warning: found multiple routes (#{local_routes.length}) from #{dp_link} to #{dest}" if local_routes.length > 1
-    
+        raise "Warning: no routes from #{dp_link} to #{dest}!" if local_routes.empty?
+        
         route = local_routes.first
-        rd.add_route(route, p)
+        rd.add_route route, p
       end
   
       routing_decisions.add rd 
@@ -78,38 +79,40 @@ def get_vissim_routes
   end
   
   # generate bus routes
-  input_links = routes.map{|r|r.start}.uniq # collect the set of starting links
-  output_links = routes.map{|r|r.exit}.uniq # collect the set of exit links
+  # note: bus routes are input using vissim for the time being
   
-  busplan = exec_query "SELECT BUS, [IN Link], [OUT Link] As OUT, Frequency As FREQ FROM [buses$]"
-  businputs = busplan.map{|row| row['IN Link'].to_i}.uniq
-  
-  busroutemap = {}
-  for input_num in businputs
-    busroutemap[input_num] = busplan.find_all{|r| r['IN Link'].to_i == input_num}
-  end
-  
-  for input_num,businfo in busroutemap
-    input = input_links.find{|l| l.number == input_num}
-    output_nums = businfo.map{|i| i['OUT'].to_i}
-    outputs = output_links.find_all{|l| output_nums.include? l.number}
-    
-    busnames = businfo.map{|i| i['BUS']}
-    
-    rd = RoutingDecision.new(input, 'Buses', "Bus#{busnames.length > 1 ? 'es' : ''} #{busnames.join(', ')}")
-    
-    freq_sum = businfo.inject(0){|sum,i| sum + i['FREQ']}
-    
-    for output in outputs
-      # find the route which connects this input and output link
-      route = routes.find{|r| r.start == input and r.exit == output}
-    
-      busfreq = businfo.find{|i| i['OUT'].to_i == output.number}['FREQ']
-      
-      rd.add_route(route, busfreq / freq_sum)
-    end
-    routing_decisions.add rd
-  end
+#  input_links = routes.map{|r|r.start}.uniq # collect the set of starting links
+#  output_links = routes.map{|r|r.exit}.uniq # collect the set of exit links
+#  
+#  busplan = exec_query "SELECT BUS, [IN Link], [OUT Link] As OUT, Frequency As FREQ FROM [buses$]"
+#  businputs = busplan.map{|row| row['IN Link'].to_i}.uniq
+#  
+#  busroutemap = {}
+#  for input_num in businputs
+#    busroutemap[input_num] = busplan.find_all{|r| r['IN Link'].to_i == input_num}
+#  end
+#  
+#  for input_num,businfo in busroutemap
+#    input = input_links.find{|l| l.number == input_num}
+#    output_nums = businfo.map{|i| i['OUT'].to_i}
+#    outputs = output_links.find_all{|l| output_nums.include? l.number}
+#    
+#    busnames = businfo.map{|i| i['BUS']}
+#    
+#    rd = RoutingDecision.new(input, 'Buses', "Bus#{busnames.length > 1 ? 'es' : ''} #{busnames.join(', ')}")
+#    
+#    freq_sum = businfo.inject(0){|sum,i| sum + i['FREQ']}
+#    
+#    for output in outputs
+#      # find the route which connects this input and output link
+#      route = routes.find{|r| r.start == input and r.exit == output}
+#    
+#      busfreq = businfo.find{|i| i['OUT'].to_i == output.number}['FREQ']
+#      
+#      rd.add_route(route, busfreq / freq_sum)
+#    end
+#    routing_decisions.add rd
+#  end
 
   routing_decisions
 end

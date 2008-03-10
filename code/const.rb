@@ -221,7 +221,7 @@ class SignalHead < VissimElem
   end
 end
 class Link < VissimElem
-  attr_reader :from,:has_trucks,:link_type,:rel_inflow,:adjacent
+  attr_reader :from,:has_trucks,:link_type,:rel_inflow,:adjacent,:lanes
   # total proportion request by all elems of each type
   @@total_inflow = 0.0
   def initialize number,attributes    
@@ -237,6 +237,7 @@ class Link < VissimElem
     @from = attributes['FROM']
     @has_trucks = attributes['HAS_TRUCKS'] == 'Y' # are trucks inserted on this link?
     @link_type = attributes['TYPE']
+    @lanes = attributes['LANES'].to_i
         
     # subtract the old contribution, if defined
     @@total_inflow -= @rel_inflow if @rel_inflow
@@ -334,8 +335,11 @@ class DecisionPoint
     # take the found links in reverse order so as to find the earlist possible
     # link to place the decision upon
     all_pred_links = dec_pred_links.values.flatten.uniq#.reverse
-    all_pred_links.find{|pred_link| @decisions.all?{|dec| dec_pred_links[dec].include? pred_link}}    
+    link_candidates = all_pred_links.find_all{|pred_link| @decisions.all?{|dec| dec_pred_links[dec].include? pred_link}}    
     
+    link_candidates.first
+    # rule of thumb: links with more lanes are likely to be "true" sections of road
+    #link_candidates.max{|l1,l2| l1.lanes <=> l2.lanes} 
   end
   def add decision
     @decisions << decision
@@ -434,16 +438,6 @@ def get_links attributes = {}
     links << link
   end
   links
-end
-def comp_to_s(comp)
-  case comp
-  when 1001
-    'Cars'
-  when 2
-    'Cars, trucks'
-  when 1003
-    'Buses'
-  end
 end
 def find_composition(veh_classes)
   case veh_classes.length
