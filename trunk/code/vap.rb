@@ -109,10 +109,11 @@ def gen_master(area,dn,ds,cnt_dets,occ_dets)
       cp.add "         DOGS_LEVEL := #{level-1};"
       cp.add "     END;", false
     end
+    cp.add "  GOTO FINAL_STATEMENTS;", false
     cp.add "  END;", false
   end
   cp.add "END;", false
-  cp.add "SetT(1)"
+  cp.add_verb "FINAL_STATEMENTS:   SetT(1)"
   cp.add_verb 'PROG_ENDE:    .'
 
   cp.write "#{Vissim_dir}\DOGS.vap"
