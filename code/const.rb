@@ -331,7 +331,9 @@ class DecisionPoint
       end while conn and not conn.dec
     end
     
-    all_pred_links = dec_pred_links.values.flatten.uniq
+    # take the found links in reverse order so as to find the earlist possible
+    # link to place the decision upon
+    all_pred_links = dec_pred_links.values.flatten.uniq#.reverse
     all_pred_links.find{|pred_link| @decisions.all?{|dec| dec_pred_links[dec].include? pred_link}}    
     
   end

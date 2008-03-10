@@ -54,7 +54,7 @@ class RoutingDecision
     str = "ROUTING_DECISION #{i} NAME \"#{@desc ? @desc : (@veh_type)} from #{@input_link}\" LABEL  0.00 0.00\n"
     # AT must be AFTER the input point
     # link inputs are always defined in the end of the link
-    str += "     LINK #{@input_link.number} AT 10.000\n"
+    str += "     LINK #{@input_link.number} AT 25.000\n"
     str += "     TIME FROM 0.0 UNTIL 99999.0\n"
     str += "     NODE 0\n"
     str += "      VEHICLE_CLASSES #{Type_map[@veh_type]}\n"
