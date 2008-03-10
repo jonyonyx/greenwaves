@@ -337,9 +337,9 @@ class DecisionPoint
     all_pred_links = dec_pred_links.values.flatten.uniq#.reverse
     link_candidates = all_pred_links.find_all{|pred_link| @decisions.all?{|dec| dec_pred_links[dec].include? pred_link}}    
     
-    link_candidates.first
+    #link_candidates.first
     # rule of thumb: links with more lanes are likely to be "true" sections of road
-    #link_candidates.max{|l1,l2| l1.lanes <=> l2.lanes} 
+    link_candidates.min{|l1,l2| l1.lanes <=> l2.lanes} 
   end
   def add decision
     @decisions << decision
