@@ -19,10 +19,14 @@ def get_vissim_routes
   decisions = routes.collect{|r|r.decisions}.flatten.uniq 
 
   turning_sql = "SELECT Number, [From], 
-        SUM([Cars Left]) As CARS_L,
-        SUM([Cars Through]) As CARS_T,
-        SUM([Cars Right]) As CARS_R,
-        SUM([Total Cars]) As CARS_TOT
+        SUM([Cars Left]) As Cars_L,
+        SUM([Cars Through]) As Cars_T,
+        SUM([Cars Right]) As Cars_R,
+        SUM([Total Cars]) As Cars_TOT,
+        SUM([Trucks Left]) As Trucks_L,
+        SUM([Trucks Through]) As Trucks_T,
+        SUM([Trucks Right]) As Trucks_R,
+        SUM([Total Trucks]) As Trucks_TOT
        FROM [counts$] 
        WHERE Number IN (1,2,3,4,5)
        GROUP BY Number,[From]"
@@ -35,10 +39,12 @@ def get_vissim_routes
     
     dp = DecisionPoint.new(from,isnum)
     for dec in decisions.find_all{|d| d.intersection == isnum and d.from == from}
-      # set the probability of making this turning decisions 
-      # as given in the traffic counts
-      # turning_motion must equal L(eft), T(hrough) or R(ight)
-      dec.p = row['CARS_' + dec.turning_motion] / row['CARS_TOT'] 
+      for veh_type in ['Cars','Trucks']
+        # set the probability of making this turning decisions 
+        # as given in the traffic counts
+        # turning_motion must equal L(eft), T(hrough) or R(ight)
+        dec.p[veh_type] = row[veh_type + '_' + dec.turning_motion] / row[veh_type + '_TOT'] 
+      end
       dp.add dec
     end
     dp.check_prob_assigned # throws a warning if not all flow is assigned to decisions
@@ -48,23 +54,27 @@ def get_vissim_routes
   routing_decisions = RoutingDecisions.new
 
   for dp in decision_points
-    dp_link = dp.link # the common starting point for decision in this point
-    rd = RoutingDecision.new(dp_link,1001)
+    for veh_type in ['Cars','Trucks']
+      dp_link = dp.link # the common starting point for decision in this point
+      rd = RoutingDecision.new(dp_link, veh_type)
   
-    # add routes to the decision point
-    for d_end in dp.decisions
-      dest = d_end.connector.to
-      #puts "Route from #{dp_link} over #{d_end.connector} with fraction #{d_end.p}"
+      # add routes to the decision point
+      for d_end in dp.decisions
+        p = d_end.p[veh_type]
+        next if p < EPS
+        dest = d_end.connector.to
+        #puts "Route from #{dp_link} over #{d_end.connector} with fraction #{d_end.p}"
     
-      local_routes = find_routes(dp_link,dest)
+        local_routes = find_routes(dp_link,dest)
     
-      raise "Warning: found multiple routes (#{local_routes.length}) from #{dp_link} to #{dest}" if local_routes.length > 1
+        raise "Warning: found multiple routes (#{local_routes.length}) from #{dp_link} to #{dest}" if local_routes.length > 1
     
-      route = local_routes.first
-      rd.add_route(route, d_end.p)
+        route = local_routes.first
+        rd.add_route(route, p)
+      end
+  
+      routing_decisions.add rd 
     end
-  
-    routing_decisions.add rd 
   end
   
   # generate bus routes
@@ -86,7 +96,7 @@ def get_vissim_routes
     
     busnames = businfo.map{|i| i['BUS']}
     
-    rd = RoutingDecision.new(input, 1003, "Bus#{busnames.length > 1 ? 'es' : ''} #{busnames.join(', ')}")
+    rd = RoutingDecision.new(input, 'Buses', "Bus#{busnames.length > 1 ? 'es' : ''} #{busnames.join(', ')}")
     
     freq_sum = businfo.inject(0){|sum,i| sum + i['FREQ']}
     

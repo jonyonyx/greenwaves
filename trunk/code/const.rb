@@ -20,7 +20,10 @@ Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
 EPS = 0.01
 INPUT_FACTOR = 1.0 # factor used to adjust link inputs
 ANNUAL_INCREASE = 1.015 # used in input generation for scaling
-  
+DOGS_LEVELS = 8
+DOGS_LEVELDOWN_BUFFER = 0.1 # percentage of threshold value for current level
+BASE_CYCLE_TIME = 80 # seconds
+DOGS_LEVEL_GREEN = 10 # seconds
 DATAFILE = "../data/data.xls" # main data file containing counts, sgp's, you name it
 CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
 
@@ -79,7 +82,7 @@ class VissimElem
   end
   def type; self.class.to_s; end
   def to_s
-    "#{type} #{@number} '#{@name}'"
+    "#{type} #{@number}#{@name and @name != '' ? " '#{@name}'" : ''}"
   end
   def hash; @number + type.hash; end
   def eql?(other); self.class == other.class and @number == other.number; end
@@ -187,10 +190,10 @@ class SignalGroup < VissimElem
     else
       RED
     end
-#    return GREEN if active_seconds === cycle_sec
-#    return AMBER if (@red_end+1..@red_end+@tred_amber) === cycle_sec
-#    return YELLOW if (@green_end..@green_end+@tamber) === cycle_sec
-#    return RED
+    #    return GREEN if active_seconds === cycle_sec
+    #    return AMBER if (@red_end+1..@red_end+@tred_amber) === cycle_sec
+    #    return YELLOW if (@green_end..@green_end+@tamber) === cycle_sec
+    #    return RED
   end
   def active_seconds
     green_start = @red_end + @tred_amber + 1
@@ -336,9 +339,11 @@ class DecisionPoint
     @decisions << decision
   end  
   def check_prob_assigned
-    sum = @decisions.map{|dec| dec.p}.sum
-    raise "Warning: the sum of turning probabilities for decision point #{@from}#{@intersection} was #{sum}! 
+    for veh_type in @decisions.map{|dec| dec.p.keys}.flatten.uniq
+      sum = @decisions.map{|dec| dec.p[veh_type]}.sum
+      raise "Warning: the sum of turning probabilities for #{veh_type} at decision point #{@from}#{@intersection} was #{sum}! 
            Maybe you forgot to mark a connector?" if (sum-1.0).abs > 0.01
+    end
   end
   def to_s
     str = "Decision point #{@from}#{@intersection}:"
@@ -350,12 +355,12 @@ class DecisionPoint
   end
 end
 class Decision
-  attr_reader :from,:intersection,:turning_motion,:flow,:successors,:connector
-  attr_accessor :p # probability of reaching this decision
+  attr_reader :from,:intersection,:turning_motion,:flow,:successors,:connector,
+    :p # probability of reaching this decision per vehicle type
   def initialize from,intersection,turning_motion, connector
     @from,@intersection,@turning_motion = from,intersection,turning_motion    
     @connector = connector
-    @p = 0.0
+    @p = Hash.new(0.0)
     @flow = 0.0
     @successors = []
   end

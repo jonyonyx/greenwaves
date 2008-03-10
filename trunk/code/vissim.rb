@@ -19,7 +19,7 @@ class VissimOutput
     puts "Wrote #{self.class} to '#{@@inpfile}'"
   end
 end
-
+Early_decisions = [48131192,48131192]
 class RoutingDecisions < VissimOutput
   def initialize
     @routing_decisions = []
@@ -37,11 +37,11 @@ class RoutingDecisions < VissimOutput
   end
 end
 class RoutingDecision
-  attr_reader :input_link, :composition
-  def initialize input_link, composition, desc = nil
+  attr_reader :input_link, :veh_type
+  def initialize input_link, veh_type, desc = nil
     @desc = desc
     @input_link = input_link
-    @composition = composition
+    @veh_type = veh_type
     @routes = []
   end
   def add_route route, fraction
@@ -51,13 +51,13 @@ class RoutingDecision
     @routes << {'ROUTE' => route, 'FRACTION' => fraction}
   end
   def to_vissim i
-    str = "ROUTING_DECISION #{i} NAME \"#{@desc ? @desc : comp_to_s(@composition)} from #{@input_link}\" LABEL  0.00 0.00\n"
+    str = "ROUTING_DECISION #{i} NAME \"#{@desc ? @desc : (@veh_type)} from #{@input_link}\" LABEL  0.00 0.00\n"
     # AT must be AFTER the input point
     # link inputs are always defined in the end of the link
-    str += "     LINK #{@input_link.number} AT 5.000\n"
+    str += "     LINK #{@input_link.number} AT 10.000\n"
     str += "     TIME FROM 0.0 UNTIL 99999.0\n"
     str += "     NODE 0\n"
-    str += "      VEHICLE_CLASSES #{@composition}\n"
+    str += "      VEHICLE_CLASSES #{Type_map[@veh_type]}\n"
         
     @routes.each_with_index do |route_info,j|
       route = route_info['ROUTE']
