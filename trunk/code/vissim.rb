@@ -216,10 +216,21 @@ class Vissim
     end
   end
   def parse_links    
-    for line in @inp
-      next unless line =~ /^LINK\s+(\d+) NAME \"#{Name_pat}\"/
+    i = 0
+    while i < @inp.length
+      unless @inp[i] =~ /^LINK\s+(\d+) NAME \"#{Name_pat}\"/
+        i += 1
+        next
+      end
+      
+      number = $1.to_i
+      name = $2
+      
+      i += 1
+      
+      @inp[i] =~ /LANES  (\d+)/
   
-      yield Link.new($1.to_i,'NAME' => $2)
+      yield Link.new(number,'NAME' => name, 'LANES' => $1)
     end
   end
 end

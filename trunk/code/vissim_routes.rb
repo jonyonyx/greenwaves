@@ -17,10 +17,18 @@ require 'facets/dictionary'
 # now have both the connectors and links
 
 def discover start, dest = nil, path=Dictionary[start,nil], &callback
+  # explore adjacent links first, starting with the ones
+  # with the more lanes as they are more interesting in routes
+  #start.adjacent.sort{|p1,p2| p1[0].lanes <=> p2[0].lanes}.reverse_each do |adj,conn|  
+  
+#  unless start.is_a?(Link) # TODO: Find out why Arrays are passed as start!
+#    puts "Received non-Link object: '#{start}' class: #{start.class}!"    
+#    start = start.first # assume this is an array!
+#  end
+  
   for adj,conn in start.adjacent
     # avoid loops by checking if the path contain this link
-    next if path.has_key?(adj) 
-    
+    next if path.has_key?(adj)
     # assume there exist a valid route using this connector to reach adj_link;
     # if this is not true, nothing is returned anyhow.
     if adj == dest or adj.exit?
@@ -32,7 +40,6 @@ def discover start, dest = nil, path=Dictionary[start,nil], &callback
     end
   end
 end
-
 
 def prune_identical routes
   # arterial optimization: prune "identical" routes ie same start and end
@@ -48,7 +55,30 @@ def prune_identical routes
         # found identical route
         # the shortest one is always the best, since the other includes 
         # a rest stop so store the one to remove
-        identical_routes << [r1,r2].max
+        #identical_routes << [r1,r2].max
+        if r1.length < r2.length
+          identical_routes << r2
+        elsif r1.length > r2.length
+          identical_routes << r1
+        else
+          # find the links which are unique to the route
+          # and
+          r1_uniq_links = [r1.links - r2.links].flatten          
+          r2_uniq_links = [r2.links - r1.links].flatten
+          r1_lanes = r1_uniq_links.map{|l| l.lanes}.sum
+          r2_lanes = r2_uniq_links.map{|l| l.lanes}.sum
+          
+          #puts "found identical routes but r1 lanes = #{r1_lanes}, r2 lanes =#{r2_lanes}" if r1_lanes != r2_lanes
+          if r1_lanes > r2_lanes
+            identical_routes << r2
+          elsif r1_lanes < r2_lanes
+            identical_routes << r1
+          else
+            # pick one of them, for now!
+            # until something new breaks!!! arg :)
+            identical_routes << r1
+          end
+        end
       end
     
     end
@@ -83,100 +113,4 @@ def get_routes(vissim)
     end
   end
   prune_identical routes
-end
-
-
-
-if $0 == __FILE__ 
-
-  # the following code will generate end-to-end routes
-  # and is not used for vissim route generation
-  puts "BEGIN"
-  
-  vissim = Vissim.new("#{Vissim_dir}tilpasset_model.inp")
-  
-  routes = get_routes(vissim,nil)  
-  
-  # generate a routing decision for each link
-  # sort by input (start) link number and then traffic composition
-  # of exit (end) link
-  decisions = []
-  
-  routingdec = nil
-  
-  input_links = routes.map{|r|r.start}.uniq # collect the set of starting links
-  
-  for input in input_links
-    # make a new decision point for each vehicle class of the input
-    # which is also a vehicle class at the exit link
-  
-    # find all routes starting at input, sorted by traffic type and then length
-    for route in routes.find_all{|r| r.start == input}.sort{|r1,r2| r1.exit.traffic_composition == r2.exit.traffic_composition ? r1 <=> r2 : r1.exit.traffic_composition <=> r2.exit.traffic_composition}
-      exit = route.exit
-      exit_classes = exit.vehicle_classes
-      
-      # find the best composition between input and exit vehicle classes
-      common_classes = input.vehicle_classes & exit_classes
-      
-      comp = find_composition(common_classes)
-    
-      #puts "Generating '#{comp_to_s(comp)}' route from #{input} to #{exit}"
-    
-      if routingdec.nil? or input != routingdec.input_link or comp != routingdec.composition        
-        # make a new route decision point when a new starting location
-        # or traffic composition for the route (exit link) is found.
-        # first make sure only the appropriate vehicles take this route
-        # by inspecting the vehicle types of the exit link
-        # routing decisions have one or more routes to choose from
-        
-        routingdec = RoutingDecision.new(input, comp)
-        decisions << routingdec
-      end
-      
-      routingdec.add_route(route, 1) # TODO: calculate the proper fraction
-    
-    end
-  end
-  
-  output_links = routes.map{|r|r.exit}.uniq # collect the set of exit links
-  
-  busplan = exec_query "SELECT BUS, [IN Link], [OUT Link] As OUT, Frequency As FREQ FROM [buses$]"
-  businputs = busplan.map{|row| row['IN Link'].to_i}.uniq
-  
-  busroutemap = {}
-  for input_num in businputs
-    busroutemap[input_num] = busplan.find_all{|r| r['IN Link'].to_i == input_num}
-  end
-  
-  for input_num,businfo in busroutemap
-    input = input_links.find{|l| l.number == input_num}
-    output_nums = businfo.map{|i| i['OUT'].to_i}
-    outputs = output_links.find_all{|l| output_nums.include? l.number}
-    
-    busnames = businfo.map{|i| i['BUS']}
-    
-    routingdec = RoutingDecision.new(input, 1003, "Bus#{busnames.length > 1 ? 'es' : ''} #{busnames.join(', ')}")
-    
-    freq_sum = businfo.inject(0){|sum,i| sum + i['FREQ']}
-    
-    for output in outputs
-      # find the route which connects this input and output link
-      route = routes.find{|r| r.start == input and r.exit == output}
-    
-      busfreq = businfo.find{|i| i['OUT'].to_i == output.number}['FREQ']
-      
-      # 
-      routingdec.add_route(route, busfreq / freq_sum) # 
-    end
-    decisions << routingdec
-  end
-
-  str = decisions.find_all{|dec| dec.composition != 1003}.map{|rd| rd.to_vissim}.join("\n")
-  
-  puts str
-
-  Clipboard.set_data str
-  puts "Please find the Routing Decisions on your clipboard."
-
-  puts "END"
 end
