@@ -1,12 +1,9 @@
-require 'const'
-require 'vissim'
+require 'network'
 require 'vissim_routes'
 
-def get_vissim_routes
+def get_vissim_routes vissim
 
-  vissim = Vissim.new("#{Vissim_dir}tilpasset_model.inp")
-
-  routes = get_routes(vissim)
+  routes = get_full_routes vissim
 
   # join decisions to their successors
   for route in routes
@@ -77,42 +74,6 @@ def get_vissim_routes
       routing_decisions.add rd 
     end
   end
-  
-  # generate bus routes
-  # note: bus routes are input using vissim for the time being
-  
-#  input_links = routes.map{|r|r.start}.uniq # collect the set of starting links
-#  output_links = routes.map{|r|r.exit}.uniq # collect the set of exit links
-#  
-#  busplan = exec_query "SELECT BUS, [IN Link], [OUT Link] As OUT, Frequency As FREQ FROM [buses$]"
-#  businputs = busplan.map{|row| row['IN Link'].to_i}.uniq
-#  
-#  busroutemap = {}
-#  for input_num in businputs
-#    busroutemap[input_num] = busplan.find_all{|r| r['IN Link'].to_i == input_num}
-#  end
-#  
-#  for input_num,businfo in busroutemap
-#    input = input_links.find{|l| l.number == input_num}
-#    output_nums = businfo.map{|i| i['OUT'].to_i}
-#    outputs = output_links.find_all{|l| output_nums.include? l.number}
-#    
-#    busnames = businfo.map{|i| i['BUS']}
-#    
-#    rd = RoutingDecision.new(input, 'Buses', "Bus#{busnames.length > 1 ? 'es' : ''} #{busnames.join(', ')}")
-#    
-#    freq_sum = businfo.inject(0){|sum,i| sum + i['FREQ']}
-#    
-#    for output in outputs
-#      # find the route which connects this input and output link
-#      route = routes.find{|r| r.start == input and r.exit == output}
-#    
-#      busfreq = businfo.find{|i| i['OUT'].to_i == output.number}['FREQ']
-#      
-#      rd.add_route(route, busfreq / freq_sum)
-#    end
-#    routing_decisions.add rd
-#  end
 
   routing_decisions
 end

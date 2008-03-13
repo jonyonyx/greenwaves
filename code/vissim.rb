@@ -19,7 +19,6 @@ class VissimOutput
     puts "Wrote #{self.class} to '#{@@inpfile}'"
   end
 end
-Early_decisions = [48131192,48131192]
 class RoutingDecisions < VissimOutput
   def initialize
     @routing_decisions = []
@@ -108,7 +107,7 @@ class Inputs < VissimOutput
 end
 
 class Vissim
-  attr_reader :links_map,:conn_map,:sc_map,:inp
+  attr_reader :links_map,:conn_map,:sc_map,:inp,:links
   def initialize inpfile
     @inpfile = inpfile
     @inp = IO.readlines(inpfile)
@@ -118,6 +117,8 @@ class Vissim
     parse_links do |link|
       @links_map[link.number] = link
     end
+    
+    @links = @links_map.values
 
     @conn_map = {}
     #now get the connectors and join them up using the links
