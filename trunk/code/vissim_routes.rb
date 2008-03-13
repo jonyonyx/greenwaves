@@ -12,79 +12,84 @@
 
 require 'const'
 require 'vissim'
-require 'facets/dictionary'
+
+class Route  
+  attr_reader :links,:connectors,:decisions
+  # a route is a list of links which are followed by using
+  # the given connectors
+  def initialize links,connectors
+    @links,@connectors = links,connectors
+    @decisions = @connectors.map{|conn| conn.dec} - [nil]
+  end
+  def length; @links.length; end
+  def start; @links.first; end
+  def exit; @links.last; end
+  # returns a space-separated string of the connector-link-connector... sequence
+  # for use in the vissim OVER format in route decisions
+  def to_vissim
+    str = ''
+    for i in (1...length-1)
+      #for link in links[1..-2]
+      conn = @connectors[i-1]
+      link = @links[i]
+      str += "#{conn.number} #{link.number} "
+    end
+    str += connectors.last.number.to_s # last connector, omit the link (implicit = exit link)
+  end
+  def to_dpstring
+    decisions.join(' > ')
+  end
+  def to_s
+    "#{start} > ... (#{length-2}) > #{exit}"
+  end  
+  def <=>(other)
+    length <=> other.length
+  end
+end
 
 # now have both the connectors and links
 
-def discover start, dest = nil, path=Dictionary[start,nil], &callback
+def discover start, exits, links = [start], connectors = [], &callback
   # explore adjacent links first, starting with the ones
   # with the more lanes as they are more interesting in routes
   #start.adjacent.sort{|p1,p2| p1[0].lanes <=> p2[0].lanes}.reverse_each do |adj,conn|  
-  
-#  unless start.is_a?(Link) # TODO: Find out why Arrays are passed as start!
-#    puts "Received non-Link object: '#{start}' class: #{start.class}!"    
-#    start = start.first # assume this is an array!
-#  end
-  
+    
   for adj,conn in start.adjacent
     # avoid loops by checking if the path contain this link
-    next if path.has_key?(adj)
+    next if links.include? adj
     # assume there exist a valid route using this connector to reach adj_link;
     # if this is not true, nothing is returned anyhow.
-    if adj == dest or adj.exit?
+    if exits.include? adj
       # found an exit link for this path
-      yield Route.new(path.merge(adj => conn)) 
+      yield Route.new(links + [adj], connectors + [conn]) 
     else
       # copy the path to avoid backreferences among routes
-      discover(adj, dest, path.merge(adj => conn),&callback) # look further
+      discover adj, exits, links + [adj], connectors + [conn], &callback # look further
     end
   end
 end
 
 def prune_identical routes
   # arterial optimization: prune "identical" routes ie same start and end
-
-  identical_routes = [] # the identical routes with fewer lanes to remove
-  for i in (0...routes.length)
-    for j in (0...routes.length)
-      next if i == j
-      r1 = routes[i]
-      r2 = routes[j]
+  
+  exiting_at = {}
+  routes.map{|r| r.exit}.uniq.each do |exit_link|
+    exiting_at[exit_link] = routes.find_all{|r| r.exit == exit_link}
+  end
     
-      if r1.start == r2.start and r1.exit == r2.exit
-        # found identical route
-        # the shortest one is always the best, since the other includes 
-        # a rest stop so store the one to remove
-        #identical_routes << [r1,r2].max
-        if r1.length < r2.length
-          identical_routes << r2
-        elsif r1.length > r2.length
-          identical_routes << r1
-        else
-          # find the links which are unique to the route
-          # and
-          r1_uniq_links = [r1.links - r2.links].flatten          
-          r2_uniq_links = [r2.links - r1.links].flatten
-          r1_lanes = r1_uniq_links.map{|l| l.lanes}.sum
-          r2_lanes = r2_uniq_links.map{|l| l.lanes}.sum
-          
-          #puts "found identical routes but r1 lanes = #{r1_lanes}, r2 lanes =#{r2_lanes}" if r1_lanes != r2_lanes
-          if r1_lanes > r2_lanes
-            identical_routes << r2
-          elsif r1_lanes < r2_lanes
-            identical_routes << r1
-          else
-            # pick one of them, for now!
-            # until something new breaks!!! arg :)
-            identical_routes << r1
-          end
-        end
-      end
-    
+  routes_to_remove = []
+  for start_link in routes.map{|r| r.start}.uniq
+    #puts "Eliminating route duplicates starting at #{start_link}... "
+    for r1 in routes.find_all{|r| r.start == start_link}
+      next if routes_to_remove.include? r1
+      duplicates = exiting_at[r1.exit].find_all{|r2| r2 != r1 and r2.start == start_link}
+      routes_to_remove += duplicates
     end
   end
-  #puts "Pruned #{identical_routes.length} of #{identical_routes.length + routes.length} routes because they had the same start and exit"
-  routes - identical_routes  
+  
+  #puts "Removed #{routes_to_remove.length} of #{routes.length} routes"
+  
+  routes - routes_to_remove
 end
 
 def find_routes start,dest  
@@ -93,24 +98,36 @@ def find_routes start,dest
   discover(start,dest) do |r|
     routes << r if r.exit == dest # skip past routes with true exits
   end
-  routes = prune_identical routes
-  #puts "Discovered #{routes.length} routes from #{start} to #{dest}"
-  routes
+  prune_identical routes
 end
 
-def get_routes(vissim)
-  area_links = get_links
-
-  input_links = area_links.find_all{|l| l.input? }
-  exit_links = area_links.find_all{|l| l.exit? }
-
-  exit_numbers = exit_links.map{|l| l.number}
-
-  routes = []
-  for link in input_links.map{|l| vissim.links_map[l.number]}.compact
-    discover(link) do |route|
-      routes << route if exit_numbers.include?(route.exit.number)
+# finds all full ie. start-to-end routes
+# in the given vissim network
+def get_full_routes(vissim)
+  input_links, exit_links = [],[]
+  for link in vissim.links
+    if link.input?
+      input_links << link
+    elsif link.exit?
+      exit_links << link
     end
   end
+
+  routes = []
+  for start in input_links    
+    #count = routes.length
+    #print "Finding routes from #{start}... "
+    discover(start,exit_links) do |route|
+      routes << route
+    end
+    #puts "found #{routes.length - count} routes"
+  end
+  
+  #puts "Completed route enumeration, found #{routes.length} routes in total"
+  
   prune_identical routes
+end
+
+if __FILE__ == $0
+  get_full_routes Vissim.new("#{Vissim_dir}tilpasset_model.inp")
 end
