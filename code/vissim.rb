@@ -107,26 +107,37 @@ class Inputs < VissimOutput
 end
 
 class Vissim
-  attr_reader :links_map,:conn_map,:sc_map,:inp,:links
+  attr_reader :links_map,:conn_map,:sc_map,:inp,:links,:input_links,:exit_links
   def initialize inpfile
     @inpfile = inpfile
-    @inp = IO.readlines(inpfile)
+    @inp = IO.readlines inpfile
 
     @links_map = {}
     # first parse all LINKS
-    parse_links do |link|
-      @links_map[link.number] = link
+    parse_links do |l|
+      @links_map[l.number] = l
     end
     
-    @links = @links_map.values
+    # enrich the existing object with data from the database
+    for row in exec_query "SELECT NUMBER, NAME, [FROM], TYPE FROM [links$] As LINKS WHERE TYPE = 'IN'"    
+      number = row['NUMBER'].to_i
+    
+      next unless links_map.has_key?(number)
+      links_map[number].update row    
+    end
 
     @conn_map = {}
     #now get the connectors and join them up using the links
     parse_connectors do |conn|
       # found a connection, join up the links
-      conn.from.add conn.to, conn  
+      # only links which can be reached are cars and trucks are interesting
+      conn.from.add conn.to, conn
       @conn_map[conn.number] = conn
     end
+    
+    @links = @links_map.values
+    @input_links = @links.find_all{|l| l.input?}
+    @exit_links = @links.find_all{|l| l.exit?}
     
     @sc_map = {}
     parse_controllers do |sc|
@@ -212,8 +223,19 @@ class Vissim
       i += 1 until @inp[i] =~ /TO LINK (\d+)/
   
       to_link = @links_map[$1.to_i]
+      
+      # look for any closed to declarations
+      # (they are mandatory)
+      i += 1 until @inp[i] == "" or @inp[i] =~ /(CLOSED|CONNECTOR|-- .+ --)/
+      
+      closed_to = if $1 == "CLOSED"
+        @inp[i+1] =~ /VEHICLE_CLASSES ([\d ]+)+/
+        $1.split(' ').map{|str| str.to_i}
+      else
+        []
+      end
   
-      yield Connector.new(number,name,from_link,to_link,lanes)     
+      yield Connector.new(number,name,from_link,to_link,lanes,closed_to)     
     end
   end
   def parse_links    
@@ -230,8 +252,14 @@ class Vissim
       i += 1
       
       @inp[i] =~ /LANES  (\d+)/
+      
+      opts = {'NAME' => name, 'LANES' => $1}
   
-      yield Link.new(number,'NAME' => name, 'LANES' => $1)
+      yield Link.new(number,opts)
     end
   end
+end
+
+if __FILE__ == $0
+  Vissim.new(Default_network)
 end

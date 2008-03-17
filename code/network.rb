@@ -14,12 +14,11 @@ class Link < VissimElem
     # to the used connector
     @adjacent = {}
   end
-  def update attributes
+  def update opts
     super
-    @from = attributes['FROM']
-    @has_trucks = attributes['HAS_TRUCKS'] == 'Y' # are trucks inserted on this link?
-    @link_type = attributes['TYPE']
-    @lanes = attributes['LANES'].to_i
+    @from = opts['FROM']
+    @link_type = opts['TYPE']
+    @lanes = opts['LANES']
   end
   def adjacent_links; @adjacent.keys; end
   # connects self to given adjacent link by given connector
@@ -29,16 +28,8 @@ class Link < VissimElem
     @adjacent[adj_link] = conn
   end
   # is this link an exit (from the network) link?
-  def exit?; @link_type == 'OUT' or @adjacent.empty?; end
-  def input?
-    return true if @link_type == 'IN'
-    # look for links, which have self on the adjacent list
-    # if none are found, this is an input link
-    ObjectSpace.each_object(Link) do |link|
-      return false if link.adjacent_links.include?(self)
-    end
-    true
-  end
+  def exit?; @adjacent.empty?; end
+  def input?; @link_type == 'IN'; end
   def to_s
     str = super
     str += ' ' + @direction if @direction
@@ -57,8 +48,10 @@ class DecisionPoint
   # destination links
   def link
     
+    raise "Decision point #{@from}#{@intersection} has no decisions!" if @decisions.empty?
+    
     connectors = []    
-    ObjectSpace.each_object(Connector) {|c| connectors << c}
+    ObjectSpace.each_object(Connector) {|c| connectors << c if (c.closed_to & Cars_and_trucks).empty?}
     
     dec_pred_links = {}
     
@@ -81,9 +74,17 @@ class DecisionPoint
     all_pred_links = dec_pred_links.values.flatten.uniq#.reverse
     link_candidates = all_pred_links.find_all{|pred_link| @decisions.all?{|dec| dec_pred_links[dec].include? pred_link}}    
     
-    #link_candidates.first
-    # rule of thumb: links with more lanes are likely to be "true" sections of road
-    link_candidates.min{|l1,l2| l1.lanes <=> l2.lanes} 
+    l = link_candidates.first
+    
+    unless l
+      str = ""
+      for dec,links in dec_pred_links
+        puts "#{dec}: #{links ? links.join(' ') : '(none)'}"
+      end
+      raise "No common links found: #{str}"
+    end
+    l
+    
   end
   def add decision
     @decisions << decision
@@ -99,30 +100,24 @@ class DecisionPoint
     str = "Decision point #{@from}#{@intersection}:"
     for dec in @decisions
       successors = dec.successors
-      str += "\n\t#{dec.turning_motion} #{format('split: %02f',dec.p)}, successors: #{successors.empty? ? '(none)' : successors.join(' ')}"
+      str += "\n\t#{dec.turning_motion}, successors: #{successors.empty? ? '(none)' : successors.join(' ')}"
     end
     str
   end
 end
 class Decision
-  attr_reader :from,:intersection,:turning_motion,:flow,:successors,:connector,
+  attr_reader :from,:intersection,:turning_motion,:successors,:connector,
     :p # probability of reaching this decision per vehicle type
   def initialize from,intersection,turning_motion, connector
     @from,@intersection,@turning_motion = from,intersection,turning_motion    
     @connector = connector
     @p = Hash.new(0.0)
-    @flow = 0.0
     @successors = []
   end
   def <=>(d2)
     @intersection == d2.intersection ? 
     (@from == d2.from ? @turning_motion <=> d2.turning_motion : @from <=> d2.from) : 
     @intersection <=> d2.intersection
-  end
-  # assigns flow to this decision
-  # from dec which is the predecessor decision supplying flow to this decision
-  def assign dec
-    @flow += dec.flow * @p
   end
   def add_succ dec
     raise "Warning: nil successors are not allowed" unless dec
@@ -137,18 +132,21 @@ class Decision
     return true
   end
   def to_s
-    "#{@intersection}#{@from}#{@turning_motion}"
+    "#{@from}#{@intersection}#{@turning_motion}"
   end
 end
 class Connector < VissimElem
-  attr_reader :from,:to,:lanes,:dec
-  def initialize number,name,from,to,lanes
+  attr_reader :from,:to,:lanes,:dec,:closed_to
+  def initialize number,name,from,to,lanes,closed_to
     super number,'NAME' => name
-    @from,@to,@lanes = from,to,lanes
+    @from,@to,@lanes,@closed_to = from,to,lanes,closed_to
     if name =~ /([NSEW])(\d+)([LTR])/
       # only one connector object represents each physical connector
       @dec = Decision.new($1,$2.to_i,$3,self)
     end
+  end
+  def closed_to_any? veh_types
+    not (@closed_to & veh_types).empty?
   end
   def <=>(c2)
     @intersection == c2.intersection ? @from_direction <=> c2.from_direction : @intersection <=> c2.intersection

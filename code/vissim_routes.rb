@@ -29,7 +29,6 @@ class Route
   def to_vissim
     str = ''
     for i in (1...length-1)
-      #for link in links[1..-2]
       conn = @connectors[i-1]
       link = @links[i]
       str += "#{conn.number} #{link.number} "
@@ -50,13 +49,10 @@ end
 # now have both the connectors and links
 
 def discover start, exits, links = [start], connectors = [], &callback
-  # explore adjacent links first, starting with the ones
-  # with the more lanes as they are more interesting in routes
-  #start.adjacent.sort{|p1,p2| p1[0].lanes <=> p2[0].lanes}.reverse_each do |adj,conn|  
-    
   for adj,conn in start.adjacent
     # avoid loops by checking if the path contain this link
-    next if links.include? adj
+    # or the link is closed to ordinary vehicle types
+    next if links.include? adj or conn.closed_to_any? Cars_and_trucks
     # assume there exist a valid route using this connector to reach adj_link;
     # if this is not true, nothing is returned anyhow.
     if exits.include? adj
@@ -87,7 +83,7 @@ def prune_identical routes
     end
   end
   
-  #puts "Removed #{routes_to_remove.length} of #{routes.length} routes"
+  puts "Eliminated #{routes_to_remove.length} of #{routes.length} routes"
   
   routes - routes_to_remove
 end
@@ -95,8 +91,8 @@ end
 def find_routes start,dest  
   routes = []
   #puts "Finding routes from #{start} to #{dest}"
-  discover(start,dest) do |r|
-    routes << r if r.exit == dest # skip past routes with true exits
+  discover(start,[dest]) do |r|
+    routes << r
   end
   prune_identical routes
 end
@@ -104,20 +100,12 @@ end
 # finds all full ie. start-to-end routes
 # in the given vissim network
 def get_full_routes(vissim)
-  input_links, exit_links = [],[]
-  for link in vissim.links
-    if link.input?
-      input_links << link
-    elsif link.exit?
-      exit_links << link
-    end
-  end
-
+  
   routes = []
-  for start in input_links    
+  for start in vissim.input_links    
     #count = routes.length
     #print "Finding routes from #{start}... "
-    discover(start,exit_links) do |route|
+    discover(start, vissim.exit_links) do |route|
       routes << route
     end
     #puts "found #{routes.length - count} routes"
@@ -129,5 +117,15 @@ def get_full_routes(vissim)
 end
 
 if __FILE__ == $0
-  get_full_routes Vissim.new("#{Vissim_dir}tilpasset_model.inp")
+  # 48131026
+  vissim = Vissim.new(Default_network)
+  routes = get_full_routes vissim
+  puts routes
+  puts "Found #{routes.length} routes"
+  
+  for route in routes
+    
+    route_numbers = route.links.map{|l|l.number}
+    puts route.to_vissim if [48131145].all?{|n| route_numbers.include? n}
+  end
 end
