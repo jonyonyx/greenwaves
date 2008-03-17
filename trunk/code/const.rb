@@ -11,6 +11,7 @@ Base_dir = 'D:\\greenwaves\\'
 Herlev_dir = Base_dir + 'data\\DOGS Herlev 2007\\'
 Glostrup_dir = Base_dir + 'data\\DOGS Glostrup 2007\\'
 Vissim_dir = Base_dir + 'Vissim\\o3_roskildevej-herlevsygehus\\'
+Default_network = "#{Vissim_dir}tilpasset_model.inp"
 
 Time_fmt = '%H:%M:%S'
 Res = 15 # resolution in minutes of inputs
@@ -24,6 +25,8 @@ NONE = 'None'
 
 # associated numbers with these vehicle types
 Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
+Cars_and_trucks = [1001, 1002]
+
 EPS = 0.01
 INPUT_FACTOR = 1.0 # factor used to adjust link inputs
 ANNUAL_INCREASE = 1.015 # used in input generation for scaling
@@ -39,29 +42,6 @@ def exec_query sql, conn_str = CS
   DBI.connect(conn_str) do |dbh|  
     return dbh.select_all(sql)
   end
-end
-def get_links attributes = {}
-  type_filter = attributes['TYPE'].downcase if attributes.has_key?('TYPE')
-    
-  links_map = {}
-  ObjectSpace.each_object(Link){|link| links_map[link.number] = link}
-    
-  links = []
-    
-  for row in exec_query 'SELECT NUMBER, NAME, [FROM], TYPE FROM [links$] As LINKS'
-    number = row['NUMBER'].to_i    
-            
-    if links_map.has_key?(number)
-      # enrich the existing object with data from the database
-      link = links_map[number]
-      link.update row
-    else
-      next if type_filter and row['TYPE'].downcase != type_filter
-      link = Link.new(number,row)
-    end
-    links << link
-  end
-  links
 end
 class Array
   def sum ; inject{|a,x|x+a} ; end

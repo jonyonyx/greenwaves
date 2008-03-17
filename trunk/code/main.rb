@@ -3,8 +3,8 @@ require 'turningprob'
 require 'vissim_input'
 
 
-vissim = Vissim.new("#{Vissim_dir}tilpasset_model.inp")
+vissim = Vissim.new(Default_network)
 
-#get_inputs.write
+#get_inputs(vissim).write
 puts get_vissim_routes(vissim).to_vissim
 #require 'vap'

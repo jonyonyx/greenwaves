@@ -4,9 +4,9 @@
 
 require 'const'  
 
-def get_inputs
+def get_inputs vissim
 
-  links = get_links('TYPE' => 'IN')
+  links = vissim.input_links
 
   input_rows = exec_query "SELECT COUNTS.Intersection, LINKS.Number, HOUR([Period End]) As H, MINUTE([Period End]) As M, 
               [Total Cars] As Cars,

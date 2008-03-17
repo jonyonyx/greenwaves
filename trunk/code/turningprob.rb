@@ -25,22 +25,23 @@ def get_vissim_routes vissim
         SUM([Trucks Right]) As Trucks_R,
         SUM([Total Trucks]) As Trucks_TOT
        FROM [counts$] 
-       WHERE Number IN (1,2,3,4,5)
+       WHERE Number <> 10
        GROUP BY Number,[From]"
 
   decision_points = []
 
-  for row in exec_query(turning_sql)
+  for row in exec_query turning_sql
     isnum = row['Number'].to_i
     from = row['From'][0..0] # extract the first letter of the From
         
     dp = DecisionPoint.new(from,isnum)
-    for dec in decisions.find_all{|d| d.intersection == isnum and d.from == from}
+    for dec in decisions.find_all{|d| d.intersection == isnum and d.from == from} 
+      puts dec      
       for veh_type in ['Cars','Trucks']
         # set the probability of making this turning decisions 
         # as given in the traffic counts
         # turning_motion must equal L(eft), T(hrough) or R(ight)
-        dec.p[veh_type] = row[veh_type + '_' + dec.turning_motion] / row[veh_type + '_TOT'] 
+        dec.p[veh_type] = row["#{veh_type}_#{dec.turning_motion}"] / row["#{veh_type}_TOT"] 
       end
       dp.add dec
     end
@@ -50,8 +51,10 @@ def get_vissim_routes vissim
 
   routing_decisions = RoutingDecisions.new
 
+  # find the local routes from the decision point
+  # to the point where the vehicles are dropped off downstream of intersection
   for dp in decision_points
-    for veh_type in ['Cars','Trucks']
+    for veh_type in Cars_and_trucks
       dp_link = dp.link # the common starting point for decision in this point
       rd = RoutingDecision.new(dp_link, veh_type)
   
@@ -62,7 +65,7 @@ def get_vissim_routes vissim
         dest = d_end.connector.to
         #puts "Route from #{dp_link} over #{d_end.connector} with fraction #{d_end.p}"
     
-        local_routes = find_routes(dp_link,dest)
+        local_routes = find_routes dp_link,dest
     
         raise "Warning: found multiple routes (#{local_routes.length}) from #{dp_link} to #{dest}" if local_routes.length > 1
         raise "Warning: no routes from #{dp_link} to #{dest}!" if local_routes.empty?
