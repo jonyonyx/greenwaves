@@ -24,8 +24,10 @@ MAJOR = 'Major'
 NONE = 'None'
 
 # associated numbers with these vehicle types
-Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
+Type_map = {'Cars' => 1001, 'Trucks' => 1002}
+Type_map_rev = {1001 => 'Cars', 1002 => 'Trucks'}
 Cars_and_trucks = [1001, 1002]
+Cars_and_trucks_str = ['Cars','Trucks']
 
 EPS = 0.01
 INPUT_FACTOR = 1.0 # factor used to adjust link inputs

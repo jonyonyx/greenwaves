@@ -57,7 +57,7 @@ class RoutingDecision
     str += "     TIME FROM 0.0 UNTIL 99999.0\n"
     str += "     NODE 0\n"
     str += "      VEHICLE_CLASSES #{Type_map[@veh_type]}\n"
-        
+    
     @routes.each_with_index do |route_info,j|
       route = route_info['ROUTE']
       str += "     ROUTE     #{j+1}  DESTINATION LINK #{route.exit.number}  AT   7.500\n"
@@ -119,7 +119,7 @@ class Vissim
     end
     
     # enrich the existing object with data from the database
-    for row in exec_query "SELECT NUMBER, NAME, [FROM], TYPE FROM [links$] As LINKS WHERE TYPE = 'IN'"    
+    for row in exec_query "SELECT NUMBER, [FROM], TYPE FROM [links$] As LINKS WHERE TYPE = 'IN'"    
       number = row['NUMBER'].to_i
     
       next unless links_map.has_key?(number)
@@ -130,12 +130,42 @@ class Vissim
     #now get the connectors and join them up using the links
     parse_connectors do |conn|
       # found a connection, join up the links
-      # only links which can be reached are cars and trucks are interesting
-      conn.from.add conn.to, conn
-      @conn_map[conn.number] = conn
+      unless conn.closed_to_any?(Cars_and_trucks)
+        # only links which can be reached are cars and trucks are interesting
+        #puts "#{conn} from #{conn.from} to #{conn.to} is closed to cars and trucks"
+      
+        @conn_map[conn.number] = conn
+      end
+    end
+    
+    # remove non-input links which cannot be reached by cars and trucks
+    #puts "Before deletion: #{@links_map.length}"
+    for link in @links_map.values
+      next if link.input?
+      conns = @conn_map.values.find_all{|c| c.to == link}
+      next unless conns.empty? # a predecessor exists if there is a connector to this link
+      #puts "Removing #{link}"
+      @links_map.delete(link.number)
+        
+      # remove all outgoing connectors from this link
+      for conn in @conn_map.values.find_all{|c| c.from == link}
+        #puts "\tRemoving #{conn}"
+        @conn_map.delete(conn.number)
+      end
+    end
+    
+    #puts "After deletion: #{@links_map.length}"
+    
+    # notify the links of connected links
+    for conn in @conn_map.values
+      from_link = conn.from
+      to_link = conn.to
+      from_link.add :successor, to_link, conn
+      #to_link.add :predecessor, from_link
     end
     
     @links = @links_map.values
+    
     @input_links = @links.find_all{|l| l.input?}
     @exit_links = @links.find_all{|l| l.exit?}
     
@@ -261,5 +291,7 @@ class Vissim
 end
 
 if __FILE__ == $0
-  Vissim.new(Default_network)
+  vissim = Vissim.new(Default_network)
+  
+  puts vissim.conn_map.values.find{|c| c.number == 49132586}
 end
