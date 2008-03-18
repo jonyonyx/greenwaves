@@ -5,7 +5,7 @@
 require 'vissim_elem'
 
 class Link < VissimElem
-  attr_reader :from,:link_type,:adjacent,:lanes
+  attr_reader :from,:link_type,:adjacent,:predecessors,:lanes
   def initialize number,attributes    
     super
     update attributes
@@ -13,6 +13,7 @@ class Link < VissimElem
     # map from adjacent links, which can be reached from self, 
     # to the used connector
     @adjacent = {}
+    @predecessors = []
   end
   def update opts
     super
@@ -22,10 +23,13 @@ class Link < VissimElem
   end
   def adjacent_links; @adjacent.keys; end
   # connects self to given adjacent link by given connector
-  def add adj_link,conn
-    raise "Link was nil #{to_s}" unless adj_link
-    raise "Connector was nil #{to_s}" unless conn
-    @adjacent[adj_link] = conn
+  def add proximtype, link, conn
+    case proximtype
+    when :successor
+      @adjacent[link] = conn
+    when :predecessor      
+      @predecessors << link
+    end
   end
   # is this link an exit (from the network) link?
   def exit?; @adjacent.empty?; end
@@ -74,6 +78,8 @@ class DecisionPoint
     all_pred_links = dec_pred_links.values.flatten.uniq#.reverse
     link_candidates = all_pred_links.find_all{|pred_link| @decisions.all?{|dec| dec_pred_links[dec].include? pred_link}}    
     
+    #puts "#{@from}#{@intersection}: #{link_candidates.join(' ')}" if link_candidates.length > 1
+    
     l = link_candidates.first
     
     unless l
@@ -92,7 +98,7 @@ class DecisionPoint
   def check_prob_assigned
     for veh_type in @decisions.map{|dec| dec.p.keys}.flatten.uniq
       sum = @decisions.map{|dec| dec.p[veh_type]}.sum
-      raise "Warning: the sum of turning probabilities for #{veh_type} at decision point #{@from}#{@intersection} was #{sum}! 
+      raise "The sum of turning probabilities for #{veh_type} at decision point #{@from}#{@intersection} was #{sum}! 
            Maybe you forgot to mark a connector?" if (sum-1.0).abs > 0.01
     end
   end

@@ -35,9 +35,9 @@ def get_vissim_routes vissim
     from = row['From'][0..0] # extract the first letter of the From
         
     dp = DecisionPoint.new(from,isnum)
-    for dec in decisions.find_all{|d| d.intersection == isnum and d.from == from} 
-      puts dec      
-      for veh_type in ['Cars','Trucks']
+    for dec in decisions.find_all{|d| d.intersection == isnum and d.from == from}
+      puts dec
+      for veh_type in Cars_and_trucks_str
         # set the probability of making this turning decisions 
         # as given in the traffic counts
         # turning_motion must equal L(eft), T(hrough) or R(ight)
@@ -54,7 +54,7 @@ def get_vissim_routes vissim
   # find the local routes from the decision point
   # to the point where the vehicles are dropped off downstream of intersection
   for dp in decision_points
-    for veh_type in Cars_and_trucks
+    for veh_type in Cars_and_trucks_str
       dp_link = dp.link # the common starting point for decision in this point
       rd = RoutingDecision.new(dp_link, veh_type)
   

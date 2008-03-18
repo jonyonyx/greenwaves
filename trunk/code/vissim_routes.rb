@@ -83,7 +83,7 @@ def prune_identical routes
     end
   end
   
-  puts "Eliminated #{routes_to_remove.length} of #{routes.length} routes"
+  #puts "Eliminated #{routes_to_remove.length} of #{routes.length} routes"
   
   routes - routes_to_remove
 end
@@ -120,12 +120,12 @@ if __FILE__ == $0
   # 48131026
   vissim = Vissim.new(Default_network)
   routes = get_full_routes vissim
-  puts routes
+  #puts routes
   puts "Found #{routes.length} routes"
   
-  for route in routes
-    
-    route_numbers = route.links.map{|l|l.number}
-    puts route.to_vissim if [48131145].all?{|n| route_numbers.include? n}
+  for route in routes    
+    route_numbers = route.connectors.map{|l|l.number}
+    puts route.to_vissim if [11253].all?{|n| route_numbers.include? n}
   end
+  
 end
