@@ -2,11 +2,6 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-require 'dbi'
-
-require 'network'
-require 'signal'
-
 Base_dir = 'D:\\greenwaves\\'
 Herlev_dir = Base_dir + 'data\\DOGS Herlev 2007\\'
 Glostrup_dir = Base_dir + 'data\\DOGS Glostrup 2007\\'
@@ -15,6 +10,7 @@ Default_network = "#{Vissim_dir}tilpasset_model.inp"
 
 Time_fmt = '%H:%M:%S'
 Res = 15 # resolution in minutes of inputs
+Minutes_per_hour = 60
 
 RED,YELLOW,GREEN,AMBER = 'R','Y','G','A'
 
@@ -40,6 +36,11 @@ BASE_CYCLE_TIME = 80 # seconds
 DATAFILE = "../data/data.xls" # main data file containing counts, sgp's, you name it
 CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
 
+require 'dbi'
+require 'network'
+require 'signal'
+require 'vissim'
+
 def exec_query sql, conn_str = CS
   DBI.connect(conn_str) do |dbh|  
     return dbh.select_all(sql)
@@ -61,7 +62,7 @@ class Array
     sort[i]
   end
   def squares ; inject{|a,x|x**2+a} ; end
-  def variance ; squares.to_f/size - mean.square; end
-  def deviation ; Math::sqrt( variance ) ; end
+  def variance ; squares.to_f/size - mean**2; end
+  def deviation ; variance**(1/2) ; end
   def sample n=1 ; (0...n).collect{ self[rand(size)] } ; end
 end

@@ -46,15 +46,10 @@ class Route
   end
 end
 
-# now have both the connectors and links
-
 def discover start, exits, links = [start], connectors = [], &callback
   for adj,conn in start.adjacent
     # avoid loops by checking if the path contain this link
-    # or the link is closed to ordinary vehicle types
-    next if links.include? adj or conn.closed_to_any? Cars_and_trucks
-    # assume there exist a valid route using this connector to reach adj_link;
-    # if this is not true, nothing is returned anyhow.
+    next if links.include? adj
     if exits.include? adj
       # found an exit link for this path
       yield Route.new(links + [adj], connectors + [conn]) 

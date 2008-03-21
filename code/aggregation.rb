@@ -2,11 +2,8 @@ require 'csv'
 require 'time'
 require 'const'
 
-#Data_dir,Namefilter,S_going = Glostrup_dir,'tael*.csv',['D02','D08','D010','D012','D014']
-Data_dir,Namefilter,S_going = Herlev_dir,'taelling*.csv', ['D3','D4','D6','D8','D15']
 
 EU_date_fmt = '%d-%m-%Y'
-Time_fmt = '%H:%M:%S'
 
 ##
 # returns a Time object given
@@ -42,7 +39,7 @@ def create_aggr csvfile
   # pre-loop initialization	
   row = reader.shift	
   prev_acc_time = parse_time(row[0..1])
-  first_row_time = prev_acc_time - (prev_acc_time.sec + prev_acc_time.min*60)
+  first_row_time = prev_acc_time - (prev_acc_time.sec + prev_acc_time.min*Minutes_per_hour)
 	
   row = reader.shift
   num_det = row.length-2 # number of detectors
@@ -80,45 +77,53 @@ end
 
 puts "BEGIN"
 
-Dir.chdir Data_dir
+Info = {
+  'Herlev' => {:dir => Herlev_dir, :southgoing => ['D3','D4','D6','D8','D15']},
+  'Glostrup' => {:dir => Glostrup_dir, :southgoing => ['D02','D08','D010','D012','D014']}
+}
 
-Time_det_map = Hash.new({})
+for area,info in Info.find_all{|e| e[0] == 'Glostrup'}
+  puts "Processing DOGS detector data from #{area}"
+  Dir.chdir info[:dir]
 
-for csvfile in Dir[Namefilter]
-  puts "Creating #{Res}m aggregate for detections in '" + csvfile + "'..."
-  prev_date = nil
-  create_aggr(csvfile) do |time,detections|
-    # extract the old hash and merge with the new set of detections
-    # assume there are no detector name clashes
-    Time_det_map[time] = Time_det_map[time].merge(detections)
-    cur_date = get_date(time)
-    unless cur_date == prev_date
-      puts "#{csvfile}: #{cur_date}"
-      prev_date = cur_date
-    end
+  time_det_map = Hash.new({})
+
+  for csvfile in Dir['tael*.csv']
+    print "Processing #{csvfile}: "
+    prev_date = nil
+    create_aggr(csvfile) do |time,detections|
+      # extract the old hash and merge with the new set of detections
+      # assume there are no detector name clashes
+      time_det_map[time] = time_det_map[time].merge(detections)
+      cur_date = get_date(time)
+      if cur_date != prev_date
+        print "#{cur_date} "
+        prev_date = cur_date
+      end
     
-    #break if cur_date == '14-11-2007'
-  end	
-  puts "Completed processing of '" + csvfile + "'"
-end
+      break if cur_date == '14-11-2007'
+    end	
+    puts 
+  end
 
-# Now put the combined results into a csv-file for processing in excel
-CSV.open("acc_#{Res}m.csv",'w',';') do |csv|
-  # find the entry with the most detector names
-  det_names = Time_det_map.values.max {|dets1, dets2| dets1.length <=> dets2.length}.keys
+  # Now put the combined results into a csv-file for processing in excel
+  CSV.open("acc_#{Res}m.csv",'w',';') do |csv|
+    # find the entry with the most detector names
+    det_names = time_det_map.values.max {|dets1, dets2| dets1.length <=> dets2.length}.keys
   
-  # make a header
-  csv << ['Date','Time','DoW','Detector','Direction','Detected']
-  for t in Time_det_map.keys.sort
-    #puts "#{get_date_time(t)}: #{Time_det_map[t].inspect}"  
-    map_t = Time_det_map[t]
+    # make a header
+    csv << ['Date','Time','DoW','Detector','Direction','Detected','Area']
+    for t in time_det_map.keys.sort
+      #puts "#{get_date_time(t)}: #{Time_det_map[t].inspect}"  
+      map_t = time_det_map[t]
     
-    # skip entries, which do not have data for all detectors
-    next if map_t.length < det_names.length
+      # skip entries, which do not have data for all detectors
+      next if map_t.length < det_names.length
     
-    date,time,dow = get_date(t),get_time(t),t.strftime('%a')
-    for dn in det_names
-      csv << [date,time,dow,dn,S_going.include?(dn) ? 'S' : 'N',map_t[dn]]
+      date,time,dow = get_date(t),get_time(t),t.strftime('%a')
+      for dn in det_names
+        csv << [date,time,dow,dn,info[:southgoing].include?(dn) ? 'S' : 'N',map_t[dn],area]
+      end
     end
   end
 end

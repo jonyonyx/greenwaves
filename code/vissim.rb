@@ -68,43 +68,7 @@ class RoutingDecision
   end
 end  
 
-class Inputs < VissimOutput
-  def initialize t_start, t_end
-    @t_start = t_start
-    @t_end = t_end
-    @inputs = []
-  end
-  def section_header; /^-- Inputs: --/; end
-  def add link, veh_type, t_end, quantity, desc = nil
-    @inputs << {'LINK' => link, 'TYPE' => veh_type, 'COMP' => Type_map[veh_type], 'TEND' => t_end, 'Q' => quantity, 'DESC' => desc}
-  end
-  def to_vissim
-    str = ''
-    @inputs.each_with_index do |input, input_num|  
-      link = input['LINK']
-      
-      if input['TEND']
-        t = input['TEND']
-        t_begin = t - Res*60
-        q = input['Q']
-      else
-        # no TEND indicates this is a bus input
-        t = @t_end
-        t_begin = @t_start
-        # bus frequencies are given by the hour so scale it
-        q = input['Q'] * (t.hour - t_begin.hour) # assume t_begin .. t_end in the same day
-      end
-      
-      q = q * INPUT_FACTOR
-      
-      str += "INPUT #{input_num+1}\n" +
-        "      NAME \"#{input['DESC'] ? input['DESC'] : input['TYPE']} from #{link.from} on #{link.name}\" LABEL  0.00 0.00\n" +
-        "      LINK #{link.number} Q #{q} COMPOSITION #{input['COMP']}\n" +
-        "      TIME FROM #{t_begin - @t_start} UNTIL #{t - @t_start}\n"
-    end
-    str
-  end
-end
+
 
 class Vissim
   attr_reader :links_map,:conn_map,:sc_map,:inp,:links,:input_links,:exit_links
@@ -119,7 +83,7 @@ class Vissim
     end
     
     # enrich the existing object with data from the database
-    for row in exec_query "SELECT NUMBER, [FROM], TYPE FROM [links$] As LINKS WHERE TYPE = 'IN'"    
+    for row in exec_query "SELECT NUMBER, Intersection AS NAME, [FROM], TYPE FROM [links$] As LINKS WHERE TYPE = 'IN'"    
       number = row['NUMBER'].to_i
     
       next unless links_map.has_key?(number)
