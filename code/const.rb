@@ -3,6 +3,7 @@
 # and open the template in the editor.
 
 Base_dir = 'D:\\greenwaves\\'
+Data_dir = "#{Base_dir}data\\"
 Herlev_dir = Base_dir + 'data\\DOGS Herlev 2007\\'
 Glostrup_dir = Base_dir + 'data\\DOGS Glostrup 2007\\'
 Vissim_dir = Base_dir + 'Vissim\\o3_roskildevej-herlevsygehus\\'
@@ -33,8 +34,12 @@ DOGS_LEVELDOWN_BUFFER = 0.1 # percentage of threshold value for current level
 DOGS_TIME = 10 # number of seconds by which cycle time is increased for each dogs level
 DOGS_LEVEL_GREEN = 10 # seconds green time associated with each dogs level change
 BASE_CYCLE_TIME = 80 # seconds
-DATAFILE = "../data/data.xls" # main data file containing counts, sgp's, you name it
-CS = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source=#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
+CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;"
+DATAFILE = "#{Data_dir}data.xls" # main data file containing counts, sgp's, you name it
+CS = "#{CSPREFIX}Data Source=#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
+CSVCS = "#{CSPREFIX}Data Source=#{Data_dir};Extended Properties=\"Text;HDR=YES;FTM=Delimited\";"
+Accname = "acc_#{Res}m.csv"
+ACCFILE = "#{Data_dir}#{Accname}"
 
 require 'dbi'
 require 'network'
@@ -44,6 +49,12 @@ require 'vissim'
 def exec_query sql, conn_str = CS
   DBI.connect(conn_str) do |dbh|  
     return dbh.select_all(sql)
+  end
+end
+def exec_non_query sql_statements, conn_str = CSVCS
+  DBI.connect(conn_str) do |dbh| 
+    sql_statements.each{|stmt| dbh.do stmt}
+    puts "Inserted #{sql_statements.length} rows"
   end
 end
 class Array

@@ -7,10 +7,13 @@ class Inputs < VissimOutput
   def add input
     @inputs << input
   end
+  def get_by_link number
+    @inputs.find_all{|i| i.link.number == number}
+  end
   def to_vissim
     str = ''
     inputnum = 1
-    tstart = @inputs.map{|i| i.tstart}.min
+    tbegin = @inputs.map{|i| i.tstart}.min
     for input in @inputs
       link = input.link
       
@@ -18,7 +21,7 @@ class Inputs < VissimOutput
         str += "INPUT #{inputnum}\n" +
           "      NAME \"#{veh_type} from #{link.from} on #{link.name}\" LABEL  0.00 0.00\n" +
           "      LINK #{link.number} Q #{q * INPUT_FACTOR} COMPOSITION #{Type_map[veh_type]}\n" +
-          "      TIME FROM #{input.tstart - tstart} UNTIL #{input.tend - tstart}\n"
+          "      TIME FROM #{input.tstart - tbegin} UNTIL #{input.tend - tbegin}\n"
         
         inputnum += 1
       end
@@ -33,7 +36,8 @@ class Input
     @link, @tstart, @tend, @veh_flow_map = link, tstart, tend, veh_flow_map
   end
   def ratio veh_type1, veh_type2
-    @veh_flow_map[veh_type1] / @veh_flow_map[veh_type2]
+    flow_type1 = @veh_flow_map[veh_type1]
+    flow_type1.to_f / (flow_type1 + @veh_flow_map[veh_type2])
   end
 end
 
@@ -92,8 +96,45 @@ def get_inputs vissim
   
   # for northern end (by herlev sygehus) and roskildevej
   # use the dogs detector data and take the cars-to-truck ratios from the
-  # traffic counts
-
+  # traffic counts  
+  
+  for det, from in [['D3','North'],['D01','South'],['D03','West'],['D06','East']]
+        
+    #fetch the link input number    
+    number = exec_query("SELECT LINKS.Number 
+        FROM [detectors$] As DETS
+        INNER JOIN [links$] As LINKS
+        ON DETS.Intersection = LINKS.Intersection
+        WHERE DETS.Name = '#{det}'
+        AND LINKS.From = '#{from}'").flatten.first.to_i
+    
+    # now change the input for this link number to use
+    # the data from this detector, respecting the vehicle ratio
+    
+    inputs_for_link = inputs.get_by_link number
+    
+    #puts "input link: #{number.inspect}"
+    
+    sql = "SELECT 
+          HOUR(Time) As H,
+          MINUTE(Time) As M,
+          AVG(Detected) As Detected
+        FROM #{Accname}
+        WHERE NOT DoW IN ('Sat','Sun') 
+        AND Detector = '#{det}'
+        AND Time BETWEEN \#1899/12/30 07:00:00\# AND \#1899/12/30 09:00:00\#
+        GROUP BY Detector,Time"
+    
+    for row in exec_query sql, CSVCS
+      input = inputs_for_link.find{|i| i.tend.hour == row['H'] and i.tend.min == row['M']}
+      qtot = row['Detected'].to_f
+      r = input.ratio('Cars', 'Trucks')
+      #puts "ratio: #{r}"
+      input.veh_flow_map['Cars'] = qtot * r
+      input.veh_flow_map['Trucks'] = qtot * (1 - r)
+    end
+  end
+  
   inputs
 end
 
