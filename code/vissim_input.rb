@@ -98,22 +98,22 @@ def get_inputs vissim
   # use the dogs detector data and take the cars-to-truck ratios from the
   # traffic counts  
   
-  for det, from in [['D3','North'],['D01','South'],['D03','West'],['D06','East']]
+  for det in ['D3','D01','D03','D06']
         
     #fetch the link input number    
     number = exec_query("SELECT LINKS.Number 
         FROM [detectors$] As DETS
         INNER JOIN [links$] As LINKS
         ON DETS.Intersection = LINKS.Intersection
-        WHERE DETS.Name = '#{det}'
-        AND LINKS.From = '#{from}'").flatten.first.to_i
+        AND DETS.FROM = LINKS.From 
+        WHERE DETS.Name = '#{det}'").flatten.first.to_i
     
     # now change the input for this link number to use
     # the data from this detector, respecting the vehicle ratio
     
     inputs_for_link = inputs.get_by_link number
     
-    #puts "input link: #{number.inspect}"
+    #puts "input link: #{number}"
     
     sql = "SELECT 
           HOUR(Time) As H,
