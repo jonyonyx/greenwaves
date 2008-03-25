@@ -1,6 +1,7 @@
 require 'const'
+require 'network'
+require 'signal'
 require 'fileutils'
-Name_pat = '([,\w\s\d\/]*)'
 
 class VissimOutput  
   @@inpname = 'tilpasset_model.inp'
@@ -52,15 +53,18 @@ class RoutingDecision
   def to_vissim i
     str = "ROUTING_DECISION #{i} NAME \"#{@desc ? @desc : (@veh_type)} from #{@input_link}\" LABEL  0.00 0.00\n"
     # AT must be AFTER the input point
-    # link inputs are always defined in the end of the link
-    str += "     LINK #{@input_link.number} AT 25.000\n"
+    # place decisions as early as possibly to give vehicles time to changes lanes
+    
+    str += "     LINK #{@input_link.number} AT #{@input_link.length * 0.1}\n"
     str += "     TIME FROM 0.0 UNTIL 99999.0\n"
     str += "     NODE 0\n"
     str += "      VEHICLE_CLASSES #{Type_map[@veh_type]}\n"
     
     @routes.each_with_index do |route_info,j|
       route = route_info['ROUTE']
-      str += "     ROUTE     #{j+1}  DESTINATION LINK #{route.exit.number}  AT   7.500\n"
+      exit_link = route.exit
+      # dump vehicles early on the route exit link so they may obtain a new route
+      str += "     ROUTE     #{j+1}  DESTINATION LINK #{exit_link.number}  AT   5.000\n"
       str += "     FRACTION #{route_info['FRACTION']}\n"
       str += "     OVER #{route.to_vissim}\n"
     end
@@ -245,9 +249,9 @@ class Vissim
       
       i += 1
       
-      @inp[i] =~ /LANES  (\d+)/
+      @inp[i] =~ /LENGTH\s+(\d+\.\d+) LANES\s+(\d+)/
       
-      opts = {'NAME' => name, 'LANES' => $1}
+      opts = {'NAME' => name, 'LENGTH' => $1.to_f, 'LANES' => $2.to_i}
   
       yield Link.new(number,opts)
     end
@@ -257,5 +261,7 @@ end
 if __FILE__ == $0
   vissim = Vissim.new(Default_network)
   
-  puts vissim.conn_map.values.find{|c| c.number == 49132586}
+  for link in vissim.links
+    puts "#{link.length}"
+  end
 end

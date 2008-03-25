@@ -36,7 +36,7 @@ def get_vissim_routes vissim
         
     dp = DecisionPoint.new(from,isnum)
     for dec in decisions.find_all{|d| d.intersection == isnum and d.from == from}
-      puts dec
+      #puts dec
       for veh_type in Cars_and_trucks_str
         # set the probability of making this turning decisions 
         # as given in the traffic counts
@@ -80,3 +80,4 @@ def get_vissim_routes vissim
 
   routing_decisions
 end
+

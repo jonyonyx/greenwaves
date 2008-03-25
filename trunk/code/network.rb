@@ -5,7 +5,7 @@
 require 'vissim_elem'
 
 class Link < VissimElem
-  attr_reader :from,:link_type,:adjacent,:predecessors,:lanes
+  attr_reader :from,:link_type,:adjacent,:predecessors,:lanes,:length
   def initialize number,attributes    
     super
     update attributes
@@ -19,7 +19,8 @@ class Link < VissimElem
     super
     @from = opts['FROM']
     @link_type = opts['TYPE']
-    @lanes = opts['LANES']
+    @lanes ||= opts['LANES']
+    @length ||= opts['LENGTH']
   end
   def adjacent_links; @adjacent.keys; end
   # connects self to given adjacent link by given connector
