@@ -8,6 +8,8 @@ Herlev_dir = Base_dir + 'data\\DOGS Herlev 2007\\'
 Glostrup_dir = Base_dir + 'data\\DOGS Glostrup 2007\\'
 Vissim_dir = Base_dir + 'Vissim\\o3_roskildevej-herlevsygehus\\'
 Default_network = "#{Vissim_dir}tilpasset_model.inp"
+Name_pat = '([,\w\s\d\/]*)'
+
 
 Time_fmt = '%H:%M:%S'
 Res = 15 # resolution in minutes of inputs
@@ -42,9 +44,9 @@ Accname = "acc_#{Res}m.csv"
 ACCFILE = "#{Data_dir}#{Accname}"
 
 require 'dbi'
-require 'network'
-require 'signal'
-require 'vissim'
+#require 'network'
+#require 'signal'
+#require 'vissim'
 
 def exec_query sql, conn_str = CS
   DBI.connect(conn_str) do |dbh|  
