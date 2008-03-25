@@ -63,8 +63,9 @@ class RoutingDecision
     @routes.each_with_index do |route_info,j|
       route = route_info['ROUTE']
       exit_link = route.exit
-      # dump vehicles early on the route exit link so they may obtain a new route
-      str += "     ROUTE     #{j+1}  DESTINATION LINK #{exit_link.number}  AT   5.000\n"
+      # dump vehicles late on the route exit link to avoid placing the destination
+      # upstream of the last connector
+      str += "     ROUTE     #{j+1}  DESTINATION LINK #{exit_link.number}  AT   #{exit_link.length * 0.5}\n"
       str += "     FRACTION #{route_info['FRACTION']}\n"
       str += "     OVER #{route.to_vissim}\n"
     end
