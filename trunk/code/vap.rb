@@ -1,4 +1,4 @@
-require 'const'
+require 'vissim'
 require 'dogs_threshold'
 
 class CodePrinter
@@ -29,7 +29,7 @@ class CodePrinter
   end
 end
 
-def gen_master(area,dn,ds,cnt_dets,occ_dets)
+def gen_master area, opts
 
   cp = CodePrinter.new
   
@@ -38,8 +38,8 @@ def gen_master(area,dn,ds,cnt_dets,occ_dets)
   cp.add_verb "PROGRAM DOGS_MASTER ; /* #{area} */"
   cp.add_verb "CONST 
         BASE_CYCLE_TIME = #{BASE_CYCLE_TIME},
-        DN = #{dn},
-        DS = #{ds},
+        DN = #{opts[:dn]},
+        DS = #{opts[:ds]},
         SMOOTHING_FACTOR = 0.5,
         DOGS_LEVEL_GREEN = #{DOGS_LEVEL_GREEN},
         ENABLE_CNT = 32,
@@ -51,6 +51,7 @@ def gen_master(area,dn,ds,cnt_dets,occ_dets)
 
   # Count (intensity) bounds are estimated for a counting period of BASE_CYCLE_TIME seconds
   # Occupied rate- (percentages) and count-bounds are taken from the DOGS material
+  # and are identical for both areas on O3
   cnt_bounds = {'UPPER' => [14, 23, 32, 41, 50, 60, 69, 78], 'LOWER' => [13, 21, 29, 37, 45, 53, 61, 69]}
   occ_bounds = {'UPPER' => [11, 29, 45, 58, 70, 80, 92, 96], 'LOWER' => [8, 17, 35, 51, 65, 74, 86, 94]}
   
@@ -81,17 +82,18 @@ def gen_master(area,dn,ds,cnt_dets,occ_dets)
   cp.add "DN_OCC := Occup_rate(DN) * 100; /* Occupied rate percentage */"    
   cp.add "DS_OCC := Occup_rate(DS) * 100;"
   cp.add_verb "/* Measuring on detectors, which are used to determine current dogs level */"
-  for occ_det in occ_dets
+  for occ_det in opts[:occ_dets]
     cp.add "D#{occ_det}_OCC := Occup_rate(#{occ_det}) * 100;"
   end
-  for cnt_det in cnt_dets
+  # counting detectors needs to be cleared
+  for cnt_det in opts[:cnt_dets]
     cp.add "D#{cnt_det}_CNT := Rear_ends(#{cnt_det});"
     cp.add "Clear_rear_ends(#{cnt_det});"
   end
-  unless cnt_dets.include? dn
+  unless opts[:cnt_dets].include? opts[:dn]
     cp.add "Clear_rear_ends(DN);"
   end
-  unless cnt_dets.include? ds
+  unless opts[:cnt_dets].include? opts[:ds]
     cp.add "Clear_rear_ends(DS);"
   end
   cp.add_verb "/* Enable dogs if north or south bounds are reached. If dogs is enabled but we are below enable-bounds, keep dogs enabled until the lower threshold is reached */"
@@ -101,11 +103,11 @@ def gen_master(area,dn,ds,cnt_dets,occ_dets)
   cp.add "ELSE", false 
   for level in (0...DOGS_LEVELS)
     cp.add "  IF DOGS_LEVEL = #{level} THEN"
-    cp.add "     IF #{occ_dets.map{|det| "(D#{det}_OCC > #{occ_bounds['UPPER'][level]})"}.join(' OR ')} OR #{cnt_dets.map{|det| "(D#{det}_CNT > #{cnt_bounds['UPPER'][level]})"}.join(' OR ')} THEN"
+    cp.add "     IF #{opts[:occ_dets].map{|det| "(D#{det}_OCC > #{occ_bounds['UPPER'][level]})"}.join(' OR ')} OR #{opts[:cnt_dets].map{|det| "(D#{det}_CNT > #{cnt_bounds['UPPER'][level]})"}.join(' OR ')} THEN"
     cp.add "         DOGS_LEVEL := #{level+1};"
     cp.add "     END;", false
     if level > 0
-      cp.add "     IF #{occ_dets.map{|det| "(D#{det}_OCC < #{occ_bounds['LOWER'][level]})"}.join(' AND ')} AND #{cnt_dets.map{|det| "(D#{det}_CNT < #{cnt_bounds['LOWER'][level]})"}.join(' AND ')} THEN"
+      cp.add "     IF #{opts[:occ_dets].map{|det| "(D#{det}_OCC < #{occ_bounds['LOWER'][level]})"}.join(' AND ')} AND #{opts[:cnt_dets].map{|det| "(D#{det}_CNT < #{cnt_bounds['LOWER'][level]})"}.join(' AND ')} THEN"
       cp.add "         DOGS_LEVEL := #{level-1};"
       cp.add "     END;", false
     end
@@ -116,7 +118,7 @@ def gen_master(area,dn,ds,cnt_dets,occ_dets)
   cp.add_verb "FINAL_STATEMENTS:   SetT(1)"
   cp.add_verb 'PROG_ENDE:    .'
 
-  cp.write "#{Vissim_dir}\DOGS.vap"
+  cp.write "#{Vissim_dir}DOGS_MASTER_#{area.upcase}.vap"
 end
 
 P_rows = exec_query "SELECT 
@@ -162,13 +164,16 @@ def gen_vap sc
   cp.add_verb ''
   
   stages = sc.stages
-  uniq_stages = stages.uniq.find_all{|s| s.is?(Stage)}
+  uniq_stages = stages.uniq.find_all{|s| s.instance_of? Stage}
   # prepare the split of DOGS extra time between major and minor stages
-  minor_stages = uniq_stages.find_all{|s| s.priority == MINOR}
+  minor_stages = uniq_stages.find_all{|s| sc.priority(s) == MINOR}
     
-  minor_fact = 2 * minor_stages.length
-  major_fact = DOGS_TIME - minor_fact
-  
+  # make sure that exactly DOGS_TIME will be distributed to
+  # extended stages
+  minor_fact = minor_stages.length > 1 ? 1 : 2
+  # arterial optimization: there is always exactly 1 major priority stage
+  major_fact = DOGS_TIME - minor_fact * minor_stages.length
+    
   cp.add_verb "CONST"
   # calculate stage lengths
   for stage in uniq_stages
@@ -179,8 +184,9 @@ def gen_vap sc
   # calculate stage end times based on stage lengths
   for i in (0...uniq_stages.length)
     prev, cur = uniq_stages[i-1], uniq_stages[i]
+    curprio = sc.priority cur
     cp.add_verb "stage#{cur}_end := STAGE#{cur}_TIME" + 
-      (cur.priority == NONE ? '' : " + #{cur.priority == MAJOR ? major_fact : minor_fact} * DOGS_LEVEL") +
+      (curprio == NONE ? '' : " + #{curprio == MAJOR ? major_fact : minor_fact} * DOGS_LEVEL") +
       (cur == uniq_stages.first ? ';' : " + Interstage_length(#{prev},#{cur}) + stage#{prev}_end;")
   end
   
@@ -214,7 +220,7 @@ def gen_vap sc
   end
   cp.add_verb 'PROG_ENDE:    .'
   
-  cp.write("#{Vissim_dir}\\#{name}.vap")
+  cp.write("#{Vissim_dir}#{name}.vap")
 end
 
 def gen_pua sc
@@ -230,7 +236,7 @@ def gen_pua sc
   cp.add_verb '$'
   
   stages = sc.stages
-  uniq_stages = stages.uniq.find_all{|s| s.is?(Stage)}
+  uniq_stages = stages.uniq.find_all{|s| s.instance_of? Stage}
   
   for stage in uniq_stages
     cp.add_verb "Stage_#{stage.number}\t#{stage.groups.map{|g|g.name}.join(' ')}"
@@ -245,14 +251,14 @@ def gen_pua sc
   
   isnum = 0
   for t in (2..sc.cycle_time)
-    next unless stages[t-1] != stages[t] and stages[t-1].is?(Stage)
+    next unless stages[t-1] != stages[t] and stages[t-1].instance_of?(Stage)
     isnum += 1
     cp.add_verb "$INTERSTAGE#{isnum}"
     
     # find the length of the interstage
     islen = 0
     fromstage = stages[t-1]
-    if stages[t].is?(Stage)
+    if stages[t].instance_of?(Stage)
       # interstage happens from one cycle second to the next
       tostage = stages[t]
     else
@@ -293,14 +299,22 @@ def gen_pua sc
   
   cp.add_verb '$END'
   
-  cp.write("#{Vissim_dir}\\#{sc.name.downcase.gsub(' ','_')}.pua")
+  cp.write("#{Vissim_dir}#{sc.name.downcase.gsub(' ','_')}.pua")
 end
 
-gen_master 'Herlev', 3,14,[3,14],[3,4,13,14]
+# information on master controllers
+MasterInfo = {
+  'Herlev' => {:dn => 3, :ds => 14, :occ_dets => [3,14], :cnt_dets => [3,4,13,14]},  
+  'Glostrup' => {:dn => 14, :ds => 1, :occ_dets => [1,2,5,8,9,10,11,12,13,14], :cnt_dets => [1,2,5,8,9,10,11,12,13,14]}
+}
 
-exit(0)
+#for area,opts in MasterInfo
+#  gen_master area, opts
+#end
 
-for sc in scs
+#exit(0)
+
+for sc in scs[8..8]
   gen_vap sc
   gen_pua sc
   puts "Generated VAP and PUA files for #{sc.name} #{sc.program}"
