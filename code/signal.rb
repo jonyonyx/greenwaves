@@ -29,6 +29,20 @@ class SignalController < VissimElem
     # check for ordinary interstages
     @groups.values.any?{|grp| [YELLOW,AMBER].include? grp.color(cycle_sec)}
   end
+  def priority stage
+    return NONE unless stage.instance_of?(Stage) # interstages are fixed length
+    
+    # a stage has major priority if it contains all groups (for this SC)
+    # which should receive major priority rather than just some of them
+    if (find_groups_by_priority(MAJOR) - stage.groups).empty?
+      MAJOR
+    else
+      stage.groups.any?{|grp| grp.priority == MINOR} ? MINOR : NONE
+    end
+  end
+  def find_groups_by_priority p
+    @groups.values.find_all{|grp| grp.priority == p}
+  end
   def stages
     last_stage = nil
     last_interstage = nil
@@ -60,6 +74,25 @@ class SignalController < VissimElem
     end
     str
   end
+end
+class Stage < VissimElem
+  attr_reader :groups
+  def initialize number, groups
+    super number,{}
+    @groups = groups
+  end
+  def to_s
+    @number.to_s
+  end
+#  def priority
+#    group_priorities = @groups.map{|grp| grp.priority}.uniq
+#    #raise "Warning: mixed group priorities in same stage #{@groups.map{|grp| "#{grp.name} => #{grp.priority}"}.join(', ')}" 
+#    if group_priorities.length > 1
+#      NONE # choose none for mixed priorities
+#    else
+#      group_priorities.first # pure, prioritized stage
+#    end
+#  end
 end
 class SignalGroup < VissimElem
   attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads,:priority
@@ -111,20 +144,5 @@ class SignalHead < VissimElem
     super
     @position_link = attributes['POSITION LINK'].to_i
     @lane = attributes['LANE'].to_i
-  end
-end
-class Stage < VissimElem
-  attr_reader :groups
-  def initialize number, groups
-    super number,{}
-    @groups = groups
-  end
-  def to_s
-    @number.to_s
-  end
-  def priority
-    group_priorities = @groups.map{|grp| grp.priority}.uniq
-    raise "Warning: mixed group priorities in same stage #{@groups.map{|grp| "#{grp.name} => #{grp.priority}"}}" if group_priorities.length > 1
-    group_priorities.first 
   end
 end
