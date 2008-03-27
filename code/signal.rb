@@ -6,7 +6,7 @@
 require 'vissim_elem'
 
 class SignalController < VissimElem
-  attr_reader :controller_type,:cycle_time,:offset,:groups,:program,:bus_detector_n,:bus_detector_s
+  attr_reader :controller_type,:cycle_time,:offset,:groups,:program
   def initialize number, attributes
     super
     update attributes
@@ -17,13 +17,19 @@ class SignalController < VissimElem
     @controller_type = attributes['TYPE']
     @cycle_time = attributes['CYCLE_TIME'].to_f
     @offset = attributes['OFFSET'].to_f
-    @program = attributes['PROGRAM']
-    @bus_detector_n = attributes['BUSDETN']
-    @bus_detector_s = attributes['BUSDETS']
+    @program = attributes['PROGRAM']    
+    @buspriority = attributes['BUSPRIORITY'] # for SCs with bus priority bp is a hash
   end
-  def has_bus_priority?
-    @bus_detector_n and @bus_detector_s
-  end
+  
+  # Methods used in bus priority
+  def has_bus_priority?; not @buspriority.empty?; end
+  def bus_detector_n; @buspriority['DETN']; end
+  def bus_detector_s; @buspriority['DETS']; end
+  def donor_stage; @buspriority['DONOR'].to_i; end
+  def recipient_stage; @buspriority['RCPT'].to_i; end
+  def is_donor? stage; stage.number == donor_stage; end
+  def is_recipient? stage; stage.number == recipient_stage; end
+  
   def add group
     @groups[group.number] = group
   end
@@ -89,15 +95,6 @@ class Stage < VissimElem
   def to_s
     @number.to_s
   end
-#  def priority
-#    group_priorities = @groups.map{|grp| grp.priority}.uniq
-#    #raise "Warning: mixed group priorities in same stage #{@groups.map{|grp| "#{grp.name} => #{grp.priority}"}.join(', ')}" 
-#    if group_priorities.length > 1
-#      NONE # choose none for mixed priorities
-#    else
-#      group_priorities.first # pure, prioritized stage
-#    end
-#  end
 end
 class SignalGroup < VissimElem
   attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads,:priority

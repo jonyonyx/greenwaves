@@ -167,9 +167,9 @@ def gen_vap sc
     end    
     # insert bus priority for the first stage (=main direction), if the SC has it
     if sc.has_bus_priority?
-      if cur == uniq_stages.first
+      if sc.is_recipient? cur
         stage_end += ' + 10 * BUS_PRIORITY'
-      elsif prev == uniq_stages.first
+      elsif sc.is_donor? cur
         # the bus green extension is subtracted from the subsequent stage
         # in the compensation cycle, the extension is given to this stage
         stage_end += ' - 10 * BUS_PRIORITY'
@@ -197,10 +197,11 @@ def gen_vap sc
   cp.add 'SetT(t_loc);'
   
   if sc.has_bus_priority?
-    cp.add 'IF (Detection(BUSDETN) OR Detection(BUSDETS)) AND Stage_active(1) THEN'
-    cp.add_verb "/* Stage 1 is the stage for the main direction where buses come
+    cp.add "IF (Detection(BUSDETN) OR Detection(BUSDETS)) AND (BUS_PRIORITY = 0) AND Stage_active(#{sc.recipient_stage}) THEN"
+    cp.add_verb "/* Recipient is the stage for the main direction where buses come
    To give priority we require that the bus arrives while in 
-   stage 1 and grant the stage extra time so that the bus may just squeeze across */"
+   stage 1 and grant the stage extra time so that the bus may just squeeze across.
+   Only start priority if BUS_PRIORITY = 0 ie. we are not already prioritizing or compensating. */"
     cp.add '   BUS_PRIORITY := 1;'
     cp.add 'END;', false
   end
@@ -212,16 +213,20 @@ def gen_vap sc
     cp.add "IF Stage_active(#{cur}) THEN" 
     cp.add "   IF T = stage#{cur}_end THEN"
     cp.add "      Is(#{cur},#{nxt});"
-    if cur == uniq_stages.first and sc.has_bus_priority?
-      cp.add '      IF BUS_PRIORITY = -1 THEN'
-      cp.add '      	BUS_PRIORITY := 0; /* two cycles of bus priority and compensation has finished */'
-      cp.add '      END;', false
-      cp.add '      IF BUS_PRIORITY = 1 THEN'
-      cp.add '      	BUS_PRIORITY := -1; /* subtract the extra bus time in next cycle */'
-      cp.add '      END;', false
+    if sc.has_bus_priority?
+      if sc.is_donor? cur
+        cp.add '      IF BUS_PRIORITY = -1 THEN'
+        cp.add '      	BUS_PRIORITY := 0; /* two cycles of bus priority and compensation has finished */'
+        cp.add '      END;', false  
+      end
     end
     cp.add "   END", false
-    cp.add "END#{i < uniq_stages.length-1 ? ';' : ''}",false
+    cp.add "END#{(i < uniq_stages.length-1 or sc.has_bus_priority?) ? ';' : ''}", false
+  end
+  if sc.has_bus_priority?
+    cp.add 'IF (t_loc = C) AND (BUS_PRIORITY = 1) THEN'
+    cp.add '   BUS_PRIORITY := -1; /* subtract the extra bus time in next cycle */'
+    cp.add 'END', false    
   end
   cp.add_verb 'PROG_ENDE:    .'
   
@@ -320,7 +325,7 @@ MasterInfo = {
 
 #exit(0)
 
-P_rows = exec_query "SELECT 
+plan_sql = "SELECT 
         PLAN.Intersection, PLAN.PROGRAM,
         NAME,
         NUMBER, 
@@ -337,33 +342,32 @@ P_rows = exec_query "SELECT
 
 scs = []
 sc = nil
-for row in P_rows
+for row in exec_query plan_sql
   isname = row['Intersection']
   isnum = row['Number']
   prog = row['PROGRAM']
   if not sc or not sc.name == isname or not sc.program == prog
     # fetch the bus detectors attached to this intersection, if any
-    busdetectors = exec_query("SELECT 
-                        [Bus Detector North] As BUSDETN, 
-                        [Bus Detector South] As BUSDETS
-                       FROM [intersections$] WHERE Name = '#{isname}'").flatten
+    busprior = exec_query("SELECT 
+                        [Detector North], [Detector South],
+                        DONOR, RECIPIENT
+                       FROM [buspriority$] WHERE Intersection = '#{isname}'").flatten - [nil]
     
-    #puts "Bus detectors for #{isname}: #{busdetectors.inspect}"
+    #puts "Bus detectors for #{isname}: #{busprior.inspect}"
     
     sc = SignalController.new(isnum, 
       'NAME' => isname, 
       'PROGRAM' => prog,
       'CYCLE_TIME' => row['CYCLE_TIME'],
       'OFFSET' => row['OFFSET'],
-      'BUSDETN' => busdetectors[0],
-      'BUSDETS' => busdetectors[1])
+      'BUSPRIORITY' => (busprior.empty? ? {} : {'DETN' => busprior[0].to_i, 'DETS' => busprior[1].to_i, 'DONOR' => busprior[2].to_i, 'RCPT' => busprior[3].to_i}) )
     scs << sc
   end
   
   sc.add SignalGroup.new(row['NUMBER'].to_i,row)
 end
 
-for sc in scs[8..8]
+for sc in scs#[8..8]
   gen_vap sc
   gen_pua sc
   puts "Generated VAP and PUA files for #{sc.name} #{sc.program}"
