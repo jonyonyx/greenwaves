@@ -12,6 +12,7 @@ Name_pat = '([,\w\s\d\/]*)'
 
 
 Time_fmt = '%H:%M:%S'
+EU_date_fmt = '%d-%m-%Y'
 Res = 15 # resolution in minutes of inputs
 Minutes_per_hour = 60
 
