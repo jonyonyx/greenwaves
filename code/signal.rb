@@ -6,7 +6,7 @@
 require 'vissim_elem'
 
 class SignalController < VissimElem
-  attr_reader :controller_type,:cycle_time,:offset,:groups,:program
+  attr_reader :controller_type,:cycle_time,:offset,:groups,:program,:bus_detector_n,:bus_detector_s
   def initialize number, attributes
     super
     update attributes
@@ -18,6 +18,11 @@ class SignalController < VissimElem
     @cycle_time = attributes['CYCLE_TIME'].to_f
     @offset = attributes['OFFSET'].to_f
     @program = attributes['PROGRAM']
+    @bus_detector_n = attributes['BUSDETN']
+    @bus_detector_s = attributes['BUSDETS']
+  end
+  def has_bus_priority?
+    @bus_detector_n and @bus_detector_s
   end
   def add group
     @groups[group.number] = group

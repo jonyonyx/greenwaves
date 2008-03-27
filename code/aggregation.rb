@@ -3,8 +3,6 @@ require 'time'
 require 'const'
 
 
-EU_date_fmt = '%d-%m-%Y'
-
 ##
 # returns a Time object given
 # an tuple with the date (eu fmt) and time (24h) resp.
