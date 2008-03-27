@@ -121,11 +121,42 @@ It is important to note that, while stages must have a temporal extend to make s
 
 A safety period, where all heads are red, is sometimes introduced in order to allow the intersection to be cleared. This can be modelled either as a stage with no green signal groups or included into the interstage definition by prolonging red end times and interstage length by the length of the safety period. The latter solution is preferred since it is directly supported in the PUA format and also avoids the introduction of an all-red stage and a number of extra interstages to and from the all-red stage.
 
-
-
 \subsection{DOGS}
 As VAP does not permit the writing of a program, which supervise all signal controllers at the same time, it was necessary to dedicate a signal controller as the master controller. To fully separate the master/slave concept it was chosen to install a virtual signal controller, whose only purpose is to run the DOGS program.
 
 The master controller, which for the purpose of offset has a virtual location on Herlev Hovedgade, runs the DOGS program and determines the current level by inspecting the northern- and southern detectors according to the specification outlined in section \ref{dogs}. In addition this controller also runs the master clock and the current DOGS level and master cycle second is sent to all slave controllers every cycle second.
 
 The slave signal controller - even the one on Herlev Hovedgade - must listen for communication from the master controller and set the green time of the various stages according to the current dogs level and cycle second as received from the master.
+
+Both master and slave VAP controllers are generated automatically from formal descriptions.
+
+\subsection*{Master}
+Relevant to master controllers we need to know the northern and southern detector names as these are used to determine if DOGS is enabled or turned off. Once DOGS is enabled another set of detectors (possibly overlapping) are measured upon to determine the appropriate level of DOGS. Note that, depending on threshold values, DOGS may be \textit{enabled} but not perform adjustments to the base-program - this is by design.
+
+These threshold values are also parameters which is fed into the generator routine (see section \ref{dogs} for a description). In the DOGS reference material supplied by TTS vehicle count and occupancy thresholds are identical.
+
+DOGS accumulate detections over a cycle - which is of variable length - and compare to the threshold values. Occupancy is a the percentage of time of which the detector was enabled ie. a vehicle passed over or was in queue over the detector and thus the detection period can be chosen freely. The amount of vehicles which passed over (the 2nd component for threshold matching) is in total numbers and consequently when the cycle time increase so does the number of detected vehicles. TTS informs me that no adjustment - except for the standard exponential smoothening - is performed when comparing detector vehicle count values with the thresholds. I decided to correct this in the VAP code by assuming the counting thresholds matched a 80 seconds cycle and then scale the detected count to this level by using the actual cycle time (which is usually higher, when DOGS is enabled).
+
+When DOGS is active level is adjusted at most by one for each cycle. Thus when the level is high it will take longer to change between levels and the measuring periods are longer, resulting in more accurate measurements.
+
+\subsection*{Slave}
+The purpose of slave controllers is to obey the cycle second and DOGS level instructions from the master controller.
+
+The first step for a slave is to calculate the local cycle second, which due to controller offset will usually differ from the master cycle second. An exception is the slave controller, which controls the intersection in which the master controller is physically positioned - the distance between them is 0 and likewise the offset.
+
+Consider stage A which is active while the master controller lowers the DOGS level by 1. In this case the end time is lowered if stage A receives priority from DOGS and it may happen that the end time for stage A is now lower then the current cycle second. Stage A will then have received more green time than it was supposed to and the slave will immediately make the transition from stage A to the next stage, B. In case B is not the stage which was supposed to be active (a rare case - stage B is short indeed) we allow stage A to carry over to the next cycle as we can only make stage transitions between subsequent stages - not in arbitrary order.
+
+\subsection*{Bus Priorities}
+Three intersections in the Glostrup area - Fabriksparken, Gammel Landevej and Kindebjergvej - operate with bus priority on the arterial. 
+
+If a bus arrives from north or south during the stage which belongs to the arterial green time of up to 10 seconds is distributed from the minor road stage to this stage. The effect is that buses might just make it across before the next stage is started rather than being cut off. In the next cycle the main stage is shortened by the same amount of time and the minor stage is lengthened accordingly.
+
+This is implemented by associating detectors for north- and southgoing buses for each of these intersections. The autogenerated VAP code will then check for bus detections in each cycle second and perform bus prioritization if:
+
+\begin{enumerate}
+\item The main stage is the currently active stage
+\item The signal controller is not currently performing a bus prioritization
+\item The signal controller is not currently compensating the minor road stage due to prioritization in the previous cycle
+\end{enumerate}
+
+When bus prioritization is activated under these conditions the stage end times will be adjusted as mentioned and the next cycle (compensation) will perform likewise adjustments albeit inversed.

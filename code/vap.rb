@@ -212,7 +212,7 @@ def gen_vap sc
     # check that from-stage is running - may not be due to dogs level change!
     cp.add "IF Stage_active(#{cur}) THEN" 
     cp.add "   IF T = stage#{cur}_end THEN"
-    cp.add "      Is(#{cur},#{nxt});"
+    cp.add_verb "IS#{cur}_#{nxt}:      Is(#{cur},#{nxt});"
     if sc.has_bus_priority?
       if sc.is_donor? cur
         cp.add '      IF BUS_PRIORITY = -1 THEN'
@@ -220,7 +220,14 @@ def gen_vap sc
         cp.add '      END;', false  
       end
     end
-    cp.add "   END", false
+    cp.add '   END', false
+    cp.add 'END;', false
+  end
+  # checks for missed interstage runs due to dogs level downshifts
+  for i in (1...uniq_stages.length)
+    prev, cur=  uniq_stages[i-1], uniq_stages[i]
+    cp.add "IF (T > stage#{prev}_end) AND Stage_active(#{prev}) AND (T < stage#{cur}_end) THEN"
+    cp.add "  GOTO IS#{prev}_#{cur};", false
     cp.add "END#{(i < uniq_stages.length-1 or sc.has_bus_priority?) ? ';' : ''}", false
   end
   if sc.has_bus_priority?

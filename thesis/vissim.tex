@@ -40,11 +40,12 @@ Where the most important fields are the \textit{link\_number}, defining on which
 The \textit{comp} variable defines the traffic composition used eg. cars, trucks, buses or a combination. It is possible, but not recommended, to defined multiple inputs on the same link for the same period of time. Since the traffic composition will remain fairly static it is more intuitive to define a single link input for a traffic composition, which defines relative proportions of each possible vehicle type.
 
 \subsubsection*{Routing decisions}
+\label{routingdecisions}
 As mentioned routing decisions are made for vehicles immediately after they enter the system. This is done by placing a route decision point somewhere on an input link and designate a number of exit links, which can be internal links also, so as to generate a set of routes, which can be chosen among from some distribution.
 
 For arterial simulation a general assumption is that most traffic is throughgoing. However, it is unrealistic to omit routes, which are not straight through. As will be seen in the data analysis section (\ref{data}), there are special circumstances to be handled for the two areas being modelled and thus is necessary to provide detailed route choices.
 
-There exist many routes even for small networks when routes are symmetric (albeit using different links). Routes can be designed using the GUI tool provided with Vissim, however since the number of routes that can be taken will grow exponentially in the number of exit links, it is unfeasible to use this approach - especially when different route choice distributions are to be tested. Therefore it was decided to design route generation in the Vissim format, in addition to the before mentioned link input generator.
+There exist many routes even for small networks when routes are symmetric (albeit using different links). Routes can be designed using the GUI tool provided with Vissim, however since the number of routes that can be taken will grow exponentially in the number of exit links, it is unfeasible to use this approach - especially if different route choice distributions are to be tested. Therefore it was decided to design route generation in the Vissim format, in addition to the before mentioned link input generator.
 
 A routing decisions and the corresponding choice set takes the format:
 
