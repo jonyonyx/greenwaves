@@ -31,13 +31,33 @@ The combined traffic input is set so that in total 20\% arise from the minor roa
 XXX Try to find something to back this up eg. from Steen Lauritzens report XXX.
 
 \subsection{Routes}
-At every intersection it is possible to follow each adjacent link (ie. turn left, right or go straight through). The lack of a full detector dataset from the area prevents determination of the exact distribution of input on the possible routes. In addition, since it is possible to reach almost every output link from an input link, some simplifying conditions were selected to solve the problem with lack of data and the large number of routes.
+\label{routefractions}
+In the network there exist a large number of routes which road users may take. The most obvious routes go all the way through the arterial but other likely routes go from a heavy-traffic minor-road such as Herlev Hovedgade and exit at either at one of the ends of the arterial or at another heavy-traffic minor-road such as Jyllingevej.
 
-It was decided that input from minor roads should turn onto the arterial and choose a north- or southgoing route to the respective end of the arterial with equal probability ie. turn-in traffic does not turn out again but continue along the arterial. In Vissim this effect is accomplished by simply omitting route assignment for vehicles entering on minor links.
+At every intersection it is possible to follow each adjacent link (ie. turn left, right or go straight through) and thus the total number of routes from an input link to an exit link in the network is tremendous.
 
-To represent turn-out traffic routes choices are inserted for the major inputs only. Thus, from either end of the arterial, there is a route, which turns out, at each intersection in addition to a route going straight-through. 
+DRD provided traffic counts for every intersection except Ejby Torvevej (which is a blinded minor road and of little importance according to DRD) which has made it possible to model in detail the turning motions in the network.
+The counting period was 7.00-9.00 in the mornings and 15.00-17.00 in the afternoons in 15-minutes intervals. The counts involved, for each approach, the turning movements of cars (including vans) and trucks. 
 
-The proportions for turn-out routes are choosen identical to those of the relative input size for the minor links, which are chosen after the arterial. This coincides with the total traffic input so that 80\% of the traffic goes straight through and 20\% turns out.
+To apply this dataset in Vissim it is possible to use \textit{turning decisions} but the Vissim manual is clear that static routes should be used (rather than turning decisions) when modelling turning distributions. The main reason is that congestion may cause a decision to turn to be overruled whereas a vehicle on a fixed route will wait for the congestion to clear. 
+
+The simplest approach was to introduce a routing decision for each approach, which had traffic count data, and then add routes - respecting the counting data - which represented the turning motion. Such a route is \textit{internal} as it does not necessarily lead from an input to an exit link. Consequently this approach yields a network with the possibility of endless circulation, however since we only regard an arterial in this project - and the fact that there are no U-turns in the network - no vehicles will be able to circulate and will always find an exit link.
+
+The routing decision must be placed at a \textit{decision point}, however this does not exist in Vissim. Rather the decision point is scattered over 2 or more connectors attached to each link facing an intersection. In order to overcome this these connectors were grouped by a naming convention which identifies which decision point they belong to and which turning motion they will cause a vehicle to take. 
+The names are the concatenation of the direction from which traffic arrives (ie. north, south, east or west), the number of the intersection the decision belongs to (intersections are numbered increasingly from north to south) and finally the turning motion (ie. left, through or right), whichever is applicable. 
+
+As an example the decision point at Herlev Sygehus (intersection 1), which faces traffic from north consist of three connectors, are called \verb|N1L|, \verb|N1T| and \verb|N1R|.
+
+To find the insertion point for the routing a backtracking search is made from each turning motion until a common link is found. This link is thus the decision point and we can automatically generate our internal routes by using the discovery routine of section \ref{routingdecisions} to find a valid route.
+
+In Figure \ref{fig:flow_dist_principle} is an example of decision points (y) and the proportions of traffic for each turning motion.
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.6]{trafficcount_to_routes_sketch.png} 
+\end{center}
+\caption{Flow distribution principle}
+\label{fig:flow_dist_principle}
+\end{figure}
 
 \subsection{Signal Plans}
 Signal plans define the stage sequence, green duration and how changes between adjacent stages should happen with respect to colors in the from and to stages. For cycle-based signal plans the cycle time must be equal to the sum of green and interstage time from the beginning of the first stage until it begins again.
@@ -65,75 +85,3 @@ As a final simplifying step it was chosen not to provide signal heads for pedest
 The final plans, which are used in the simulation, can be seen in appendix \ref{app:signalplans}.
 
 The actual implementation was done in VAP by running the interstages at the cycle second according to the signal plan, for more details refer to section \ref{vap}.
-
-\subsection{Route Fractions from Traffic Counts}
-\label{routefractions}
-The Vissim manual is very clear that static routes should be used over turning decisions, mainly because congestion may cause a decision to turn to be overruled whereas a vehicle on a fixed route will wait for the congestion to clear.
-
-In the beginning of each input link a routing decision is placed so that every vehicle in the network is following a route. The question remains how many should follow each route.
-
-DRD supplied traffic counts for all intersections with the exception of Ejby Torvevej, which is blinded from east and is estimated by DRD to contribute very little.
-
-The counting period was 7.00-9.00 in the mornings and 15.00-17.00 in the afternoons in 15-minutes intervals. The counts involved, for each approach, the turning movements of cars (including vans) and trucks. 
-
-Traffic counts only show how flow traverses the individual intersection. In order to gain relative route distributions from these traffic counts a linear programming (LP) model by Jesper Larsen was implemented. The solutions to the model will give the relative fraction 
-
-Routes are modelled as strings of turning decisions. Each time an intersection is reached a it must be decided which direction to take next, for example left, right of through (whichever is applicable). Such decision happen at a \textit{decision point}.
-
-The model consist of a few constraints which much be satisfied by assigning values to $\mathbf{r}$, the relative route loads.
-
-\begin{table}[!ht]
-\begin{center}
-\begin{tabular}{ll}
-\hline
-$k = 1...m$ & Route indexes \\
-$l = 1...n$ & Decision point indexes  \\
-$D$ & Decision points. Columns represent routes and rows the decisions  \\
-$A$ & Binary decision point adjacency matrix  \\
-\hline
-\end{tabular}
-\end{center}
-\caption{Notation for turning probabilities to route fraction model}
-\end{table}
-
-\begin{eqnarray}
-\sum_{j = 1}^{m}{D_{l,j} \cdot r_j} = y_l \cdot p_l & \forall l \\
-y_l = \sum_{i = 1}^{n}{A_{i,l} \cdot p_i \cdot y_i} & \forall l
-\end{eqnarray}
-
-Where $m$ is the number of routes and $n$ is the longest string of choices. The matrix P indicates how the input to the decision point at row $i$ is distributed to decision points $l$. Thus P contains the turning probabilities from our traffic counts and may look like Figure \ref{fig:flow_dist_principle}. Below is the matrix form of this model.
-
-\begin{eqnarray}
-\mathbf{D} \cdot \mathbf{r} = \mathbf{y} \cdot \mathbf{p} \\
-\mathbf{y} = \mathbf{P} \cdot \mathbf{y}
-\end{eqnarray}
-
-\begin{figure}[!ht]
-\begin{center}
-\includegraphics[scale=0.6]{trafficcount_to_routes_sketch.png} 
-\end{center}
-\caption{Flow distribution principle}
-\label{fig:flow_dist_principle}
-\end{figure}
-
-In Table \ref{tbl:flow_dist_principle} is a selection of the $P$-matrix which corresponds to this network layout and turning probabilities.
-
-The downstream input is calculated by summing the upstream inputs multiplied by the turning percentages for the directions facing the decision point. For example $y_5 = 0.6 y_2 + 0.9 y_3$. In this case $y_2$ is an input link (same as 1, 5 and 6) with direct input defined per-hour i Vissim and $y_3$ is derived from the upstream inputs and turning probabilities name input and left-turning probability on link 5 and input and through-going probability on link 6.
-
-\begin{table}[!ht]
-\begin{center}
-\begin{tabular}{l|ccc}
- 	& 4 & 5 & 6 \\ \hline
-1	& $0.3$ & 0 & $0.7$ \\
-2	& $0.6$ & 0 & $0.4$ \\
-3	& $0.1$ & $0.9$ & 0
-\end{tabular}
-\end{center}
-\caption{Example of input distribution using turning percentages. Rows are donors and columns are recipients. The row-sums must be $1.0$ to illustrate that all input is distributed and is not \textit{lost} in the intersection and no decision point must distribute input to itself.}
-\label{tbl:flow_dist_principle}
-\end{table}
-
-In Vissim the concept of a decision point, as required by this model, does not exist. Rather the decision point is scattered over 2 or more connectors attached to each link facing an intersection. In order to overcome this these connectors were grouped by a naming convention which identifies which decision point they belong to and which turning motion they will cause a vehicle to take, should the connector be taken. The names are the concatenation of the direction from which traffic arrives (ie. north, south, east or west), the number of the intersection the decision belongs to (intersections are numbered increasingly from north to south) and finally the turning motion (ie. left, through or right). 
-
-As an example the decision point at Herlev Sygehus (intersection 1), which faces traffic from north consist of three connectors, are called \verb|N1L|, \verb|N1T| and \verb|N1R|.
-
