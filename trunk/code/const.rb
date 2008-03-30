@@ -4,12 +4,11 @@
 
 Base_dir = 'D:\\greenwaves\\'
 Data_dir = "#{Base_dir}data\\"
-Herlev_dir = Base_dir + 'data\\DOGS Herlev 2007\\'
-Glostrup_dir = Base_dir + 'data\\DOGS Glostrup 2007\\'
+Herlev_dir = "#{Data_dir}DOGS Herlev 2007\\"
+Glostrup_dir = "#{Data_dir}DOGS Glostrup 2007\\"
 Vissim_dir = Base_dir + 'Vissim\\o3_roskildevej-herlevsygehus\\'
 Default_network = "#{Vissim_dir}tilpasset_model.inp"
 Name_pat = '([,\w\s\d\/]*)'
-
 
 Time_fmt = '%H:%M:%S'
 EU_date_fmt = '%d-%m-%Y'
@@ -43,21 +42,13 @@ CS = "#{CSPREFIX}Data Source=#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes
 CSVCS = "#{CSPREFIX}Data Source=#{Data_dir};Extended Properties=\"Text;HDR=YES;FTM=Delimited\";"
 Accname = "acc_#{Res}m.csv"
 ACCFILE = "#{Data_dir}#{Accname}"
+ENABLE_VAP_TRACING = {:master => false, :slave => false} # write trace statements in vap code?
 
 require 'dbi'
-#require 'network'
-#require 'signal'
-#require 'vissim'
 
 def exec_query sql, conn_str = CS
   DBI.connect(conn_str) do |dbh|  
     return dbh.select_all(sql)
-  end
-end
-def exec_non_query sql_statements, conn_str = CSVCS
-  DBI.connect(conn_str) do |dbh| 
-    sql_statements.each{|stmt| dbh.do stmt}
-    puts "Inserted #{sql_statements.length} rows"
   end
 end
 class Array

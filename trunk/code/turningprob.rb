@@ -25,7 +25,6 @@ def get_vissim_routes vissim
         SUM([Trucks Right]) As Trucks_R,
         SUM([Total Trucks]) As Trucks_TOT
        FROM [counts$] 
-       WHERE Number <> 10
        GROUP BY Number,[From]"
 
   decision_points = []

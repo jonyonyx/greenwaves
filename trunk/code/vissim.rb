@@ -55,7 +55,7 @@ class RoutingDecision
     # AT must be AFTER the input point
     # place decisions as early as possibly to give vehicles time to changes lanes
     
-    str += "     LINK #{@input_link.number} AT #{@input_link.length * 0.1}\n"
+    str += "     LINK #{@input_link.number} AT #{@input_link.length * 0.2}\n"
     str += "     TIME FROM 0.0 UNTIL 99999.0\n"
     str += "     NODE 0\n"
     str += "      VEHICLE_CLASSES #{Type_map[@veh_type]}\n"
@@ -65,7 +65,7 @@ class RoutingDecision
       exit_link = route.exit
       # dump vehicles late on the route exit link to avoid placing the destination
       # upstream of the last connector
-      str += "     ROUTE     #{j+1}  DESTINATION LINK #{exit_link.number}  AT   #{exit_link.length * 0.5}\n"
+      str += "     ROUTE     #{j+1}  DESTINATION LINK #{exit_link.number}  AT   #{exit_link.length * 0.1}\n"
       str += "     FRACTION #{route_info['FRACTION']}\n"
       str += "     OVER #{route.to_vissim}\n"
     end

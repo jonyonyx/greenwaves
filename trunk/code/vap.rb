@@ -65,7 +65,8 @@ def gen_master area, opts
   
   cp.add "IF NOT cycle_sec THEN /* Perform initialization */"
   cp.add "  DN_CNT := 0; DS_CNT := 0; /* Keeps Vissim from nagging */"
-  cp.add "  SetT(1); /* Start the clock (tracing insert: TRACE(ALL);) */"
+  cp.add "  SetT(1); /* Start the clock */"
+  cp.add "  TRACE(ALL); /* Enable tracing */" if ENABLE_VAP_TRACING[:master]
   cp.add "  GOTO PROG_ENDE", false
   cp.add "END;", false
   
@@ -159,12 +160,13 @@ def gen_vap sc
     prev, cur = uniq_stages[i-1], uniq_stages[i]
     curprio = sc.priority cur
     stage_end = "stage#{cur}_end := STAGE#{cur}_TIME"
-    if curprio == MAJOR
-      stage_end += " + #{curprio == MAJOR ? major_fact : minor_fact} * DOGS_LEVEL"
-    end
-    if cur != uniq_stages.first      
-      stage_end += " + Interstage_length(#{prev},#{cur}) + stage#{prev}_end"
-    end    
+    
+    # assign priority to major and minor stages
+    stage_end += " + #{curprio == MAJOR ? major_fact : minor_fact} * DOGS_LEVEL" if curprio != NONE
+          
+    # account for the interstage length for all stage ends but the first stage
+    stage_end += " + Interstage_length(#{prev},#{cur}) + stage#{prev}_end" if cur != uniq_stages.first   
+    
     # insert bus priority for the first stage (=main direction), if the SC has it
     if sc.has_bus_priority?
       if sc.is_recipient? cur
@@ -184,7 +186,8 @@ def gen_vap sc
   cp.add 'DOGS_LEVEL := Marker_get(1); TIME := Marker_get(2);'
   cp.add 'IF NOT SYNC THEN'
   cp.add '   IF TIME = (OFFSET - 1) THEN'
-  cp.add '      SYNC := 1; TRACE(ALL)'
+  cp.add '      SYNC := 1;'
+  cp.add '      TRACE(ALL);' if ENABLE_VAP_TRACING[:slave]
   cp.add '   END;', false
   cp.add '   GOTO PROG_ENDE', false
   cp.add 'END;', false
@@ -326,9 +329,9 @@ MasterInfo = {
   'Glostrup' => {:dn => 14, :ds => 1, :occ_dets => [1,2,5,8,9,10,11,12,13,14], :cnt_dets => [1,2,5,8,9,10,11,12,13,14]}
 }
 
-#for area,opts in MasterInfo
-#  gen_master area, opts
-#end
+for area,opts in MasterInfo
+  gen_master area, opts
+end
 
 #exit(0)
 
