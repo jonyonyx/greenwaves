@@ -147,7 +147,7 @@ The first step for a slave is to calculate the local cycle second, which due to 
 Consider stage A which is active while the master controller lowers the DOGS level by 1. In this case the end time is lowered if stage A receives priority from DOGS and it may happen that the end time for stage A is now lower then the current cycle second. Stage A will then have received more green time than it was supposed to and the slave will immediately make the transition from stage A to the next stage, B. In case B is not the stage which was supposed to be active (a rare case - stage B is short indeed) we allow stage A to carry over to the next cycle as we can only make stage transitions between subsequent stages - not in arbitrary order.
 
 \subsection*{Bus Priorities}
-Three intersections in the Glostrup area - Fabriksparken, Gammel Landevej and Kindebjergvej - operate with bus priority on the arterial. 
+Three intersections in the Glostrup area - Fabriksparken, Gammel Landevej and Kindebjergvej - operate with bus priority on the arterial direction. 
 
 If a bus arrives from north or south during the stage which belongs to the arterial green time of up to 10 seconds is distributed from the minor road stage to this stage. The effect is that buses might just make it across before the next stage is started rather than being cut off. In the next cycle the main stage is shortened by the same amount of time and the minor stage is lengthened accordingly.
 
@@ -160,3 +160,5 @@ This is implemented by associating detectors for north- and southgoing buses for
 \end{enumerate}
 
 When bus prioritization is activated under these conditions the stage end times will be adjusted as mentioned and the next cycle (compensation) will perform likewise adjustments albeit inversed.
+
+In case that a bus arrives and activates bus prioritization but make it across the intersection before the green time for the stage has been extended, bus prioritization is cancelled.

@@ -172,11 +172,11 @@ def gen_vap sc
     # insert bus priority for the first stage (=main direction), if the SC has it
     if sc.has_bus_priority?
       if sc.is_recipient? cur
-        stage_end += ' + 10 * BUS_PRIORITY'
+        stage_end += " + #{BUS_TIME} * BUS_PRIORITY"
       elsif sc.is_donor? cur
         # the bus green extension is subtracted from the subsequent stage
         # in the compensation cycle, the extension is given to this stage
-        stage_end += ' - 10 * BUS_PRIORITY'
+        stage_end += " - #{BUS_TIME} * BUS_PRIORITY"
       end
     end
     cp.add_verb stage_end + ';'
@@ -194,11 +194,11 @@ def gen_vap sc
   cp.add '   GOTO PROG_ENDE', false
   cp.add 'END;', false
   cp.add "C := BASE_CYCLE_TIME + #{DOGS_TIME} * DOGS_LEVEL;"
-#  cp.add "IF TIME >= OFFSET THEN /* Poor man's modulos (VAP version 4) */"
-#  cp.add '   t_loc := TIME - OFFSET + 1'
-#  cp.add 'ELSE', false
-#  cp.add '   t_loc := TIME - OFFSET + C + 1'
-#  cp.add 'END;', false
+  #  cp.add "IF TIME >= OFFSET THEN /* Poor man's modulos (VAP version 4) */"
+  #  cp.add '   t_loc := TIME - OFFSET + 1'
+  #  cp.add 'ELSE', false
+  #  cp.add '   t_loc := TIME - OFFSET + C + 1'
+  #  cp.add 'END;', false
   cp.add 't_loc := (TIME + OFFSET) % C + 1;'
   cp.add 'SetT(t_loc);'
   
@@ -225,14 +225,17 @@ def gen_vap sc
     # stage 1 and grant the stage extra time so that the bus may just squeeze across.
     # Only start priority if BUS_PRIORITY = 0 ie. we are not already prioritizing or compensating.
     
-    # deactivation of bus priority because buses signalled they no longer need it
-    cp.add "IF BUS_PRIORITY AND (BUS_FROM_NORTH = 0) AND (BUS_FROM_SOUTH = 0) THEN"
-    cp.add '   BUS_PRIORITY := 0;'
-    cp.add 'END;', false
+    # Any bus prioritization must be done within the main (arterial) stage
+    cp.add "IF Stage_active(#{sc.recipient_stage}) THEN"
+    # check for deactivation of bus priority because buses signalled they no longer need it
+    cp.add "   IF BUS_PRIORITY = 1 AND (BUS_FROM_NORTH = 0) AND (BUS_FROM_SOUTH = 0) AND (T < (stage#{sc.recipient_stage}_end - #{BUS_TIME})) THEN"
+    cp.add '      BUS_PRIORITY := 0;'
+    cp.add '   END;', false
     
-    # enabling of bus priority
-    cp.add "IF (BUS_FROM_NORTH OR BUS_FROM_SOUTH) AND (BUS_PRIORITY = 0) AND Stage_active(#{sc.recipient_stage}) THEN"
-    cp.add '   BUS_PRIORITY := 1;'
+    # check if bus priority should be enabled
+    cp.add '   IF (BUS_FROM_NORTH OR BUS_FROM_SOUTH) AND (BUS_PRIORITY = 0) THEN'
+    cp.add '      BUS_PRIORITY := 1;'
+    cp.add '   END;', false
     cp.add 'END;', false
   end
   
@@ -246,8 +249,13 @@ def gen_vap sc
     if sc.has_bus_priority?
       if sc.is_donor? cur
         cp.add '      IF BUS_PRIORITY = -1 THEN'
-        cp.add '      	BUS_PRIORITY := 0; /* two cycles of bus priority and compensation has finished */'
+        cp.add '      	BUS_PRIORITY := 0; /* two cycles of bus priority has finished and the donor received its compensation */'
         cp.add '      END;', false  
+      end
+      if cur == uniq_stages.last
+        cp.add '      IF BUS_PRIORITY = 1 THEN'
+        cp.add '        BUS_PRIORITY := -1; /* subtract the extra bus time in next cycle */'
+        cp.add '      END;', false    
       end
     end
     cp.add '   END', false
@@ -255,15 +263,10 @@ def gen_vap sc
   end
   # checks for missed interstage runs due to dogs level downshifts
   for i in (1...uniq_stages.length)
-    prev, cur=  uniq_stages[i-1], uniq_stages[i]
+    prev, cur =  uniq_stages[i-1], uniq_stages[i]
     cp.add "IF (T > stage#{prev}_end) AND Stage_active(#{prev}) AND (T < stage#{cur}_end) THEN"
     cp.add "  GOTO IS#{prev}_#{cur};", false
-    cp.add "END#{(i < uniq_stages.length-1 or sc.has_bus_priority?) ? ';' : ''}", false
-  end
-  if sc.has_bus_priority?
-    cp.add 'IF (t_loc = C) AND (BUS_PRIORITY = 1) THEN'
-    cp.add '   BUS_PRIORITY := -1; /* subtract the extra bus time in next cycle */'
-    cp.add 'END', false    
+    cp.add "END#{(i < uniq_stages.length-1) ? ';' : ''}", false
   end
   cp.add_verb 'PROG_ENDE:    .'
   
