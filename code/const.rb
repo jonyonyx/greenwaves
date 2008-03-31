@@ -42,7 +42,7 @@ CS = "#{CSPREFIX}Data Source=#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes
 CSVCS = "#{CSPREFIX}Data Source=#{Data_dir};Extended Properties=\"Text;HDR=YES;FTM=Delimited\";"
 Accname = "acc_#{Res}m.csv"
 ACCFILE = "#{Data_dir}#{Accname}"
-ENABLE_VAP_TRACING = {:master => false, :slave => false} # write trace statements in vap code?
+ENABLE_VAP_TRACING = {:master => false, :slave => true} # write trace statements in vap code?
 
 require 'dbi'
 

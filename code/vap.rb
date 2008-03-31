@@ -150,8 +150,10 @@ def gen_vap sc
     cp.add_verb "\tSTAGE#{stage}_TIME = #{stages.find_all{|s| s == stage}.length},"
   end
   if sc.has_bus_priority?
-    cp.add_verb "\tBUSDETN = #{sc.bus_detector_n},"
-    cp.add_verb "\tBUSDETS = #{sc.bus_detector_s},"
+    cp.add_verb "\tBUSDETN = 1#{sc.bus_detector_n}," # arrival detector
+    cp.add_verb "\tBUSDETS = 1#{sc.bus_detector_s}," # arrival detector
+    cp.add_verb "\tBUSDETN_END = 2#{sc.bus_detector_n}," # departure detector
+    cp.add_verb "\tBUSDETS_END = 2#{sc.bus_detector_s}," # departure detector
   end
   cp.add_verb "\tBASE_CYCLE_TIME = #{sc.cycle_time},\n\tOFFSET = #{sc.offset};"
   cp.add_verb ''
@@ -192,19 +194,44 @@ def gen_vap sc
   cp.add '   GOTO PROG_ENDE', false
   cp.add 'END;', false
   cp.add "C := BASE_CYCLE_TIME + #{DOGS_TIME} * DOGS_LEVEL;"
-  cp.add "IF TIME >= OFFSET THEN /* Poor man's modulos (VAP version 4) */"
-  cp.add '   t_loc := TIME - OFFSET + 1'
-  cp.add 'ELSE', false
-  cp.add '   t_loc := TIME - OFFSET + C + 1'
-  cp.add 'END;', false
+#  cp.add "IF TIME >= OFFSET THEN /* Poor man's modulos (VAP version 4) */"
+#  cp.add '   t_loc := TIME - OFFSET + 1'
+#  cp.add 'ELSE', false
+#  cp.add '   t_loc := TIME - OFFSET + C + 1'
+#  cp.add 'END;', false
+  cp.add 't_loc := (TIME + OFFSET) % C + 1;'
   cp.add 'SetT(t_loc);'
   
   if sc.has_bus_priority?
-    cp.add "IF (Detection(BUSDETN) OR Detection(BUSDETS)) AND (BUS_PRIORITY = 0) AND Stage_active(#{sc.recipient_stage}) THEN"
-    cp.add_verb "/* Recipient is the stage for the main direction where buses come
-   To give priority we require that the bus arrives while in 
-   stage 1 and grant the stage extra time so that the bus may just squeeze across.
-   Only start priority if BUS_PRIORITY = 0 ie. we are not already prioritizing or compensating. */"
+    
+    # arrival detection
+    cp.add "IF Detection(BUSDETN) THEN"
+    cp.add "   BUS_FROM_NORTH := 1;"
+    cp.add "END;", false
+    cp.add "IF Detection(BUSDETS) THEN"
+    cp.add "   BUS_FROM_SOUTH := 1;"
+    cp.add "END;", false
+    
+    # departure detection
+    cp.add "IF Detection(BUSDETN_END) THEN"
+    cp.add "   BUS_FROM_NORTH := 0;"
+    cp.add "END;", false
+    cp.add "IF Detection(BUSDETS_END) THEN"
+    cp.add "   BUS_FROM_SOUTH := 0;"
+    cp.add "END;", false
+    
+    # Recipient is the stage for the main direction where buses come
+    # To give priority we require that the bus arrives while in 
+    # stage 1 and grant the stage extra time so that the bus may just squeeze across.
+    # Only start priority if BUS_PRIORITY = 0 ie. we are not already prioritizing or compensating.
+    
+    # deactivation of bus priority because buses signalled they no longer need it
+    cp.add "IF BUS_PRIORITY AND (BUS_FROM_NORTH = 0) AND (BUS_FROM_SOUTH = 0) THEN"
+    cp.add '   BUS_PRIORITY := 0;'
+    cp.add 'END;', false
+    
+    # enabling of bus priority
+    cp.add "IF (BUS_FROM_NORTH OR BUS_FROM_SOUTH) AND (BUS_PRIORITY = 0) AND Stage_active(#{sc.recipient_stage}) THEN"
     cp.add '   BUS_PRIORITY := 1;'
     cp.add 'END;', false
   end
@@ -289,7 +316,7 @@ def gen_pua sc
     
     cp.add_verb "Length [s]: #{islen}"
     cp.add_verb "From Stage: #{fromstage}"
-    cp.add_verb "To Stage: #{tostage ? tostage : uniq_stages.first}" #wrap around cycle
+    cp.add_verb "To Stage: #{tostage ? tostage : uniq_stages.first}" # wrap around cycle
     cp.add_verb "$\tredend\tgrend"
     
     # capture all changes in this interstage
@@ -329,9 +356,9 @@ MasterInfo = {
   'Glostrup' => {:dn => 14, :ds => 1, :occ_dets => [1,2,5,8,9,10,11,12,13,14], :cnt_dets => [1,2,5,8,9,10,11,12,13,14]}
 }
 
-for area,opts in MasterInfo
-  gen_master area, opts
-end
+#for area,opts in MasterInfo
+#  gen_master area, opts
+#end
 
 #exit(0)
 
@@ -359,8 +386,8 @@ for row in exec_query plan_sql
   if not sc or not sc.name == isname or not sc.program == prog
     # fetch the bus detectors attached to this intersection, if any
     busprior = exec_query("SELECT 
-                        [Detector North], [Detector South],
-                        DONOR, RECIPIENT
+                        [Detector North Suffix], [Detector South Suffix],
+                        [Donor Stage] As DONOR, [Recipient Stage] As RECIPIENT
                        FROM [buspriority$] WHERE Intersection = '#{isname}'").flatten - [nil]
     
     #puts "Bus detectors for #{isname}: #{busprior.inspect}"
@@ -370,7 +397,7 @@ for row in exec_query plan_sql
       'PROGRAM' => prog,
       'CYCLE_TIME' => row['CYCLE_TIME'],
       'OFFSET' => row['OFFSET'],
-      'BUSPRIORITY' => (busprior.empty? ? {} : {'DETN' => busprior[0].to_i, 'DETS' => busprior[1].to_i, 'DONOR' => busprior[2].to_i, 'RCPT' => busprior[3].to_i}) )
+      'BUSPRIORITY' => (busprior.empty? ? {} : {'DETN' => busprior[0], 'DETS' => busprior[1], 'DONOR' => busprior[2].to_i, 'RCPT' => busprior[3].to_i}) )
     scs << sc
   end
   
