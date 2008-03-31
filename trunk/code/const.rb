@@ -34,6 +34,7 @@ ANNUAL_INCREASE = 1.015 # used in input generation for scaling
 DOGS_LEVELS = 8
 DOGS_LEVELDOWN_BUFFER = 0.1 # percentage of threshold value for current level
 DOGS_TIME = 10 # number of seconds by which cycle time is increased for each dogs level
+BUS_TIME = 10 # number of seconds to extend green time for bus stages
 DOGS_LEVEL_GREEN = 10 # seconds green time associated with each dogs level change
 BASE_CYCLE_TIME = 80 # seconds
 CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;"
@@ -42,7 +43,7 @@ CS = "#{CSPREFIX}Data Source=#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes
 CSVCS = "#{CSPREFIX}Data Source=#{Data_dir};Extended Properties=\"Text;HDR=YES;FTM=Delimited\";"
 Accname = "acc_#{Res}m.csv"
 ACCFILE = "#{Data_dir}#{Accname}"
-ENABLE_VAP_TRACING = {:master => false, :slave => true} # write trace statements in vap code?
+ENABLE_VAP_TRACING = {:master => false, :slave => false} # write trace statements in vap code?
 
 require 'dbi'
 
