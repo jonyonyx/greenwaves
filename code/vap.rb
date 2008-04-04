@@ -359,11 +359,9 @@ MasterInfo = {
   'Glostrup' => {:dn => 14, :ds => 1, :occ_dets => [1,2,5,8,9,10,11,12,13,14], :cnt_dets => [1,2,5,8,9,10,11,12,13,14]}
 }
 
-#for area,opts in MasterInfo
-#  gen_master area, opts
-#end
-
-#exit(0)
+for area,opts in MasterInfo
+  gen_master area, opts
+end
 
 plan_sql = "SELECT 
         PLAN.Intersection, PLAN.PROGRAM,

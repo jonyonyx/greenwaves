@@ -2,11 +2,11 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-Base_dir = 'D:\\greenwaves\\'
+Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
 Data_dir = "#{Base_dir}data\\"
 Herlev_dir = "#{Data_dir}DOGS Herlev 2007\\"
 Glostrup_dir = "#{Data_dir}DOGS Glostrup 2007\\"
-Vissim_dir = Base_dir + 'Vissim\\o3_roskildevej-herlevsygehus\\'
+Vissim_dir = "#{Base_dir}Vissim\\o3_roskildevej-herlevsygehus\\"
 Default_network = "#{Vissim_dir}tilpasset_model.inp"
 Name_pat = '([,\w\s\d\/]*)'
 
