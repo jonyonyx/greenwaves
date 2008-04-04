@@ -5,7 +5,7 @@
         <data xmlns="http://www.netbeans.org/ns/ruby-project/1">
             <name>Green Waves - Source Code</name>
             <source-roots>
-                <root id="src.dir"/>
+                <root id="src.code.dir"/>
             </source-roots>
             <test-roots/>
         </data>
