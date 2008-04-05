@@ -56,8 +56,8 @@ for row in exec_query "SELECT BUS, [In Link], [Out Link] FROM [buses$]"
   tts.add "Bus #{row[0].to_i}", row[1].to_i, row[2].to_i, [Type_map['Buses']]
 end
 
-# Insert travel time measurings for full routes
-for route in routes.sort
+# Insert travel time measurings for full routes which have a certain length
+for route in routes.find_all{|r| r.length >= 10}.sort
   tts.add "From #{route.start} to #{route.exit}", route.start.number, route.exit.number
 end
 

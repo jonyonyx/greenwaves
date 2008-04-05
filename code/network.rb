@@ -6,6 +6,7 @@ require 'vissim_elem'
 
 class Link < VissimElem
   attr_reader :from,:link_type,:adjacent,:predecessors,:lanes,:length
+  attr_accessor :is_bus_input
   def initialize number,attributes    
     super
     update attributes
