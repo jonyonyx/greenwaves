@@ -1,20 +1,17 @@
-require 'const'  
-class Inputs < VissimOutput
-  def initialize
-    @inputs = []
-  end
+require 'const'
+require 'vissim'
+
+class Inputs < Array
+  include VissimOutput
   def section_header; /^-- Inputs: --/; end
-  def add input
-    @inputs << input
-  end
   def get_by_link number
-    @inputs.find_all{|i| i.link.number == number}
+    find_all{|i| i.link.number == number}
   end
   def to_vissim
     str = ''
     inputnum = 1
-    tbegin = @inputs.map{|i| i.tstart}.min
-    for input in @inputs
+    tbegin = map{|i| i.tstart}.min
+    for input in self
       link = input.link
       
       for veh_type, q in input.veh_flow_map      
@@ -52,7 +49,7 @@ def get_inputs vissim
               INNER JOIN [links$] As LINKS 
               ON  COUNTS.Intersection = LINKS.Intersection AND 
                   COUNTS.From = LINKS.From
-              WHERE LINKS.Type = 'IN' 
+              WHERE LINKS.Type = 'IN'
               ORDER BY [Period End], LINKS.Number"
 
   insect_info = exec_query "SELECT Name, [Count Date] FROM [intersections$]"
@@ -74,7 +71,7 @@ def get_inputs vissim
     isrow = insect_info.find{|r| r['Name'] == isname}
   
     raise "Unable to find counting date for intersection '#{isname}'" unless isrow
-  
+      
     count_date = Time.parse(isrow['Count Date'].to_s)
       
     # number of years which has passed since the traffic count
@@ -91,7 +88,7 @@ def get_inputs vissim
       veh_flow_map[veh_type] = flow * (Minutes_per_hour/Res) * ANNUAL_INCREASE ** years_passed 
     end
     tstart = tend - Res*Minutes_per_hour
-    inputs.add Input.new(link, tstart, tend, veh_flow_map)
+    inputs << Input.new(link, tstart, tend, veh_flow_map)
   end
   
   # for northern end (by herlev sygehus) and roskildevej

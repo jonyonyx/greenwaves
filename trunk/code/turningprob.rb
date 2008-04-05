@@ -5,14 +5,6 @@ def get_vissim_routes vissim
 
   routes = get_full_routes vissim
 
-  # join decisions to their successors
-#  for route in routes
-#    decisions = route.decisions
-#    for i in (0...decisions.length-1)
-#      decisions[i].add_succ decisions[i+1]
-#    end
-#  end
-
   decisions = routes.collect{|r|r.decisions}.flatten.uniq 
 
   turning_sql = "SELECT Number, [From], 
@@ -66,14 +58,14 @@ def get_vissim_routes vissim
     
         local_routes = find_routes dp_link,dest
     
-        raise "Warning: found multiple routes (#{local_routes.length}) from #{dp_link} to #{dest}" if local_routes.length > 1
-        raise "Warning: no routes from #{dp_link} to #{dest}!" if local_routes.empty?
+        raise "Found multiple routes (#{local_routes.length}) from #{dp_link} to #{dest}" if local_routes.length > 1
+        raise "No routes from #{dp_link} to #{dest}!" if local_routes.empty?
         
         route = local_routes.first
         rd.add_route route, p
       end
   
-      routing_decisions.add rd 
+      routing_decisions << rd 
     end
   end
 

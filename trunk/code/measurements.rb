@@ -4,13 +4,12 @@ require 'const'
 require 'vissim'
 require 'vissim_routes'
 
-class QueueCounters < VissimOutput
-  def initialize; @links = []; end
+class QueueCounters < Array
+  include VissimOutput
   def section_header; /^-- Queue Counters: --/; end
-  def add link; @links << link; end
   def to_vissim
     str = ''
-    @links.each_with_index do |link,i|
+    each_with_index do |link,i|
       str += "QUEUE_COUNTER #{i+1}     LINK #{link.number}  AT #{link.length - 5}\n"
     end
     str
@@ -26,19 +25,20 @@ decisions = routes.collect{|r|r.decisions}.flatten.uniq
 qc = QueueCounters.new
 # insert a queue length detector before each turning motion
 # a decision is a connector. the from link is where to put the measuring device
-decisions.sort.each{|dec| qc.add dec.connector.from}
+decisions.sort.each{|dec| qc << dec.connector.from}
 
-#qc.write
+#puts qc.to_vissim
+qc.write
 
-class TravelTimes < VissimOutput
-  def initialize; @tts = []; end
+class TravelTimes < Array
+  include VissimOutput
   def section_header; /^-- Travel Times: --/; end
   def add name, input, exit, veh_types = Cars_and_trucks
-    @tts << {:name => name, :input => input, :exit => exit, :vehtyp => veh_types}
+    self << {:name => name, :input => input, :exit => exit, :vehtyp => veh_types}
   end
   def to_vissim
     str = "TRAVEL_TIME   AGGREGATION_INTERVAL 99999 FROM 0 UNTIL 99999 RAW YES DATABASE TABLE \"TRAVELTIMES\"  AGGREGATE NO\n"
-    @tts.each_with_index do |tt,i|      
+    each_with_index do |tt,i|      
 
       str += "
 TRAVEL_TIME   #{i+1} NAME \"#{tt[:name]}\"   DISPLAY LABEL 0.000 0.000 0.000 0.000  EVALUATION YES
