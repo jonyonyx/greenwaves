@@ -61,7 +61,7 @@ module VissimOutput
       file << "\n#{section_contents}\n"
       file << inp[section_end..-1]
     end
-    puts "Wrote #{self.class} to '#{Default_network}'"
+    puts "Wrote#{respond_to?(:length) ? " #{length}" : ''} #{self.class} to '#{Default_network}'"
   end
 end
 

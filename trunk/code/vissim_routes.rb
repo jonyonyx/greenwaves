@@ -70,7 +70,7 @@ def prune_identical routes
     
   routes_to_remove = []
   for start_link in routes.map{|r| r.start}.uniq
-    #puts "Eliminating route duplicates starting at #{start_link}... "
+    # Eliminating route duplicates starting at start_link... 
     for r1 in routes.find_all{|r| r.start == start_link}
       next if routes_to_remove.include? r1
       duplicates = exiting_at[r1.exit].find_all{|r2| r2 != r1 and r2.start == start_link}
@@ -78,14 +78,11 @@ def prune_identical routes
     end
   end
   
-  #puts "Eliminated #{routes_to_remove.length} of #{routes.length} routes"
-  
   routes - routes_to_remove
 end
 
 def find_routes start,dest  
   routes = []
-  #puts "Finding routes from #{start} to #{dest}"
   discover(start,[dest]) do |r|
     routes << r
   end
@@ -94,28 +91,21 @@ end
 
 # finds all full ie. start-to-end routes
 # in the given vissim network
-def get_full_routes(vissim)
+def get_full_routes(vissim, start_links = vissim.input_links)
   
   routes = []
-  for start in vissim.input_links    
-    #count = routes.length
-    #print "Finding routes from #{start}... "
+  for start in start_links
     discover(start, vissim.exit_links) do |route|
       routes << route
     end
-    #puts "found #{routes.length - count} routes"
   end
-  
-  #puts "Completed route enumeration, found #{routes.length} routes in total"
   
   prune_identical routes
 end
 
 if __FILE__ == $0
-  # 48131026
   vissim = Vissim.new(Default_network)
   routes = get_full_routes vissim
-  #puts routes
   puts "Found #{routes.length} routes"
   
   for route in routes    

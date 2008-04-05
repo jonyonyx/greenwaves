@@ -72,7 +72,7 @@ end
 Name_pat = "([,\\w\\s\\d\\/']*)"
 
 class Vissim
-  attr_reader :links_map,:conn_map,:sc_map,:inp,:links,:input_links,:exit_links
+  attr_reader :links_map,:conn_map,:sc_map,:tt_map,:qc_map,:inp,:links,:input_links,:exit_links
   def initialize inpfile
     @inpfile = inpfile
     @inp = IO.readlines inpfile
@@ -90,6 +90,10 @@ class Vissim
       next unless links_map.has_key?(number)
       links_map[number].update row    
     end
+    
+    for businputlinknum in exec_query('SELECT [In Link] FROM [buses$]').flatten.map{|f| f.to_i}.uniq
+      links_map[businputlinknum].is_bus_input = true
+    end
 
     @conn_map = {}
     #now get the connectors and join them up using the links
@@ -101,12 +105,10 @@ class Vissim
         @conn_map[conn.number] = conn
       end
     end
-    
-    businputlinks = exec_query('SELECT [In Link] FROM [buses$]').flatten.map{|f| f.to_i}.uniq
         
     # remove non-input links which cannot be reached by cars and trucks
     for link in @links_map.values
-      next if link.input? or businputlinks.include? link.number
+      next if link.input? or link.is_bus_input
       conns = @conn_map.values.find_all{|c| c.to == link}
       next unless conns.empty? # a predecessor exists if there is a connector to this link
       @links_map.delete(link.number)
