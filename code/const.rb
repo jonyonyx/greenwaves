@@ -7,7 +7,8 @@ Data_dir = "#{Base_dir}data\\"
 Herlev_dir = "#{Data_dir}DOGS Herlev 2007\\"
 Glostrup_dir = "#{Data_dir}DOGS Glostrup 2007\\"
 Vissim_dir = "#{Base_dir}Vissim\\o3_roskildevej-herlevsygehus\\"
-Default_network = "#{Vissim_dir}tilpasset_model.inp"
+Network_name = "tilpasset_model.inp"
+Default_network = "#{Vissim_dir}#{Network_name}"
 Name_pat = '([,\w\s\d\/]*)'
 
 Time_fmt = '%H:%M:%S'
@@ -23,7 +24,7 @@ MAJOR = 'Major'
 NONE = 'None'
 
 # associated numbers with these vehicle types
-Type_map = {'Cars' => 1001, 'Trucks' => 1002}
+Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
 Type_map_rev = {1001 => 'Cars', 1002 => 'Trucks'}
 Cars_and_trucks = [1001, 1002]
 Cars_and_trucks_str = ['Cars','Trucks']

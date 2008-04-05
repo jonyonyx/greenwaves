@@ -3,21 +3,19 @@ require 'network'
 require 'signal'
 require 'fileutils'
 
-class VissimOutput  
-  @@inpname = 'tilpasset_model.inp'
-  @@inpfile = "#{Vissim_dir}#{@@inpname}"
+class VissimOutput 
   def write
     section_contents = to_vissim # make sure this can be successfully generated
-    FileUtils.cp @@inpfile, "d:\\temp\\#{@@inpname}#{rand}" # backup
-    inp = IO.readlines(@@inpfile)
+    FileUtils.cp Default_network, "#{ENV['TEMP']}\\#{Network_name}#{rand}" # backup
+    inp = IO.readlines(Default_network)
     section_start = (0...inp.length).to_a.find{|i| inp[i] =~ section_header} + 1
     section_end = (section_start...inp.length).to_a.find{|i| inp[i] =~ /-- .+ --/ } - 1 
-    File.open(@@inpfile, "w") do |file| 
+    File.open(Default_network, "w") do |file| 
       file << inp[0..section_start]
-      file << section_contents
+      file << "\n#{section_contents}\n"
       file << inp[section_end..-1]
     end
-    puts "Wrote #{self.class} to '#{@@inpfile}'"
+    puts "Wrote #{self.class} to '#{Default_network}'"
   end
 end
 class RoutingDecisions < VissimOutput
@@ -71,10 +69,7 @@ class RoutingDecision
     end
     str
   end
-end  
-
-
-
+end
 class Vissim
   attr_reader :links_map,:conn_map,:sc_map,:inp,:links,:input_links,:exit_links
   def initialize inpfile
@@ -146,6 +141,7 @@ class Vissim
   def to_s
     str = ''    
     for sc in @sc_map.values
+      str += "#{sc}\n"
       for grp in sc.groups.values
         str += "\t#{grp}\n"
         for head in grp.heads
