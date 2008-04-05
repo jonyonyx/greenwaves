@@ -9,7 +9,6 @@ Glostrup_dir = "#{Data_dir}DOGS Glostrup 2007\\"
 Vissim_dir = "#{Base_dir}Vissim\\o3_roskildevej-herlevsygehus\\"
 Network_name = "tilpasset_model.inp"
 Default_network = "#{Vissim_dir}#{Network_name}"
-Name_pat = '([,\w\s\d\/]*)'
 
 Time_fmt = '%H:%M:%S'
 EU_date_fmt = '%d-%m-%Y'
@@ -38,15 +37,33 @@ DOGS_TIME = 10 # number of seconds by which cycle time is increased for each dog
 BUS_TIME = 10 # number of seconds to extend green time for bus stages
 DOGS_LEVEL_GREEN = 10 # seconds green time associated with each dogs level change
 BASE_CYCLE_TIME = 80 # seconds
-CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;"
+CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source="
 DATAFILE = "#{Data_dir}data.xls" # main data file containing counts, sgp's, you name it
-CS = "#{CSPREFIX}Data Source=#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
-CSVCS = "#{CSPREFIX}Data Source=#{Data_dir};Extended Properties=\"Text;HDR=YES;FTM=Delimited\";"
+CS = "#{CSPREFIX}#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
+CSVCS = "#{CSPREFIX}#{Data_dir};Extended Properties=\"Text;HDR=YES;FTM=Delimited\";"
+CSRESDB = "#{CSPREFIX}#{Vissim_dir}results.mdb;"
 Accname = "acc_#{Res}m.csv"
 ACCFILE = "#{Data_dir}#{Accname}"
 ENABLE_VAP_TRACING = {:master => false, :slave => false} # write trace statements in vap code?
 
 require 'dbi'
+require 'fileutils'
+
+module VissimOutput 
+  def write
+    section_contents = to_vissim # make sure this can be successfully generated
+    FileUtils.cp Default_network, "#{ENV['TEMP']}\\#{Network_name}#{rand}" # backup
+    inp = IO.readlines(Default_network)
+    section_start = (0...inp.length).to_a.find{|i| inp[i] =~ section_header} + 1
+    section_end = (section_start...inp.length).to_a.find{|i| inp[i] =~ /-- .+ --/ } - 1 
+    File.open(Default_network, "w") do |file| 
+      file << inp[0..section_start]
+      file << "\n#{section_contents}\n"
+      file << inp[section_end..-1]
+    end
+    puts "Wrote #{self.class} to '#{Default_network}'"
+  end
+end
 
 def exec_query sql, conn_str = CS
   DBI.connect(conn_str) do |dbh|  

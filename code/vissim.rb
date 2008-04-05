@@ -1,34 +1,13 @@
 require 'const'
 require 'network'
 require 'signal'
-require 'fileutils'
 
-class VissimOutput 
-  def write
-    section_contents = to_vissim # make sure this can be successfully generated
-    FileUtils.cp Default_network, "#{ENV['TEMP']}\\#{Network_name}#{rand}" # backup
-    inp = IO.readlines(Default_network)
-    section_start = (0...inp.length).to_a.find{|i| inp[i] =~ section_header} + 1
-    section_end = (section_start...inp.length).to_a.find{|i| inp[i] =~ /-- .+ --/ } - 1 
-    File.open(Default_network, "w") do |file| 
-      file << inp[0..section_start]
-      file << "\n#{section_contents}\n"
-      file << inp[section_end..-1]
-    end
-    puts "Wrote #{self.class} to '#{Default_network}'"
-  end
-end
-class RoutingDecisions < VissimOutput
-  def initialize
-    @routing_decisions = []
-  end
+class RoutingDecisions < Array
+  include VissimOutput
   def section_header; /^-- Routing Decisions: --/; end
-  def add routing_decision
-    @routing_decisions << routing_decision
-  end
   def to_vissim
     str = ''
-    @routing_decisions.each_with_index do |rd,i|
+    each_with_index do |rd,i|
       str += "#{rd.to_vissim(i+1)}"
     end
     str
@@ -70,6 +49,28 @@ class RoutingDecision
     str
   end
 end
+class QueueCounter < VissimElem
+  attr_reader :link
+  def update opts
+    @link = opts[:link]
+  end
+  def to_s
+    "#{super} at #{@link}" 
+  end
+end
+class TravelTime < VissimElem
+  attr_reader :from,:to
+  def update opts
+    @from = opts[:from]
+    @to = opts[:to]
+  end
+  def to_s
+    "#{super} from #{@from} to #{@to}"
+  end
+end
+
+Name_pat = "([,\\w\\s\\d\\/']*)"
+
 class Vissim
   attr_reader :links_map,:conn_map,:sc_map,:inp,:links,:input_links,:exit_links
   def initialize inpfile
@@ -96,36 +97,31 @@ class Vissim
       # found a connection, join up the links
       unless conn.closed_to_any?(Cars_and_trucks)
         # only links which can be reached are cars and trucks are interesting
-        #puts "#{conn} from #{conn.from} to #{conn.to} is closed to cars and trucks"
       
         @conn_map[conn.number] = conn
       end
     end
     
+    businputlinks = exec_query('SELECT [In Link] FROM [buses$]').flatten.map{|f| f.to_i}.uniq
+        
     # remove non-input links which cannot be reached by cars and trucks
-    #puts "Before deletion: #{@links_map.length}"
     for link in @links_map.values
-      next if link.input?
+      next if link.input? or businputlinks.include? link.number
       conns = @conn_map.values.find_all{|c| c.to == link}
       next unless conns.empty? # a predecessor exists if there is a connector to this link
-      #puts "Removing #{link}"
       @links_map.delete(link.number)
         
       # remove all outgoing connectors from this link
       for conn in @conn_map.values.find_all{|c| c.from == link}
-        #puts "\tRemoving #{conn}"
         @conn_map.delete(conn.number)
       end
     end
-    
-    #puts "After deletion: #{@links_map.length}"
     
     # notify the links of connected links
     for conn in @conn_map.values
       from_link = conn.from
       to_link = conn.to
       from_link.add :successor, to_link, conn
-      #to_link.add :predecessor, from_link
     end
     
     @links = @links_map.values
@@ -136,6 +132,22 @@ class Vissim
     @sc_map = {}
     parse_controllers do |sc|
       @sc_map[sc.number] = sc
+    end
+    
+    @qc_map = {}    
+    parse_queuecounters do |qcnum, linknum|
+      qc = QueueCounter.new(qcnum, :link => @links.find{|l| l.number == linknum})
+      @qc_map[qc.number] = qc
+    end
+    
+    @tt_map = {}    
+    parse_traveltimes do |num, name, fromnum, tonum|
+      from = @links.find{|l| l.number == fromnum}
+      to = @links.find{|l| l.number == tonum}
+      raise "From link with number #{fromnum} not found" unless from
+      raise "To link with number #{tonum} not found" unless to
+      
+      @tt_map[num] = TravelTime.new(num, 'NAME' => name ,:from => from, :to => to)
     end
   end
   def to_s
@@ -150,6 +162,36 @@ class Vissim
       end
     end
     str
+  end
+  def parse_queuecounters
+    i = 0
+    while i < @inp.length
+      unless @inp[i] =~ /^QUEUE_COUNTER (\d+)     LINK (\d+)/
+        i += 1
+        next
+      end
+      yield $1.to_i, $2.to_i
+      i += 1
+    end
+  end
+  def parse_traveltimes
+    i = 0
+    while i < @inp.length
+      unless @inp[i] =~ /^TRAVEL_TIME   (\d+) NAME \"#{Name_pat}\"/
+        i += 1
+        next
+      end
+      
+      num = $1.to_i
+      name = $2
+            
+      i += 1
+      
+      @inp[i] =~ /FROM    LINK (\d+)  AT \d+.\d+    TO    LINK (\d+)/
+      
+      yield num, name, $1.to_i, $2.to_i
+      i += 1
+    end
   end
   # returns signal controllers and their groups.
   def parse_controllers
@@ -184,7 +226,7 @@ class Vissim
           grpnum = $3.to_i
           grp = ctrl.groups[grpnum]
           
-          raise "Warning: signal head '#{head}' is missing its group #{grpnum} at controller '#{ctrl}'" unless grp
+          raise "Signal head '#{head}' is missing its group #{grpnum} at controller '#{ctrl}'" unless grp
           grp.add(head) 
         end      
       
@@ -257,8 +299,4 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new(Default_network)
-  
-  for link in vissim.links
-    puts "#{link.length}"
-  end
 end
