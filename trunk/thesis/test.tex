@@ -1,0 +1,27 @@
+\section{Test Scenarios}
+The purpose of this section is to highlight the findings in the various simulation runs which were performed.
+
+The primary purpose of the simulation was to test the DOGS system against a theoretically better founded system for dynamic signal control. In addition tests were performed to discover the effect of bus priority and to determine whether DOGS with its varying cycle time can outperform a fixed cycle time but properly coordinated offsets.
+
+All simulations were fitted to the traffic observed in the morning period fra 7-9 am.
+To account for fluctuations each test was run 5 times with different seeds.
+
+The results of the tests are measured by inspection of a number of travel time sections and queue counters. Travel times are measured for every \textit{full} route (ie. from input to exit link) in the network, which traverse at least 5 links.
+
+\subsection{The Effect of DOGS}
+This test covers four scenarios:
+
+\begin{enumerate}
+\item DOGS and bus priority
+\item DOGS without bus priority
+\item Default program with bus priority
+\item Default program with no priority for buses
+\end{enumerate}
+
+In scenario 1 and 2 DOGS is enabled and the capacity in the main direction is adjusted according to detector values. In scenarios 3 and 4 DOGS is disabled effectively ignoring all detections (except for buses in scenario 3) and thus the signals will remain in the base program.
+
+\subsection*{Bus Priority}
+
+
+\subsection{Coordination with Direction Priority Offsets}
+

@@ -13,4 +13,7 @@ class VissimElem
   end
   def hash; @number + type.hash; end
   def eql?(other); self.class == other.class and @number == other.number; end
+  def <=>(other)
+    @number <=> other.number
+  end
 end

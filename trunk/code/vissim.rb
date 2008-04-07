@@ -67,6 +67,9 @@ class TravelTime < VissimElem
   def to_s
     "#{super} from #{@from} to #{@to}"
   end
+  def <=>(tt2)
+    (@from == tt2.from) ? (@to <=> tt2.to) : (@from <=> tt2.from)
+  end
 end
 
 Name_pat = "([,\\w\\s\\d\\/']*)"
@@ -189,7 +192,7 @@ class Vissim
             
       i += 1
       
-      @inp[i] =~ /FROM    LINK (\d+)  AT \d+.\d+    TO    LINK (\d+)/
+      @inp[i] =~ /FROM\s+LINK\s+(\d+)\s+AT\s+\d+.\d+\s+TO\s+LINK\s+(\d+)/
       
       yield num, name, $1.to_i, $2.to_i
       i += 1
