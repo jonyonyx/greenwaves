@@ -11,56 +11,69 @@ require 'measurements'
 puts "BEGIN"
 
 tests = [
-  {:name => 'DOGS_and_bus', :dogs => true, :buspriority => true},
-  {:name => 'DOGS_no_bus', :dogs => true, :buspriority => false}
+  {:name => 'DOGS and bus', :dogs => true, :buspriority => true},
+  {:name => 'DOGS no bus', :dogs => true, :buspriority => false},
+  {:name => 'No DOGS with bus', :dogs => false, :buspriority => true},
+  {:name => 'No DOGS or bus', :dogs => false, :buspriority => false}
 ]
+
+testqueue = ThreadSafeArray.new tests
 
 insert_measurements
 
 puts "Loading Vissim..."
 
 vissimnet = Vissim.new(Default_network)
-vissim = WIN32OLE.new('VISSIM.Vissim')
 
-puts "Loading network..."
+threads = []
 
-vissim.LoadNet Default_network
-vissim.LoadLayout "#{Vissim_dir}speed.ini"
+# start a vissim instance for each processor 
+# (vissim does not use parallel computations before 5.10)
+ENV['NUMBER_OF_PROCESSORS'].times do
+  threads << Thread.new do 
+    vissim = WIN32OLE.new('VISSIM.Vissim')
 
-puts "Loading simulator..."
+    puts "Loading network..."
 
-sim = vissim.Simulation
+    vissim.LoadNet Default_network
+    vissim.LoadLayout "#{Vissim_dir}speed.ini"
 
-#sim.Period = 2 * Minutes_per_hour * Seconds_per_minute # simulation seconds
-sim.Period = 600 # simulation seconds
-sim.Resolution = 1 # steps per simulation second
+    puts "Loading simulator..."
 
-results = TravelTimeResults.new
+    sim = vissim.Simulation
 
-n = tests.length
-i = 1
-for parms in tests
+    sim.Period = 1 * Minutes_per_hour * Seconds_per_minute # simulation seconds
+    #sim.Period = 900 # simulation seconds
+    sim.Resolution = 1 # steps per simulation second
+
+    results = TravelTimeResults.new(vissimnet)
+
+    while parms = testqueue.pop
   
-  generate_controllers parms
+      generate_controllers parms
   
-  print "Running simulation #{i} of #{n}... "
+      print "Running simulation '#{parms[:name]}'... "
   
-  sim.RandomSeed = rand
-  sim.RunContinuous
+      sim.RandomSeed = rand
+      sim.RunContinuous
   
-  puts "done"
+      puts "done"
   
-  results.extract_results parms[:name]
+      results.extract_results parms[:name]
   
-  i += 1
+      i += 1
+    end
+
+    puts "Completed #{i} simulation#{i != 1 ? 's' : ''}, exiting Vissim..."
+
+    vissim.Exit
+  end
 end
 
-puts "Completed #{n} simulation#{n != 1 ? 's' : ''}, exiting Vissim..."
+threads.each{|t| t.join}
 
-vissim.Exit
+puts "Preparing Results..."
 
-puts "Printing Results:"
-
-results.print vissimnet
+results.to_xls
 
 puts "END"
