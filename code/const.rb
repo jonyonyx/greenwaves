@@ -95,3 +95,18 @@ class Array
   def deviation ; variance**(1/2) ; end
   def sample n=1 ; (0...n).collect{ self[rand(size)] } ; end
 end
+
+class ThreadSafeArray
+  def initialize initar = []
+    @mutex = Mutex.new
+    @internalArray = initar
+  end  
+  def method_missing(method, *args, &block)
+    @mutex.lock
+    begin
+      @internalArray.send(method, *args, &block)
+    ensure
+      @mutex.unlock
+    end
+  end
+end
