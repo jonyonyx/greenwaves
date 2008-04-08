@@ -10,14 +10,12 @@ require 'measurements'
 
 puts "BEGIN"
 
-tests = [
-  {:name => 'DOGS and bus', :dogs => true, :buspriority => true},
-  {:name => 'DOGS no bus', :dogs => true, :buspriority => false},
-  {:name => 'No DOGS with bus', :dogs => false, :buspriority => true},
-  {:name => 'No DOGS or bus', :dogs => false, :buspriority => false}
-]
+testqueue = ThreadSafeArray.new
 
-testqueue = ThreadSafeArray.new tests
+testqueue << {:testname => 'DOGS and bus',     :dogs_enabled => true,  :buspriority => true}
+testqueue << {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false}
+testqueue << {:testname => 'No DOGS with bus', :dogs_enabled => false, :buspriority => true}
+testqueue << {:testname => 'No DOGS or bus',   :dogs_enabled => false, :buspriority => false}
 
 insert_measurements
 
@@ -27,50 +25,70 @@ vissimnet = Vissim.new(Default_network)
 
 threads = []
 
-# start a vissim instance for each processor 
+results = TravelTimeResults.new(vissimnet)
+    
+# start a vissim instance for each processor / core
 # (vissim does not use parallel computations before 5.10)
-ENV['NUMBER_OF_PROCESSORS'].times do
-  threads << Thread.new do 
+CPUCOUNT = 1 #ENV['NUMBER_OF_PROCESSORS'].to_i
+CPUCOUNT.times do |i|
+  threads << Thread.new(i) do |threadnum|
+    
+    # create a working directory for each vissim instance
+    # to avoid clashes in database tables and parameters
+    instancename = "vissim_instance#{threadnum+1}"
+    
+    workdir = File.join(Tempdir, instancename)
+    begin
+      Dir.mkdir workdir
+    rescue
+      # workdir already exists, clear it
+      FileUtils.rm Dir[File.join(workdir,'*')]
+    end
+    
+    Dir.chdir Vissim_dir
+    
+    # copy all relevant files to the instance workdir
+    FileUtils.cp(Dir['*.inp'] + Dir['*.pua'] + Dir['*.mdb'], workdir)
+        
     vissim = WIN32OLE.new('VISSIM.Vissim')
-
-    puts "Loading network..."
-
-    vissim.LoadNet Default_network
+    
+    # load the instance copy of the network
+    tempnet = Dir[File.join(workdir, '*.inp')].first.gsub('/',"\\")
+    #puts "Vissim #{instancename} loading '#{tempnet}'"
+    vissim.LoadNet tempnet
     vissim.LoadLayout "#{Vissim_dir}speed.ini"
-
-    puts "Loading simulator..."
 
     sim = vissim.Simulation
 
-    sim.Period = 1 * Minutes_per_hour * Seconds_per_minute # simulation seconds
-    #sim.Period = 900 # simulation seconds
+    #sim.Period = 1 * Minutes_per_hour * Seconds_per_minute # simulation seconds
+    sim.Period = 900 # simulation seconds
     sim.Resolution = 1 # steps per simulation second
 
-    results = TravelTimeResults.new(vissimnet)
-
+    processed = 0
     while parms = testqueue.pop
+      simname = parms[:testname]
   
-      generate_controllers parms
+      generate_controllers parms, workdir # creates vap and pua files
   
-      print "Running simulation '#{parms[:name]}'... "
+      print "Vissim instance #{threadnum+1} running simulation '#{simname}'... "
   
       sim.RandomSeed = rand
       sim.RunContinuous
   
       puts "done"
   
-      results.extract_results parms[:name]
+      results.extract_results simname, workdir
   
-      i += 1
+      processed += 1
     end
 
-    puts "Completed #{i} simulation#{i != 1 ? 's' : ''}, exiting Vissim..."
+    puts "Completed #{processed} simulation#{processed != 1 ? 's' : ''}, exiting Vissim..."
 
     vissim.Exit
   end
 end
 
-threads.each{|t| t.join}
+threads.reverse_each{|t| t.join}
 
 puts "Preparing Results..."
 

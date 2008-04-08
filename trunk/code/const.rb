@@ -2,6 +2,7 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
+Tempdir = ENV['TEMP'].gsub("\\",'/')
 Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
 Data_dir = "#{Base_dir}data\\"
 Herlev_dir = "#{Data_dir}DOGS Herlev 2007\\"
@@ -25,7 +26,7 @@ NONE = 'None'
 
 # associated numbers with these vehicle types
 Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
-Type_map_rev = {1001 => 'Cars', 1002 => 'Trucks'}
+Type_map_rev = {1001 => 'Cars', 1002 => 'Trucks', 1003 => 'Buses'}
 Cars_and_trucks = [1001, 1002]
 Cars_and_trucks_str = ['Cars','Trucks']
 
@@ -69,7 +70,12 @@ module VissimOutput
     puts "Wrote#{respond_to?(:length) ? " #{length}" : ''} #{self.class} to '#{network}'"
   end
 end
-
+def change_in_file(file, find, replace)
+  text = File.read file
+  File.open(file, 'w') do |f| 
+    f << text.gsub(find, replace)
+  end
+end
 def exec_query sql, conn_str = CS
   DBI.connect(conn_str) do |dbh|  
     return dbh.select_all(sql)
@@ -97,14 +103,15 @@ class Array
 end
 
 class ThreadSafeArray
-  def initialize initar = []
-    @mutex = Mutex.new
-    @internalArray = initar
-  end  
-  def method_missing(method, *args, &block)
+  def method_missing method, *args, &block
+    if @mutex.nil?
+      @mutex = Mutex.new
+      @internalArray = []
+    end
+    
     @mutex.lock
     begin
-      @internalArray.send(method, *args, &block)
+      @internalArray.send method, *args, &block
     ensure
       @mutex.unlock
     end

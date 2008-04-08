@@ -9099,7 +9099,7 @@ QUEUE_COUNTER 119     LINK 45  AT 789.844
 -- Evaluations: --
 ------------------
 
-EVALUATION  DATABASE "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=C:\greenwaves\Vissim\o3_roskildevej-herlevsygehus\results.mdb;Persist Security Info=False" CONFIRM_OVERWRITE  NO
+EVALUATION  DATABASE "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=results.mdb;Persist Security Info=False" CONFIRM_OVERWRITE  NO
 
 EVALUATION  TYPE  SEGMENT  CONFIG_FILE "02042004_m.sak" AGGREGATION_INTERVAL 60.0 
             TIME FROM 0.0 UNTIL 99999.0
