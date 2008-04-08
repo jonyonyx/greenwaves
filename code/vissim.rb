@@ -59,10 +59,11 @@ class QueueCounter < VissimElem
   end
 end
 class TravelTime < VissimElem
-  attr_reader :from,:to
+  attr_reader :from,:to,:vehicle_classes
   def update opts
     @from = opts[:from]
     @to = opts[:to]
+    @vehicle_classes = opts[:veh_classes].map{|num| Type_map_rev[num]}
   end
   def to_s
     "#{super} from #{@from} to #{@to}"
@@ -72,7 +73,7 @@ class TravelTime < VissimElem
   end
 end
 
-Name_pat = "([,\\w\\s\\d\\/']*)"
+Name_pat = "([,\\w\\s\\d\\/']*)" # pattern for names in vissim network files
 
 class Vissim
   attr_reader :links_map,:conn_map,:sc_map,:tt_map,:qc_map,:inp,:links,:input_links,:exit_links
@@ -146,13 +147,13 @@ class Vissim
     end
     
     @tt_map = {}    
-    parse_traveltimes do |num, name, fromnum, tonum|
+    parse_traveltimes do |num, name, fromnum, tonum, vcs|
       from = @links.find{|l| l.number == fromnum}
       to = @links.find{|l| l.number == tonum}
       raise "From link with number #{fromnum} not found" unless from
       raise "To link with number #{tonum} not found" unless to
       
-      @tt_map[num] = TravelTime.new(num, 'NAME' => name ,:from => from, :to => to)
+      @tt_map[num] = TravelTime.new(num, 'NAME' => name ,:from => from, :to => to, :veh_classes => vcs)
     end
   end
   def to_s
@@ -192,9 +193,9 @@ class Vissim
             
       i += 1
       
-      @inp[i] =~ /FROM\s+LINK\s+(\d+)\s+AT\s+\d+.\d+\s+TO\s+LINK\s+(\d+)/
+      @inp[i] =~ /FROM\s+LINK\s+(\d+)\s+AT\s+\d+.\d+\s+TO\s+LINK\s+(\d+)\s+AT\s+\d+.\d+\s+SMOOTHING\s+\d.\d+\s+VEHICLE_CLASSES\s+([\d ]+)+/
       
-      yield num, name, $1.to_i, $2.to_i
+      yield num, name, $1.to_i, $2.to_i, $3.split(' ').map{|vcs| vcs.to_i}
       i += 1
     end
   end

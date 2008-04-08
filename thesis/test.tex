@@ -20,6 +20,8 @@ This test covers four scenarios:
 
 In scenario 1 and 2 DOGS is enabled and the capacity in the main direction is adjusted according to detector values. In scenarios 3 and 4 DOGS is disabled effectively ignoring all detections (except for buses in scenario 3) and thus the signals will remain in the base program.
 
+As DOGS will naturally cause decreased performance for the minor roads it was decided to split the dataset so that \textit{arterial} and \textit{crossing} traffic can be distinguished. For travel timings arterial traffic is defined as traffic which enters or leaves the network by one of the ends of the arterial (north or south). All other traffic is marked as crossing.
+
 \subsection*{Bus Priority}
 
 

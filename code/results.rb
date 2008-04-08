@@ -17,15 +17,26 @@ class TravelTimeResult
     (@tt == ttres.tt) ? (@testname <=> ttres.testname) : (@tt <=> ttres.tt)
   end
 end
-class TravelTimeResults < Array
+class TravelTimeResults < ThreadSafeArray
+  #travel times are inserted "raw" ie in chronological
+  # order and the vehicles (Veh) column indicates the total number of vehicles
+  # that participated in this travel time measurement. below is
+  # SQL to fetch the last entry into TRAVELTIMES. 
+  @@ttsql = 'SELECT 
+              TRAVELTIMES.[No_], 
+              Trav,
+              Veh
+             FROM TRAVELTIMES 
+             INNER JOIN (SELECT [No_], MAX([Time]) As T FROM TRAVELTIMES GROUP BY [No_]) As MAXTIMES
+             ON TRAVELTIMES.[Time] = MAXTIMES.T'
+  
   def initialize vissim
     @vissim = vissim
   end
-  def extract_results name
-
-    ttsql = 'SELECT [No_], AVG(Trav) FROM TRAVELTIMES GROUP BY [No_]'
+  
+  def extract_results name, resdir
     
-    for row in exec_query(ttsql, CSRESDB)
+    for row in exec_query(@ttsql, "#{CSPREFIX}#{File.join(resdir,'results.mdb')};")
       ttnum = row[0]
     
       # find the traveltime entry in order to gain additional insight
@@ -46,7 +57,7 @@ class TravelTimeResults < Array
     
     datash.cells.clear
     
-    ['Test Name','TT Number','Travel Time', 'From Link', 
+    ['TT Number','Test Name', 'Travel Time', 'Vehicle Type', 'Traffic Type', 'From Link', 
       'To Link', 'From Dec', 'To Dec', 'From IS', 'To Is'].each_with_index do |header,i|
       datash.cells(1,i+1).Value = header
     end
@@ -64,9 +75,18 @@ class TravelTimeResults < Array
       fromis = insect_info.find{|r| r['Number'] == firstdec.intersection}['Name']
       tois = insect_info.find{|r| r['Number'] == lastdec.intersection}['Name']
       
+      veh_types = tt.vehicle_classes.join(' & ')
+      
+      # 'arterial' traffic exits in either end of the arterial
+      traffic_type = if not (['N','S'] & [firstdec.from,lastdec.from]).empty? and lastdec.turning_motion == 'T'
+        'Arterial'
+      else
+        'Crossing'
+      end
+      
       # insert a row for all results for this tt fella in each test
       for ttres in find_all{|res| res.tt == tt}
-        [ttres.testname, tt.number, ttres.value, link_desc(from), link_desc(to), 
+        [tt.number, ttres.testname, ttres.value, veh_types, traffic_type, from.number, to.number, 
           firstdec, lastdec, fromis, tois].each_with_index do |value,i|
           datash.cells(j,i+1).Value = value.to_s
         end
@@ -82,17 +102,4 @@ class TravelTimeResults < Array
     
     excel.Quit
   end
-end
-
-def link_desc link
-  "#{link.number}#{link.name ? " #{link.name}" : ''}"
-end
-
-
-if __FILE__ == $0
-  vissim = Vissim.new(Default_network)
-  results = TravelTimeResults.new(vissim)
-  results.extract_results 'test'
-  results.extract_results 'test2'
-  results.to_xls
 end
