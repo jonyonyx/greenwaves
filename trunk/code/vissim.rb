@@ -1,6 +1,7 @@
 require 'const'
 require 'network'
 require 'signal'
+require 'vissim_elem'
 
 class RoutingDecisions < Array
   include VissimOutput
@@ -72,11 +73,12 @@ class TravelTime < VissimElem
     (@from == tt2.from) ? (@to <=> tt2.to) : (@from <=> tt2.from)
   end
 end
+class Node < VissimElem; end
 
 Name_pat = "([,\\w\\s\\d\\/']*)" # pattern for names in vissim network files
 
 class Vissim
-  attr_reader :links_map,:conn_map,:sc_map,:tt_map,:qc_map,:inp,:links,:input_links,:exit_links
+  attr_reader :links_map,:conn_map,:sc_map,:tt_map,:node_map,:qc_map,:inp,:links,:input_links,:exit_links
   def initialize inpfile
     @inpfile = inpfile
     @inp = IO.readlines inpfile
@@ -146,6 +148,12 @@ class Vissim
       @qc_map[qc.number] = qc
     end
     
+    @node_map = {}
+    parse_nodes do |num,name|
+      node = Node.new(num, 'NAME' => name)
+      @node_map[node.number] = node
+    end
+    
     @tt_map = {}    
     parse_traveltimes do |num, name, fromnum, tonum, vcs|
       from = @links.find{|l| l.number == fromnum}
@@ -196,6 +204,18 @@ class Vissim
       @inp[i] =~ /FROM\s+LINK\s+(\d+)\s+AT\s+\d+.\d+\s+TO\s+LINK\s+(\d+)\s+AT\s+\d+.\d+\s+SMOOTHING\s+\d.\d+\s+VEHICLE_CLASSES\s+([\d ]+)+/
       
       yield num, name, $1.to_i, $2.to_i, $3.split(' ').map{|vcs| vcs.to_i}
+      i += 1
+    end
+  end
+  def parse_nodes
+    i = 0
+    while i < @inp.length
+      unless @inp[i] =~ /NODE\s+(\d+)\s+NAME\s+\"#{Name_pat}\"/
+        i += 1
+        next
+      end
+      
+      yield $1.to_i, $2
       i += 1
     end
   end
@@ -305,4 +325,6 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new(Default_network)
+  
+  puts vissim.node_map.values
 end

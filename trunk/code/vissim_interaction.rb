@@ -10,12 +10,14 @@ require 'measurements'
 
 puts "BEGIN"
 
+RUNS = 2 # number of runs per test
+
 testqueue = ThreadSafeArray.new
 
 testqueue << {:testname => 'DOGS and bus',     :dogs_enabled => true,  :buspriority => true}
-testqueue << {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false}
-testqueue << {:testname => 'No DOGS with bus', :dogs_enabled => false, :buspriority => true}
-testqueue << {:testname => 'No DOGS or bus',   :dogs_enabled => false, :buspriority => false}
+#testqueue << {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false}
+#testqueue << {:testname => 'No DOGS with bus', :dogs_enabled => false, :buspriority => true}
+#testqueue << {:testname => 'No DOGS or bus',   :dogs_enabled => false, :buspriority => false}
 
 insert_measurements
 
@@ -25,7 +27,7 @@ vissimnet = Vissim.new(Default_network)
 
 threads = []
 
-results = TravelTimeResults.new(vissimnet)
+results = NodeEvals.new(vissimnet)
     
 # start a vissim instance for each processor / core
 # (vissim does not use parallel computations before 5.10)
@@ -48,7 +50,7 @@ CPUCOUNT.times do |i|
     Dir.chdir Vissim_dir
     
     # copy all relevant files to the instance workdir
-    FileUtils.cp(Dir['*.inp'] + Dir['*.pua'] + Dir['*.mdb'], workdir)
+    FileUtils.cp(%w{inp pua knk mdb}.map{|ext| Dir["*.#{ext}"]}.flatten, workdir)
         
     vissim = WIN32OLE.new('VISSIM.Vissim')
     
@@ -60,8 +62,8 @@ CPUCOUNT.times do |i|
 
     sim = vissim.Simulation
 
-    #sim.Period = 1 * Minutes_per_hour * Seconds_per_minute # simulation seconds
-    sim.Period = 900 # simulation seconds
+    #sim.Period = 2 * Minutes_per_hour * Seconds_per_minute # simulation seconds
+    sim.Period = 1200 # simulation seconds
     sim.Resolution = 1 # steps per simulation second
 
     processed = 0
@@ -72,8 +74,11 @@ CPUCOUNT.times do |i|
   
       print "Vissim instance #{threadnum+1} running simulation '#{simname}'... "
   
-      sim.RandomSeed = rand
-      sim.RunContinuous
+      RUNS.times do |i|
+        sim.RunIndex = i
+        sim.RandomSeed = rand
+        sim.RunContinuous
+      end
   
       puts "done"
   

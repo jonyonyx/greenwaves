@@ -1,4 +1,6 @@
 # insertion of measurement points (queue length detectors and travel time sections)
+# note! obsoleted, use node evaluations per intersection instead!
+# buses are an exception for travel time evaluations
 
 require 'const'
 require 'vissim'
@@ -7,8 +9,8 @@ require 'vissim_routes'
 def insert_measurements vissim = Vissim.new(Default_network)
   routes = get_full_routes vissim
   
-  insert_queuecounters vissim, routes
-  insert_traveltimes routes
+  #insert_queuecounters vissim, routes
+  insert_traveltimes routes, :buses => true
 end
 
 class QueueCounters < Array
@@ -54,17 +56,21 @@ TRAVEL_TIME   #{i+1} NAME \"#{tt[:name]}\"   DISPLAY LABEL 0.000 0.000 0.000 0.0
     str
   end
 end
-def insert_traveltimes routes
+def insert_traveltimes routes, opts
   tts = TravelTimes.new
 
-  # Insert travel time measurings for each bus line
-  for row in exec_query "SELECT BUS, [In Link], [Out Link] FROM [buses$]"
-    tts.add "Bus #{row[0].to_i}", row[1].to_i, row[2].to_i, [Type_map['Buses']]
+  if opts[:buses]
+    # Insert travel time measurings for each bus line
+    for row in exec_query "SELECT BUS, [In Link], [Out Link] FROM [buses$]"
+      tts.add "Bus #{row[0].to_i}", row[1].to_i, row[2].to_i, [Type_map['Buses']]
+    end
   end
 
-  # Insert travel time measurings for full routes which have a certain length
-  for route in routes.find_all{|r| r.length >= MIN_ROUTE_LENGTH}.sort
-    tts.add "From #{route.start} to #{route.exit}", route.start.number, route.exit.number
+  if opts[:private_vehicles]
+    # Insert travel time measurings for full routes which have a certain length
+    for route in routes.find_all{|r| r.length >= MIN_ROUTE_LENGTH}.sort
+      tts.add "From #{route.start} to #{route.exit}", route.start.number, route.exit.number
+    end
   end
 
   #puts tts.to_vissim
@@ -72,5 +78,5 @@ def insert_traveltimes routes
 end
 
 if __FILE__ == $0
-  insert_all
+  insert_measurements
 end
