@@ -95,24 +95,25 @@ def get_inputs vissim
   # use the dogs detector data and take the cars-to-truck ratios from the
   # traffic counts  
   
-  for det in ['D3','D01','D03','D06']
+  if Project
+    for det in ['D3','D01','D03','D06']
         
-    #fetch the link input number    
-    number = exec_query("SELECT LINKS.Number 
+      #fetch the link input number    
+      number = exec_query("SELECT LINKS.Number 
         FROM [detectors$] As DETS
         INNER JOIN [links$] As LINKS
         ON DETS.Intersection = LINKS.Intersection
         AND DETS.FROM = LINKS.From 
         WHERE DETS.Name = '#{det}'").flatten.first.to_i
     
-    # now change the input for this link number to use
-    # the data from this detector, respecting the vehicle ratio
+      # now change the input for this link number to use
+      # the data from this detector, respecting the vehicle ratio
     
-    inputs_for_link = inputs.get_by_link number
+      inputs_for_link = inputs.get_by_link number
     
-    #puts "input link: #{number}"
+      #puts "input link: #{number}"
     
-    sql = "SELECT 
+      sql = "SELECT 
           HOUR(Time) As H,
           MINUTE(Time) As M,
           AVG(Detected) As Detected
@@ -122,13 +123,14 @@ def get_inputs vissim
         AND Time BETWEEN \#1899/12/30 07:00:00\# AND \#1899/12/30 09:00:00\#
         GROUP BY Detector,Time"
     
-    for row in exec_query sql, CSVCS
-      input = inputs_for_link.find{|i| i.tend.hour == row['H'] and i.tend.min == row['M']}
-      qtot = row['Detected'].to_f
-      r = input.ratio('Cars', 'Trucks')
-      #puts "ratio: #{r}"
-      input.veh_flow_map['Cars'] = qtot * r
-      input.veh_flow_map['Trucks'] = qtot * (1 - r)
+      for row in exec_query sql, CSVCS
+        input = inputs_for_link.find{|i| i.tend.hour == row['H'] and i.tend.min == row['M']}
+        qtot = row['Detected'].to_f
+        r = input.ratio('Cars', 'Trucks')
+        #puts "ratio: #{r}"
+        input.veh_flow_map['Cars'] = qtot * r
+        input.veh_flow_map['Trucks'] = qtot * (1 - r)
+      end
     end
   end
   
@@ -136,8 +138,10 @@ def get_inputs vissim
 end
 
 if __FILE__ == $0
+  puts "BEGIN"
   vissim = Vissim.new(Default_network)
   inputs = get_inputs vissim
   
   puts inputs.to_vissim
+  puts "END"
 end

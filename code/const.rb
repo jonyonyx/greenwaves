@@ -2,13 +2,22 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
+Project = true
+
+if Project
+  Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
+  Network_name = "tilpasset_model.inp"
+  Vissim_dir = "#{Base_dir}Vissim\\o3_roskildevej-herlevsygehus\\"
+else  
+  Base_dir = "C:\\projects\\62832\\"
+  Network_name = "amagermotorvejen_avedore-havnevej.inp"
+  Vissim_dir = "#{Base_dir}network\\"
+end
+
 Tempdir = ENV['TEMP'].gsub("\\",'/')
-Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
 Data_dir = "#{Base_dir}data\\"
 Herlev_dir = "#{Data_dir}DOGS Herlev 2007\\"
 Glostrup_dir = "#{Data_dir}DOGS Glostrup 2007\\"
-Vissim_dir = "#{Base_dir}Vissim\\o3_roskildevej-herlevsygehus\\"
-Network_name = "tilpasset_model.inp"
 Default_network = "#{Vissim_dir}#{Network_name}"
 
 Time_fmt = '%H:%M:%S'
@@ -77,6 +86,7 @@ def change_in_file(file, find, replace)
   end
 end
 def exec_query sql, conn_str = CS
+  #puts CS
   DBI.connect(conn_str) do |dbh|  
     return dbh.select_all(sql)
   end
