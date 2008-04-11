@@ -10,14 +10,14 @@ require 'measurements'
 
 puts "BEGIN"
 
-RUNS = 2 # number of runs per test
+RUNS = 10 # number of runs per test
 
 testqueue = ThreadSafeArray.new
 
 testqueue << {:testname => 'DOGS and bus',     :dogs_enabled => true,  :buspriority => true}
-#testqueue << {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false}
-#testqueue << {:testname => 'No DOGS with bus', :dogs_enabled => false, :buspriority => true}
-#testqueue << {:testname => 'No DOGS or bus',   :dogs_enabled => false, :buspriority => false}
+testqueue << {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false}
+testqueue << {:testname => 'No DOGS with bus', :dogs_enabled => false, :buspriority => true}
+testqueue << {:testname => 'No DOGS or bus',   :dogs_enabled => false, :buspriority => false}
 
 insert_measurements
 
@@ -62,19 +62,21 @@ CPUCOUNT.times do |i|
 
     sim = vissim.Simulation
 
-    #sim.Period = 2 * Minutes_per_hour * Seconds_per_minute # simulation seconds
-    sim.Period = 1200 # simulation seconds
+    sim.Period = 2 * Minutes_per_hour * Seconds_per_minute # simulation seconds
+    #sim.Period = 1200 # simulation seconds
     sim.Resolution = 1 # steps per simulation second
 
     processed = 0
     while parms = testqueue.pop
       simname = parms[:testname]
   
-      generate_controllers parms, workdir # creates vap and pua files
+      # creates vap and pua files respecting the simulation parameters
+      generate_controllers parms, workdir 
   
-      print "Vissim instance #{threadnum+1} running simulation '#{simname}'... "
+      print "Vissim instance #{threadnum+1} running #{RUNS} simulation#{RUNS != 1 ? 's' : ''} of '#{simname}'... "
   
       RUNS.times do |i|
+        print "#{i+1} "
         sim.RunIndex = i
         sim.RandomSeed = rand
         sim.RunContinuous
