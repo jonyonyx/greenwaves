@@ -73,7 +73,13 @@ class TravelTime < VissimElem
     (@from == tt2.from) ? (@to <=> tt2.to) : (@from <=> tt2.from)
   end
 end
-class Node < VissimElem; end
+class Node < VissimElem
+
+  def update opts
+      super
+      @coords = opts[:coords]
+  end
+end
 
 Name_pat = "([,\\w\\s\\d\\/']*)" # pattern for names in vissim network files
 
@@ -149,9 +155,11 @@ class Vissim
     end
     
     @node_map = {}
-    parse_nodes do |num,name|
-      node = Node.new(num, 'NAME' => name)
+    parse_nodes do |num,name, coords|
+      node = Node.new(num, 'NAME' => name, 'COORDS' => coords)
       @node_map[node.number] = node
+      
+      
     end
     
     @tt_map = {}    
@@ -215,7 +223,19 @@ class Vissim
         next
       end
       
-      yield $1.to_i, $2
+      num = $1.to_i
+      name = $2
+      
+      i += 2
+      
+      @inp[i] =~ /NETWORK_AREA (\d+)\s+([\d\. ]+)+/
+      
+      len = $1.to_i
+      flatcoords = $2.split(/\s+/).map{|s| s.to_f}
+      
+      coords = flatcoords.chunk len
+      
+      yield num, name, coords
       i += 1
     end
   end
@@ -223,7 +243,7 @@ class Vissim
   def parse_controllers
     i = 0
     while i < @inp.length
-      unless @inp[i] =~ /^SCJ (\d+)\s+NAME \"#{Name_pat}\"\s+TYPE FIXED_TIME\s+CYCLE_TIME ([\d\.]+)\s+ OFFSET ([\d\.])/
+      unless @inp[i] =~ /^SCJ (\d+)\s+NAME \"#{Name_pat}\"/ #\s+TYPE FIXED_TIME\s+CYCLE_TIME ([\d\.]+)\s+ OFFSET ([\d\.])
         i += 1
         next
       end
@@ -238,7 +258,7 @@ class Vissim
       # until the next signal controller statement is found
       until @inp[i] =~ /^SCJ/
         # find the signal groups
-        if @inp[i] =~ /^SIGNAL_GROUP (\d+)  NAME \"#{Name_pat}\"  SCJ #{ctrl.number}  RED_END ([\d\.]+)  GREEN_END ([\d\.]+)  TRED_AMBER ([\d\.]+)  TAMBER ([\d\.]+)/
+        if @inp[i] =~ /^SIGNAL_GROUP (\d+)  NAME \"#{Name_pat}\"  SCJ #{ctrl.number}.+TRED_AMBER ([\d\.]+)\s+TAMBER ([\d\.]+)/
           
           grp = SignalGroup.new($1.to_i,
             'NAME' => $2,
@@ -326,5 +346,6 @@ end
 if __FILE__ == $0
   vissim = Vissim.new(Default_network)
   
-  puts vissim.node_map.values
+  #puts vissim.sc_map.values.sort
+  puts vissim.node_map.values.sort
 end

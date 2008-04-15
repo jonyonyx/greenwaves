@@ -19,6 +19,7 @@ class SignalController < VissimElem
     @offset = attributes['OFFSET'].to_f
     @program = attributes['PROGRAM']    
     @buspriority = attributes['BUSPRIORITY'] # for SCs with bus priority bp is a hash
+    @node = attributes['NODE']
   end
   
   # Methods used in bus priority

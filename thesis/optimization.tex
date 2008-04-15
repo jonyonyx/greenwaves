@@ -1,0 +1,48 @@
+\section{Optimization System}
+\label{optimization}
+This section will discuss the alternative proposal for arterial optimization, which was developed in response to DOGS.
+
+\subsection{Coordination}
+\label{coordination}
+Coordination along an arterial is fundamental in signal optimization. The ideal situation for road users is the \textit{green wave}, where upon arrival to the next intersection there will always be a green light.
+
+Contemporary car engines consume less fuel in general when they are allowed to run at a constant RPM level so the travel experience as well as emmission levels are improved under coordination.
+
+There are also security aspects which indicate that coordination and green waves are desirable since the human eye has difficulty in observing acceleration and deceleration.
+
+In one-way coordination a signal controller emits a platoon of vehicles over a period of time, say from $t_1$ to $t_2$, where $T_g = t_2 - t_1$ is indicative of the number of vehicles that need to pass. To avoid stopping these vehicles at the next signal the same amount of green time, $T_g$ must be given to the approaching platoon only \textit{offset} in time by $o$ time units to represent the travel time of the platoon from one signal to the next. 
+
+In fact, due to \textit{platoon dispersion} SEE XXX XXX, which depend mainly on the intersignal distance and speeds, more than $T_g$ green time must be allotted to the stage of the downstream signal. It is also due to platoon dispersion that coordination is only relevant for signals which are relatively close. Practical experience from DRD indicate that the distance should not exceed 800-900 m. 
+
+In perfect two-way coordination between two intersections the leading vehicles in platoons of traffic in either direction must experience that the next signal switch to green before they reach the area in which they decide to brake for red.
+
+In a common cycle-time based system \cite{coord} gives us:
+
+$$o = n \cdot \frac{C}{2}$$
+
+Where $o$ is the travel time between the intersections, which is assumed to be the same in both directions, $C$ is the cycle time and $n$ is an integer.
+
+The travel time is calculated as $o = L / v$ where $L$ is the distance and $v$ is the speed by which road users travel between the intersections. By insertion we get:
+
+$$C = 2 \cdot \frac{L}{n \cdot v}$$
+
+This equation is quite constrained, however. For cycle time we require that is lies within a span of about 60 til 120 seconds based on practical experiences. If the cycle time is less stage lengths become too short to reach past the queue startup delays (about 4 vehicles), if more the minor roads experience long delays and pedestrians and bicyclists may start to cross the road before the signal is green.
+
+In addition green waves usually span over more than two intersections with may have different distances and average speeds between them, all this making it hard or impossible to find an integer $n$. Thus green waves are most obvious in one, main direction. It is possible to affect the average speeds between intersections by changing the allowed speed-signs. If this is not sufficient one might accept that the green wave is not perfect by, for instance, prioritizing one direction over the other.
+
+Priority can be given entirely to one direction or distributed by some weight, for instance based on the ratio of traffic in each direction. An obvious choice for the first option would be for an arterial with traffic between some suburbs and a major city. In the morning full priority should be given in the direction towards the city when people go to work and opposite in the afternoon. For ring road 3, which was simulated in this project, there is no clear distinction between the direction of morning and afternoon traffic (see Section \ref{data}) and the second option is preferable.
+
+Intersignal distances can be extracted from the vissim network file. Since Vissim does not have the concept of intersections nodes are inserted for each intersection it was decided to 
+
+For travel times (offset) between intersections we continously measure upon the intermediate detectors to obtain an idea of the average speeds.
+
+\subsection{Stage-based signals}
+
+Assuming fixed signal plans we have expressions for the offset and cycle time which causes coordination. Fixed signal plans are identical for each cycle iteration. It is possible to include green time extensions such as the ones used for bus priority but it is always necessary to take the seconds from some other stage. Likewise with stage skipping, you must always "spend" $C$ cycle seconds.
+
+For stage based signals the plans cannot be written down in advance in terms of $C$ but rather must be defined dynamically on the basis of \textit{signal rules} and the measured traffic conditions. For coordination the rule is:
+
+\begin{quote}
+Whenever the arterial stage for a signal is active from $t_1$ to $t_2$ the arterial stage of the downstream signal must be active from $t_1 + o$ to $t_2 + o$.
+\end{quote}
+
