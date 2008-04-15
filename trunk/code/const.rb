@@ -110,6 +110,11 @@ class Array
   def variance ; squares.to_f/size - mean**2; end
   def deviation ; variance**(1/2) ; end
   def sample n=1 ; (0...n).collect{ self[rand(size)] } ; end
+  def chunk(pieces)
+    return [] if pieces.zero?
+    piece_size = (length.to_f / pieces).ceil
+    [first(piece_size), *last(length - piece_size).chunk(pieces - 1)]
+  end
 end
 
 class ThreadSafeArray
