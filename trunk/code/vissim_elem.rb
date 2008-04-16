@@ -1,11 +1,7 @@
 class VissimElem
-  attr_reader :number,:name  
-  def initialize number,attributes
+  attr_reader :number
+  def initialize number
     @number = number
-    update attributes
-  end
-  def update attributes
-    @name = attributes['NAME']
   end
   def type; self.class.to_s; end
   def to_s

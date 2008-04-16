@@ -5,23 +5,19 @@
 require 'vissim_elem'
 
 class Link < VissimElem
-  attr_reader :from,:link_type,:adjacent,:predecessors,:lanes,:length
+#  attr_reader :from,:link_type,:adjacent,:predecessors,:lanes,:length
   attr_accessor :is_bus_input
-  def initialize number,attributes    
-    super
-    update attributes
-    
-    # map from adjacent links, which can be reached from self, 
-    # to the used connector
-    @adjacent = {}
-    @predecessors = []
-  end
+#  def initialize number,attributes    
+#    super
+#    update attributes
+#    
+#    # map from adjacent links, which can be reached from self, 
+#    # to the used connector
+#    @adjacent = {}
+#    @predecessors = []
+#  end
   def update opts
-    super
-    @from = opts['FROM']
-    @link_type = opts['TYPE']
-    @lanes ||= opts['LANES']
-    @length ||= opts['LENGTH']
+    opts.each{|k,v| instance_variable_set("@#{k}",v)}
   end
   def adjacent_links; @adjacent.keys; end
   # connects self to given adjacent link by given connector
@@ -155,9 +151,8 @@ class RoadSegment < VissimElem
 end
 class Connector < RoadSegment
   attr_reader :from,:to,:dec
-  def initialize number,opts
-    super
-    if name =~ /([NSEW])(\d+)([LTR])(\d+)?/
+  def initialize number
+    if @name =~ /([NSEW])(\d+)([LTR])(\d+)?/
       # only one connector object represents each physical connector
       @dec = Decision.new!($1,$2.to_i,$3, ($4 ? $4.to_i : nil),self)
     end

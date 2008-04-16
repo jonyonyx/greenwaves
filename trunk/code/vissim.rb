@@ -100,7 +100,7 @@ class Vissim
       number = row['NUMBER'].to_i
     
       next unless links_map.has_key?(number)
-      links_map[number].update row    
+      links_map[number].update :from => row['FROM'], :type => row['TYPE'], :name => row['NAME']
     end
     
     begin # fetch bus inputs
@@ -121,6 +121,8 @@ class Vissim
         @conn_map[conn.number] = conn
       end
     end
+    
+    puts @conn_map.values
         
     # remove non-input links which cannot be reached by cars and trucks
     for link in @links_map.values
@@ -350,7 +352,7 @@ class Vissim
       
       opts = {'NAME' => name, 'LENGTH' => $1.to_f, 'LANES' => $2.to_i}
   
-      yield Link.new(number,opts)
+      yield Link.new!(number,opts)
     end
   end
 end
