@@ -2,8 +2,8 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-#Project = 'dtu'
-Project = 'cowi'
+Project = 'dtu'
+#Project = 'cowi'
 
 if Project == 'dtu'
   Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
@@ -152,23 +152,48 @@ end
 class Class
   def new!(*args, &block)
     # make sure we have arguments
-    if args && args.size > 0
+    if args and args.size > 0      
       # if it's not a Hash, perform a normal "new"
-      return new(*args, &block) unless Hash === args[-1]
+      return new(*args, &block) unless Hash === args.last      
 
-      # grab the last arg in the list
-      last_arg = args.pop
-      puts last_arg.inspect
-
+      init = args.pop
+      
       # create the object and set its fields
-      new_obj = new(*args, &block)
-      last_arg.each {|key, value|
-        new_obj.instance_variable_set "@#{key}", value
-      }
+      obj = new(*args, &block)
+      init.each{|k, v| obj.instance_variable_set("@#{k}", v)}      
     else
       # no args, just do a normal "new" with any block passed
-      new_obj = new(&block)
+      obj = new(&block)
     end
-    new_obj
+    obj
   end
+end
+
+class Object
+  def method_missing name, *args
+    var = "@#{name}"
+    begin
+      if instance_variable_defined? var
+        instance_variable_get var
+      else
+        super
+      end
+    rescue
+      super
+    end
+  end
+end
+
+if __FILE__ == $0
+  class Klass
+    def initialize name, opts = {}
+      
+    end
+  end
+  
+  k = Klass.new! 'børge', :hejsa => 'med dig', :yo => 25.123
+  
+  puts k.inspect
+  puts k.hejsa
+  puts k.yo
 end
