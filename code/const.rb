@@ -2,16 +2,27 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-Project = true
+#Project = 'dtu'
+Project = 'cowi'
 
-if Project
+if Project == 'dtu'
   Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
   Network_name = "tilpasset_model.inp"
   Vissim_dir = "#{Base_dir}Vissim\\o3_roskildevej-herlevsygehus\\"
-else  
+  
+  USEDOGS = true
+  
+  # associated numbers with these vehicle types
+  Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
+elsif Project == 'cowi'
   Base_dir = "C:\\projects\\62832\\"
   Network_name = "amagermotorvejen_avedore-havnevej.inp"
   Vissim_dir = "#{Base_dir}network\\"
+  
+  USEDOGS = false
+  
+  # associated numbers with these vehicle types
+  Type_map = {'Cars' => 5, 'Trucks' => 6, 'Buses' => 7}
 end
 
 Tempdir = ENV['TEMP'].gsub("\\",'/')
@@ -33,11 +44,14 @@ MINOR = 'Minor'
 MAJOR = 'Major'
 NONE = 'None'
 
-# associated numbers with these vehicle types
-Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
-Type_map_rev = {1001 => 'Cars', 1002 => 'Trucks', 1003 => 'Buses'}
-Cars_and_trucks = [1001, 1002]
+# reverse the type map so that composition numbers point to the text description
+# assume 1-to-1 mapping
+Type_map_rev = []
+Type_map.each{|k,v| Type_map_rev[v] = k}
+  
+# strings and composition numbers for cars and trucks (buses are handled separately
 Cars_and_trucks_str = ['Cars','Trucks']
+Cars_and_trucks = Type_map.map{|k,v| Cars_and_trucks_str.include?(k) ? v : nil} - [nil]
 
 EPS = 0.01
 INPUT_FACTOR = 1.0 # factor used to adjust link inputs
@@ -58,6 +72,8 @@ ACCFILE = "#{Data_dir}#{Accname}"
 ENABLE_VAP_TRACING = {:master => false, :slave => false} # write trace statements in vap code?
 
 MIN_ROUTE_LENGTH = 5 # the minimum length of routes which are measured on for travel times
+
+PERIOD_START, PERIOD_END = '07:00', '09:00' # used in input and route generation
 
 require 'dbi'
 require 'fileutils'
@@ -86,7 +102,7 @@ def change_in_file(file, find, replace)
   end
 end
 def exec_query sql, conn_str = CS
-  #puts CS
+  #puts conn_str
   DBI.connect(conn_str) do |dbh|  
     return dbh.select_all(sql)
   end
@@ -130,5 +146,29 @@ class ThreadSafeArray
     ensure
       @mutex.unlock
     end
+  end
+end
+
+class Class
+  def new!(*args, &block)
+    # make sure we have arguments
+    if args && args.size > 0
+      # if it's not a Hash, perform a normal "new"
+      return new(*args, &block) unless Hash === args[-1]
+
+      # grab the last arg in the list
+      last_arg = args.pop
+      puts last_arg.inspect
+
+      # create the object and set its fields
+      new_obj = new(*args, &block)
+      last_arg.each {|key, value|
+        new_obj.instance_variable_set "@#{key}", value
+      }
+    else
+      # no args, just do a normal "new" with any block passed
+      new_obj = new(&block)
+    end
+    new_obj
   end
 end

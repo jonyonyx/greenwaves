@@ -5,9 +5,9 @@ def get_vissim_routes vissim
 
   routes = get_full_routes vissim
 
-  decisions = routes.collect{|r|r.decisions}.flatten.uniq 
+  decisions = routes.collect{|r|r.decisions}.flatten.uniq
 
-  turning_sql = "SELECT Number, [From], 
+  turning_sql = "SELECT INSECTS.Number, [From], 
         SUM([Cars Left]) As Cars_L,
         SUM([Cars Through]) As Cars_T,
         SUM([Cars Right]) As Cars_R,
@@ -16,23 +16,32 @@ def get_vissim_routes vissim
         SUM([Trucks Through]) As Trucks_T,
         SUM([Trucks Right]) As Trucks_R,
         SUM([Total Trucks]) As Trucks_TOT
-       FROM [counts$] 
+       FROM [counts$] As COUNTS
+       INNER JOIN [intersections$] As INSECTS
+       ON COUNTS.Intersection = INSECTS.Name
+       WHERE [Period End] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#
        GROUP BY Number,[From]"
 
   decision_points = []
 
   for row in exec_query turning_sql
+    puts row.inspect
     isnum = row['Number'].to_i
     from = row['From'][0..0] # extract the first letter of the From
         
     dp = DecisionPoint.new(from,isnum)
     for dec in decisions.find_all{|d| d.intersection == isnum and d.from == from}
-      #puts dec
+      puts dec
       for veh_type in Cars_and_trucks_str
         # set the probability of making this turning decisions 
         # as given in the traffic counts
         # turning_motion must equal L(eft), T(hrough) or R(ight)
-        dec.p[veh_type] = row["#{veh_type}_#{dec.turning_motion}"] / row["#{veh_type}_TOT"] 
+        
+        q_turning_motion = row["#{veh_type}_#{dec.turning_motion}"]
+        
+        next unless q_turning_motion
+        
+        dec.p[veh_type] = q_turning_motion / row["#{veh_type}_TOT"] 
       end
       dp.add dec
     end
@@ -72,3 +81,13 @@ def get_vissim_routes vissim
   routing_decisions
 end
 
+if __FILE__ == $0  
+  puts "BEGIN"
+  vissim = Vissim.new(Default_network)
+  
+  routingdec = get_vissim_routes vissim
+  
+  puts routingdec.to_vissim
+  
+  puts "END"
+end

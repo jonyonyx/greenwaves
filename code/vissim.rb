@@ -76,8 +76,8 @@ end
 class Node < VissimElem
 
   def update opts
-      super
-      @coords = opts[:coords]
+    super
+    @coords = opts[:coords]
   end
 end
 
@@ -103,8 +103,12 @@ class Vissim
       links_map[number].update row    
     end
     
-    for businputlinknum in exec_query('SELECT [In Link] FROM [buses$]').flatten.map{|f| f.to_i}.uniq
-      links_map[businputlinknum].is_bus_input = true
+    begin # fetch bus inputs
+      for businputlinknum in exec_query('SELECT [In Link] FROM [buses$]').flatten.map{|f| f.to_i}.uniq
+        links_map[businputlinknum].is_bus_input = true
+      end
+    rescue
+      puts "Skipping bus input links."
     end
 
     @conn_map = {}
@@ -255,8 +259,9 @@ class Vissim
       
       i += 1
       # parse signal groups and signal heads
-      # until the next signal controller statement is found
-      until @inp[i] =~ /^SCJ/
+      # until the next signal controller statement is found or we run out of lines
+      until @inp[i] =~ /^SCJ/ or i > @inp.length
+        
         # find the signal groups
         if @inp[i] =~ /^SIGNAL_GROUP (\d+)  NAME \"#{Name_pat}\"  SCJ #{ctrl.number}.+TRED_AMBER ([\d\.]+)\s+TAMBER ([\d\.]+)/
           
@@ -267,12 +272,19 @@ class Vissim
             'TRED_AMBER' => $5,
             'TAMBER' => $6)
           ctrl.add grp
-        elsif @inp[i] =~ /SIGNAL_HEAD (\d+)\s+NAME \"#{Name_pat}\"\s+LABEL  0.00 0.00\s+SCJ #{ctrl.number}\s+GROUP (\d+)\s+POSITION LINK (\d+)\s+LANE (\d)/
-          head = SignalHead.new($1.to_i, 'NAME' => $2, 'POSITION LINK' => $4, 'LANE' => $5)
+        elsif @inp[i] =~ /SIGNAL_HEAD (\d+)\s+NAME\s+\"#{Name_pat}"\s+LABEL  0.00 0.00\s+SCJ #{ctrl.number}\s+GROUP (\d+)/
+          num = $1.to_i
+          name = $2
           grpnum = $3.to_i
           grp = ctrl.groups[grpnum]
           
-          raise "Signal head '#{head}' is missing its group #{grpnum} at controller '#{ctrl}'" unless grp
+          raise "Signal head '#{name}' is missing its group #{grpnum} at controller '#{ctrl}'" unless grp
+          
+          # optionally match against the TYPE flag (eg. left arrow)
+          @inp[i] =~ /POSITION LINK (\d+)\s+LANE (\d)\s+AT (\d+\.\d+)/
+            
+          head = SignalHead.new($1.to_i, 'NAME' => name, 'POSITION LINK' => @links_map[$1.to_i], 'LANE' => $2.to_i, 'AT' => $3.to_f)
+                    
           grp.add(head) 
         end      
       
@@ -318,7 +330,7 @@ class Vissim
         []
       end
   
-      yield Connector.new(number,name,from_link,to_link,lanes,closed_to)     
+      yield Connector.new!(number, :name => name, :from => from_link, :to => to_link, :lanes => lanes, :closed_to => closed_to)     
     end
   end
   def parse_links    
@@ -346,6 +358,13 @@ end
 if __FILE__ == $0
   vissim = Vissim.new(Default_network)
   
-  #puts vissim.sc_map.values.sort
-  puts vissim.node_map.values.sort
+  for sc in vissim.sc_map.values.sort
+    puts sc
+    for grp in sc.groups.values
+      puts "\t#{grp}"
+      for head in grp.heads
+        puts "\t\t#{head} on #{head.link} at #{head.at}"
+      end
+    end
+  end
 end

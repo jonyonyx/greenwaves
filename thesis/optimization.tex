@@ -32,9 +32,11 @@ In addition green waves usually span over more than two intersections with may h
 
 Priority can be given entirely to one direction or distributed by some weight, for instance based on the ratio of traffic in each direction. An obvious choice for the first option would be for an arterial with traffic between some suburbs and a major city. In the morning full priority should be given in the direction towards the city when people go to work and opposite in the afternoon. For ring road 3, which was simulated in this project, there is no clear distinction between the direction of morning and afternoon traffic (see Section \ref{data}) and the second option is preferable.
 
-Intersignal distances can be extracted from the vissim network file. Since Vissim does not have the concept of intersections nodes are inserted for each intersection it was decided to 
+The distance between one signal head (intersection) and the next can be extracted from the Vissim network file in both directions and is static. The signal heads for both directions of the arterial are marked using a naming convention similar to the one mentioned in Section \ref{routefractions} only less information is required since the relation of the head to its signal controller can be deduced directly from the network file.
 
-For travel times (offset) between intersections we continously measure upon the intermediate detectors to obtain an idea of the average speeds.
+For travel times (offset) it is possible to rely on the speed limitations / free flow speeds for offset calculation, however under congestion speeds will decrease causing the travel times to increase. A better solution is to continously inspect the smoothened travel times which are inserted for each stretch. 
+
+DRD has traditionally used TRANSYT to obtain coordination but often it is necessary to manually adjust the offsets in order to obtain a good two-way coordination. It is possible to have two-way green waves by compromise, which could be either some sacrifice in the quality of the green waves or that each direction have perfect green waves but only in some ratio of the intersections (see \cite{artc}). A third alternative is to a perfect progression band in one direction for a some ratio of time, corresponding to the ratios of traffic in either direction.
 
 \subsection{Stage-based signals}
 
