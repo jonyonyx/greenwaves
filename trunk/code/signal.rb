@@ -31,6 +31,11 @@ class SignalController < VissimElem
   def is_donor? stage; stage.number == donor_stage; end
   def is_recipient? stage; stage.number == recipient_stage; end
   
+  # returns the distance from this signal controller to sc
+  def dist_to sc
+    
+  end
+  
   def add group
     @groups[group.number] = group
   end
@@ -138,14 +143,15 @@ class SignalGroup < VissimElem
   end
 end
 class SignalHead < VissimElem
-  attr_reader :position_link,:lane
+  attr_reader :link,:lane,:at
   def initialize number, attributes
     super
     update attributes
   end
   def update attributes
     super
-    @position_link = attributes['POSITION LINK'].to_i
+    @link = attributes['POSITION LINK']
     @lane = attributes['LANE'].to_i
+    @at = attributes['AT']
   end
 end

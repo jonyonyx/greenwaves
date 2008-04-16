@@ -49,7 +49,7 @@ end
 def discover start, exits, links = [start], connectors = [], &callback
   for adj,conn in start.adjacent
     # avoid loops by checking if the path contain this link
-    next if links.include? adj
+    next if links.include? adj or adj.closed_to_any?(Cars_and_trucks)
     if exits.include? adj
       # found an exit link for this path
       yield Route.new(links + [adj], connectors + [conn]) 
@@ -108,9 +108,7 @@ if __FILE__ == $0
   routes = get_full_routes vissim
   puts "Found #{routes.length} routes"
   
-  for route in routes    
-    route_numbers = route.connectors.map{|l|l.number}
-    puts route.to_vissim if [11253].all?{|n| route_numbers.include? n}
-  end
-  
+  for route in routes.find_all{|r|  r.exit.number == 5}
+    puts "#{route} over #{route.decisions.join(', ')}"
+  end  
 end

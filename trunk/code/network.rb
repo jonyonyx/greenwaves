@@ -101,6 +101,7 @@ class DecisionPoint
     for veh_type in @decisions.map{|dec| dec.p.keys}.flatten.uniq
       sum = @decisions.map{|dec| dec.p[veh_type]}.sum
       raise "The sum of turning probabilities for #{veh_type} at decision point #{@from}#{@intersection} was #{sum}! 
+           Found these connectors / decisions: #{@decisions.join(',')}
            Maybe you forgot to mark a connector?" if (sum-1.0).abs > 0.01
     end
   end
@@ -114,10 +115,13 @@ class DecisionPoint
   end
 end
 class Decision
-  attr_reader :from,:intersection,:turning_motion,:successors,:connector,
+  attr_reader :from,:intersection,:turning_motion,:successors,:connector,:option_no,
     :p # probability of reaching this decision per vehicle type
-  def initialize from,intersection,turning_motion, connector
-    @from,@intersection,@turning_motion = from,intersection,turning_motion    
+  def initialize from,intersection,turning_motion, option_no, connector
+    @from,@intersection,@turning_motion = from,intersection,turning_motion 
+    # the numbered option for this turning motion, when altertives for the
+    # same turning motion exist.
+    @option_no = option_no
     @connector = connector
     @p = Hash.new(0.0)
     @successors = []
@@ -143,18 +147,20 @@ class Decision
     "#{@from}#{@intersection}#{@turning_motion}"
   end
 end
-class Connector < VissimElem
-  attr_reader :from,:to,:lanes,:dec,:closed_to
-  def initialize number,name,from,to,lanes,closed_to
-    super number,'NAME' => name
-    @from,@to,@lanes,@closed_to = from,to,lanes,closed_to
-    if name =~ /([NSEW])(\d+)([LTR])/
-      # only one connector object represents each physical connector
-      @dec = Decision.new($1,$2.to_i,$3,self)
-    end
-  end
+class RoadSegment < VissimElem  
+  attr_reader :lanes,:closed_to
   def closed_to_any? veh_types
-    not (@closed_to & veh_types).empty?
+    not (closed_to & veh_types).empty?
+  end
+end
+class Connector < RoadSegment
+  attr_reader :from,:to,:dec
+  def initialize number,opts
+    super
+    if name =~ /([NSEW])(\d+)([LTR])(\d+)?/
+      # only one connector object represents each physical connector
+      @dec = Decision.new!($1,$2.to_i,$3, ($4 ? $4.to_i : nil),self)
+    end
   end
   def <=>(c2)
     @intersection == c2.intersection ? @from_direction <=> c2.from_direction : @intersection <=> c2.intersection

@@ -25,7 +25,6 @@ class CodePrinter
   end
   def write filepath
     File.open(filepath, 'w') { |f|  f << to_s}
-    #puts "Wrote #{@lines.length} lines to '#{filepath}'"
   end
 end
 def get_generated_info
@@ -124,14 +123,16 @@ def gen_master opts, outputdir
   cp.write File.join(outputdir, "DOGS_MASTER_#{opts[:name].upcase}.vap")
 end
 
+Replacement = {221 => 'ae', 248 => 'oe', 206 => 'aa'} # be sure to use character codes for non-ascii chars
+  
 # Below is code for generating a DOGS SLAVE controller in VAP
 def gen_vap sc, outputdir
   cp = CodePrinter.new
   
-  cp.add_verb get_generated_info
+  cp.add_verb get_generated_info  
   
-  name = "#{sc.name.downcase.gsub(' ','_')}"
-  cp.add_verb "PROGRAM #{name}; /* #{sc.program} */"
+  name = sc.name.downcase.gsub(' ','_')
+  cp.add_verb "PROGRAM #{name.gsub(/[^a-z]/){ |match| Replacement[match.to_s[0]]}}; /* #{sc.program} */"
   cp.add_verb ''
   
   stages = sc.stages
@@ -163,9 +164,11 @@ def gen_vap sc, outputdir
     curprio = sc.priority cur
     stage_end = "stage#{cur}_end := STAGE#{cur}_TIME"
     
-    # assign priority to major and minor stages
-    stage_end += " + #{curprio == MAJOR ? major_fact : minor_fact} * DOGS_LEVEL" if curprio != NONE
-          
+    if USEDOGS
+      # assign priority to major and minor stages
+      stage_end += " + #{curprio == MAJOR ? major_fact : minor_fact} * DOGS_LEVEL" if curprio != NONE
+    end
+    
     # account for the interstage length for all stage ends but the first stage
     stage_end += " + Interstage_length(#{prev},#{cur}) + stage#{prev}_end" if cur != uniq_stages.first   
     
@@ -184,22 +187,29 @@ def gen_vap sc, outputdir
   
   cp.add_verb ''
   
-  # dogs master sync and local timing calculations
-  cp.add 'DOGS_LEVEL := Marker_get(1); TIME := Marker_get(2);'
-  cp.add 'IF NOT SYNC THEN'
-  cp.add '   IF TIME = (OFFSET - 1) THEN'
-  cp.add '      SYNC := 1;'
-  cp.add '      TRACE(ALL);' if ENABLE_VAP_TRACING[:slave]
-  cp.add '   END;', false
-  cp.add '   GOTO PROG_ENDE', false
-  cp.add 'END;', false
-  cp.add "C := BASE_CYCLE_TIME + #{DOGS_TIME} * DOGS_LEVEL;"
-  #  cp.add "IF TIME >= OFFSET THEN /* Poor man's modulos (VAP version 4) */"
-  #  cp.add '   t_loc := TIME - OFFSET + 1'
-  #  cp.add 'ELSE', false
-  #  cp.add '   t_loc := TIME - OFFSET + C + 1'
-  #  cp.add 'END;', false
-  cp.add 't_loc := (TIME + OFFSET) % C + 1;'
+  if USEDOGS
+    # dogs master sync and local timing calculations
+    cp.add 'DOGS_LEVEL := Marker_get(1); TIME := Marker_get(2);'
+    cp.add 'IF NOT SYNC THEN'
+    cp.add '   IF TIME = (OFFSET - 1) THEN'
+    cp.add '      SYNC := 1;'
+    cp.add '      TRACE(ALL);' if ENABLE_VAP_TRACING[:slave]
+    cp.add '   END;', false
+    cp.add '   GOTO PROG_ENDE', false
+    cp.add 'END;', false
+    #  cp.add "IF TIME >= OFFSET THEN /* Poor man's modulos (VAP version 4) */"
+    #  cp.add '   t_loc := TIME - OFFSET + 1'
+    #  cp.add 'ELSE', false
+    #  cp.add '   t_loc := TIME - OFFSET + C + 1'
+    #  cp.add 'END;', false
+  else
+    # local time required
+    cp.add 'TIME := OLDTIME + 1;'
+    cp.add 'OLDTIME := TIME;'
+  end  
+  
+  cp.add "C := BASE_CYCLE_TIME + #{DOGS_TIME} * DOGS_LEVEL;" if USEDOGS
+  cp.add "t_loc := (TIME + OFFSET) % #{USEDOGS ? 'C' : 'BASE_CYCLE_TIME'} + 1;"
   cp.add 'SetT(t_loc);'
   
   if sc.has_bus_priority?
@@ -358,7 +368,7 @@ MasterInfo = [
   {:name => 'Glostrup', :dn => 14, :ds => 1, :occ_dets => [1,2,5,8,9,10,11,12,13,14], :cnt_dets => [1,2,5,8,9,10,11,12,13,14]}
 ]
 
-def generate_controllers attributes, outputdir = Vissim_dir
+def generate_controllers attributes = {}, outputdir = Vissim_dir
   for opts in MasterInfo
     gen_master opts.merge(attributes), outputdir
   end
@@ -367,7 +377,7 @@ def generate_controllers attributes, outputdir = Vissim_dir
         PLAN.Intersection, PLAN.PROGRAM,
         NAME,
         NUMBER, 
-        [DOGS Priority] As PRIORITY,
+        PRIORITY,
         80 As CYCLE_TIME,
         OFFSET,
         [Red End] As RED_END, 
@@ -409,4 +419,8 @@ def generate_controllers attributes, outputdir = Vissim_dir
     gen_vap sc, outputdir
     gen_pua sc, outputdir
   end
+end
+
+if __FILE__ == $0
+  generate_controllers 
 end

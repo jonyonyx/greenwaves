@@ -41,7 +41,7 @@ end
 def get_inputs vissim
 
   links = vissim.input_links
-
+  
   input_sql = "SELECT COUNTS.Intersection, LINKS.Number, HOUR([Period End]) As H, MINUTE([Period End]) As M, 
               [Total Cars] As Cars,
               [Total Trucks] As Trucks
@@ -50,6 +50,7 @@ def get_inputs vissim
               ON  COUNTS.Intersection = LINKS.Intersection AND 
                   COUNTS.From = LINKS.From
               WHERE LINKS.Type = 'IN'
+              AND [Period End] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#
               ORDER BY [Period End], LINKS.Number"
 
   insect_info = exec_query "SELECT Name, [Count Date] FROM [intersections$]"
@@ -95,7 +96,7 @@ def get_inputs vissim
   # use the dogs detector data and take the cars-to-truck ratios from the
   # traffic counts  
   
-  if Project
+  if Project == 'dtu'
     for det in ['D3','D01','D03','D06']
         
       #fetch the link input number    
@@ -140,8 +141,10 @@ end
 if __FILE__ == $0
   puts "BEGIN"
   vissim = Vissim.new(Default_network)
+  
   inputs = get_inputs vissim
   
-  puts inputs.to_vissim
+  inputs.write
+  
   puts "END"
 end
