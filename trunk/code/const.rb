@@ -107,6 +107,9 @@ def exec_query sql, conn_str = CS
     return dbh.select_all(sql)
   end
 end
+def deepcopy(obj)
+  Marshal::load(Marshal::dump(obj))
+end
 class Array
   def sum ; inject{|a,x|x+a} ; end
   def mean ; sum.to_f/size ; end
