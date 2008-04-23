@@ -107,9 +107,6 @@ def exec_query sql, conn_str = CS
     return dbh.select_all(sql)
   end
 end
-def deepcopy(obj)
-  Marshal::load(Marshal::dump(obj))
-end
 class Array
   def sum ; inject{|a,x|x+a} ; end
   def mean ; sum.to_f/size ; end
@@ -137,12 +134,11 @@ class Array
 end
 
 class ThreadSafeArray
-  def method_missing method, *args, &block
-    if @mutex.nil?
-      @mutex = Mutex.new
-      @internalArray = []
-    end
-    
+  def initialize
+    @mutex = Mutex.new
+    @internalArray = []    
+  end
+  def method_missing method, *args, &block    
     @mutex.lock
     begin
       @internalArray.send method, *args, &block
@@ -172,31 +168,3 @@ class Class
   end
 end
 
-class Object
-  def method_missing name, *args
-    var = "@#{name}"
-    begin
-      if instance_variable_defined? var
-        instance_variable_get var
-      else
-        super
-      end
-    rescue
-      super
-    end
-  end
-end
-
-if __FILE__ == $0
-  class Klass
-    def initialize name, opts = {}
-      
-    end
-  end
-  
-  k = Klass.new! 'børge', :hejsa => 'med dig', :yo => 25.123
-  
-  puts k.inspect
-  puts k.hejsa
-  puts k.yo
-end
