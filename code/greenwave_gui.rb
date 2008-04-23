@@ -4,14 +4,12 @@ include Wx
 
 class RoadTimeDiagram < Frame
   FATPENWIDTH = 3
-  OPA = 192
-  def initialize coords, scs, h, offsets
-    super(nil, :title => "Road-Time Diagram (#{CONTROLLERS.size} intersections)", :size => [800,600])
+  def initialize coords, scs, h
+    super(nil, :title => "Road-Time Diagram (#{scs.size} intersections)", :size => [800,600])
     
     @signal_controllers = scs
     @coordinations = coords
     @horizon = h
-    @offset = offsets
     
     @tmax = [@coordinations.map{|c| c.traveltime}.sum, @horizon.max].max.to_f
     @distmax = @signal_controllers.map{|sc| sc.position + sc.internal_distance}.max.to_f + 5
@@ -26,7 +24,7 @@ class RoadTimeDiagram < Frame
     
     @greenwave_brush = Brush.new(Colour.new(0,255,255,160))
     @bluewave_brush = Brush.new(Colour.new(0,0,255,160))
-    set_background_colour WHITE
+    set_background_colour WHITE    
     
     @green_pen = Pen.new(Colour.new(0,255,0))
     @green_pen.set_width FATPENWIDTH * 2
@@ -34,16 +32,48 @@ class RoadTimeDiagram < Frame
     @red_pen = Pen.new(Colour.new(255,0,0))
     @red_pen.set_width FATPENWIDTH * 2
     
+    problem = CoordinationProblem.new(coords, scs, h)
+    siman = SimulatedAnnealing.new(problem, 1, :start_temp => 100.0, :alpha => 0.5)
+    
+    problem.create_initial_solution
+    @offset = problem.solution
+    
+    queue = Queue.new
+    
+    Thread.new do    
+      siman.run do |newval, prevval, new_offsets|
+        puts "Found new encumbent #{newval} vs. #{prevval}"
+        queue << new_offsets
+      end
+    end.join
+    
+    Timer.every(1000) do       
+      unless queue.empty?
+        @offset = queue.pop     
+        on_paint        
+      end
+    end
+    
     evt_paint { on_paint }
     evt_size { on_paint }
-    show
+    
+    show     
   end
   def on_paint
-    paint do | dc |
+    paint_buffered do | dc |
       dc.clear
 
       siz = dc.size
       h, w = siz.height, siz.width
+      
+      # WORKAROUND paint_buffered black background
+      pen = Pen.new(get_background_colour)
+      brush = Brush.new(get_background_colour)
+
+      dc.set_pen(pen)
+      dc.set_brush(brush)
+      dc.draw_rectangle(0,0,w,h)
+      # END WORKAROUND      
       
       gdc = GraphicsContext.create(dc)  
             
@@ -97,7 +127,9 @@ class RoadTimeDiagram < Frame
           lstart = sc1.position + sc1.internal_distance
           lend = lstart - coord.distance
         end
-        sc1.bands_in_horizon(@horizon, @offset[sc1]) do |t1, t2|
+        sc1.bands_in_horizon(@horizon, @offset[sc1]).each do |band|
+          t1 = band.tstart
+          t2 = band.tend
           t1, t2 = t2, t1 unless coord.left_to_right
         
           x1 = (lstart * xscale).round + @ox
@@ -127,7 +159,8 @@ class RoadTimeDiagram < Frame
         gdc.set_pen @red_pen
         
         x = (coord.conflict_position * xscale).round + @ox
-        coord.mismatches_in_horizon(@horizon, @offset[sc1], @offset[sc2]) do |t1, t2|
+        coord.mismatches_in_horizon(@horizon, @offset[sc1], @offset[sc2]) do |band|
+          t1, t2 = band.tstart, band.tend
           gdc.stroke_line(x, ybase - (t2 * yscale).round, x, ybase - (t1 * yscale).round)
         end
       end
@@ -142,16 +175,16 @@ class RoadTimeDiagram < Frame
   end
 end
 
-def show_roadtime_diagram coords, scs, horizon, offsets  
+def optimize_roadtime_diagram coords, scs, horizon  
   App.run do
-    RoadTimeDiagram.new(coords, scs, horizon, offsets)
+    RoadTimeDiagram.new(coords, scs, horizon)
   end
 end
 
 if __FILE__ == $0
   require 'greenwave_eval'
-  parse_coordinations do |coordinations, scs|
-    show_roadtime_diagram(coordinations, scs, H, Hash.new(0))
+  parse_coordinations do |coords, scs|    
+    optimize_roadtime_diagram(coords, scs, H)
   end
 end
   
