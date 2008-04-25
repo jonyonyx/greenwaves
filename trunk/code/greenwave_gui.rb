@@ -14,7 +14,7 @@ class RoadTimeDiagram < Frame
     @tmax = [@coordinations.map{|c| c.traveltime}.sum, @horizon.max].max.to_f
     @distmax = @signal_controllers.map{|sc| sc.position + sc.internal_distance}.max.to_f + 5
           
-    # all time/distance related paint jobs must translat to match this origo (0,0)
+    # all time/distance related paint jobs must translate to match this origo (0,0)
     @ox, @oy = 30, 120
       
     @fat_pen = Pen.new(BLACK)

@@ -9,63 +9,57 @@ class RoutingDecisions < Array
   def to_vissim
     str = ''
     each_with_index do |rd,i|
-      str += "#{rd.to_vissim(i+1)}"
+      str << "#{rd.to_vissim(i+1)}"
     end
     str
   end
 end
 class RoutingDecision
   attr_reader :input_link, :veh_type
-  def initialize input_link, veh_type, desc = nil
-    @desc = desc
-    @input_link = input_link
-    @veh_type = veh_type
+  def initialize
     @routes = []
   end
-  def add_route route, fraction
+  def add_route route, fractions
     raise "Warning: starting link (#{route.start}) of route was different 
              from the input link of the routing decision(#{@input_link})!" unless route.start == @input_link
       
-    @routes << {'ROUTE' => route, 'FRACTION' => fraction}
+    raise "Wrong vehicle types detected among fractions, expecting only #{@veh_type}" if fractions.any?{|f| f.veh_type != @veh_type}
+    raise "Wrong number of fractions, #{fractions.size}, expected #{@time_intervals.size}\n#{fractions.sort.join("\n")}" unless fractions.size == @time_intervals.size
+    @routes << [route, fractions]
   end
   def to_vissim i
     str = "ROUTING_DECISION #{i} NAME \"#{@desc ? @desc : (@veh_type)} from #{@input_link}\" LABEL  0.00 0.00\n"
     # AT must be AFTER the input point
     # place decisions as early as possibly to give vehicles time to changes lanes
     
-    str += "     LINK #{@input_link.number} AT #{@input_link.length * 0.2}\n"
-    str += "     TIME FROM 0.0 UNTIL 99999.0\n"
-    str += "     NODE 0\n"
-    str += "      VEHICLE_CLASSES #{Type_map[@veh_type]}\n"
+    str << "     LINK #{@input_link.number} AT #{@input_link.length * 0.2}\n"
+    str << "     TIME #{@time_intervals.sort.map{|int|int.to_vissim}.join(' ')}\n"
+    str << "     NODE 0\n"
+    str << "      VEHICLE_CLASSES #{Type_map[@veh_type]}\n"
     
-    @routes.each_with_index do |route_info,j|
-      route = route_info['ROUTE']
+    j = 1
+    
+    for route, fractions in @routes
+      
       exit_link = route.exit
       # dump vehicles late on the route exit link to avoid placing the destination
       # upstream of the last connector
-      str += "     ROUTE     #{j+1}  DESTINATION LINK #{exit_link.number}  AT   #{exit_link.length * 0.1}\n"
-      str += "     FRACTION #{route_info['FRACTION']}\n"
-      str += "     OVER #{route.to_vissim}\n"
+      str << "     ROUTE     #{j}  DESTINATION LINK #{exit_link.number}  AT   #{exit_link.length * 0.1}\n"
+      str << "     #{fractions.sort.map{|f|f.to_vissim}.join(' ')}\n"
+      str << "     OVER #{route.to_vissim}\n"
+      j += 1
     end
     str
   end
 end
 class QueueCounter < VissimElem
   attr_reader :link
-  def update opts
-    @link = opts[:link]
-  end
   def to_s
     "#{super} at #{@link}" 
   end
 end
 class TravelTime < VissimElem
   attr_reader :from,:to,:vehicle_classes
-  def update opts
-    @from = opts[:from]
-    @to = opts[:to]
-    @vehicle_classes = opts[:veh_classes].map{|num| Type_map_rev[num]}
-  end
   def to_s
     "#{super} from #{@from} to #{@to}"
   end
@@ -74,33 +68,29 @@ class TravelTime < VissimElem
   end
 end
 class Node < VissimElem
-
-  def update opts
-    super
-    @coords = opts[:coords]
-  end
+  
 end
 
 Name_pat = "([,\\w\\s\\d\\/']*)" # pattern for names in vissim network files
 
 class Vissim
-  attr_reader :links_map,:conn_map,:sc_map,:tt_map,:node_map,:qc_map,:inp,:links,:input_links,:exit_links
+  attr_reader :links_map,:conn_map,:sc_map,:tt_map,:node_map,:qc_map,:links,:input_links,:exit_links
   def initialize inpfile
-    @inpfile = inpfile
-    @inp = IO.readlines inpfile
+    inpfile = inpfile
+    inp = IO.readlines inpfile
 
     @links_map = {}
     # first parse all LINKS
-    parse_links do |l|
+    parse_links(inp) do |l|
       @links_map[l.number] = l
     end
     
     # enrich the existing object with data from the database
-    for row in exec_query "SELECT NUMBER, Intersection AS NAME, [FROM], TYPE FROM [links$] As LINKS WHERE TYPE = 'IN'"    
+    for row in exec_query "SELECT NUMBER, Intersection AS NAME, [FROM], TYPE FROM [links$] As LINKS WHERE TYPE = 'IN'"
       number = row['NUMBER'].to_i
     
-      next unless links_map.has_key?(number)
-      links_map[number].update :from => row['FROM'], :type => row['TYPE'], :name => row['NAME']
+      next unless @links_map.has_key?(number)
+      links_map[number].update :from => row['FROM'], :link_type => row['TYPE'], :name => row['NAME']
     end
     
     begin # fetch bus inputs
@@ -108,12 +98,12 @@ class Vissim
         links_map[businputlinknum].is_bus_input = true
       end
     rescue
-      puts "Skipping bus input links."
+      # skip bus input links
     end
 
     @conn_map = {}
     #now get the connectors and join them up using the links
-    parse_connectors do |conn|
+    parse_connectors(inp) do |conn|
       # found a connection, join up the links
       unless conn.closed_to_any?(Cars_and_trucks)
         # only links which can be reached are cars and trucks are interesting
@@ -121,8 +111,6 @@ class Vissim
         @conn_map[conn.number] = conn
       end
     end
-    
-    puts @conn_map.values
         
     # remove non-input links which cannot be reached by cars and trucks
     for link in @links_map.values
@@ -150,26 +138,24 @@ class Vissim
     @exit_links = @links.find_all{|l| l.exit?}
     
     @sc_map = {}
-    parse_controllers do |sc|
+    parse_controllers(inp) do |sc|
       @sc_map[sc.number] = sc
     end
     
     @qc_map = {}    
-    parse_queuecounters do |qcnum, linknum|
+    parse_queuecounters(inp) do |qcnum, linknum|
       qc = QueueCounter.new(qcnum, :link => @links.find{|l| l.number == linknum})
       @qc_map[qc.number] = qc
     end
     
     @node_map = {}
-    parse_nodes do |num,name, coords|
-      node = Node.new(num, 'NAME' => name, 'COORDS' => coords)
+    parse_nodes(inp) do |num,name, coords|
+      node = Node.new!(num, :name => name, :coords => coords)
       @node_map[node.number] = node
-      
-      
     end
     
     @tt_map = {}    
-    parse_traveltimes do |num, name, fromnum, tonum, vcs|
+    parse_traveltimes(inp) do |num, name, fromnum, tonum, vcs|
       from = @links.find{|l| l.number == fromnum}
       to = @links.find{|l| l.number == tonum}
       raise "From link with number #{fromnum} not found" unless from
@@ -191,10 +177,10 @@ class Vissim
     end
     str
   end
-  def parse_queuecounters
+  def parse_queuecounters(inp)
     i = 0
-    while i < @inp.length
-      unless @inp[i] =~ /^QUEUE_COUNTER (\d+)     LINK (\d+)/
+    while i < inp.length
+      unless inp[i] =~ /^QUEUE_COUNTER (\d+)     LINK (\d+)/
         i += 1
         next
       end
@@ -202,10 +188,10 @@ class Vissim
       i += 1
     end
   end
-  def parse_traveltimes
+  def parse_traveltimes(inp)
     i = 0
-    while i < @inp.length
-      unless @inp[i] =~ /^TRAVEL_TIME   (\d+) NAME \"#{Name_pat}\"/
+    while i < inp.length
+      unless inp[i] =~ /^TRAVEL_TIME   (\d+) NAME \"#{Name_pat}\"/
         i += 1
         next
       end
@@ -215,16 +201,16 @@ class Vissim
             
       i += 1
       
-      @inp[i] =~ /FROM\s+LINK\s+(\d+)\s+AT\s+\d+.\d+\s+TO\s+LINK\s+(\d+)\s+AT\s+\d+.\d+\s+SMOOTHING\s+\d.\d+\s+VEHICLE_CLASSES\s+([\d ]+)+/
+      inp[i] =~ /FROM\s+LINK\s+(\d+)\s+AT\s+\d+.\d+\s+TO\s+LINK\s+(\d+)\s+AT\s+\d+.\d+\s+SMOOTHING\s+\d.\d+\s+VEHICLE_CLASSES\s+([\d ]+)+/
       
       yield num, name, $1.to_i, $2.to_i, $3.split(' ').map{|vcs| vcs.to_i}
       i += 1
     end
   end
-  def parse_nodes
+  def parse_nodes(inp)
     i = 0
-    while i < @inp.length
-      unless @inp[i] =~ /NODE\s+(\d+)\s+NAME\s+\"#{Name_pat}\"/
+    while i < inp.length
+      unless inp[i] =~ /NODE\s+(\d+)\s+NAME\s+\"#{Name_pat}\"/
         i += 1
         next
       end
@@ -234,7 +220,7 @@ class Vissim
       
       i += 2
       
-      @inp[i] =~ /NETWORK_AREA (\d+)\s+([\d\. ]+)+/
+      inp[i] =~ /NETWORK_AREA (\d+)\s+([\d\. ]+)+/
       
       len = $1.to_i
       flatcoords = $2.split(/\s+/).map{|s| s.to_f}
@@ -246,15 +232,15 @@ class Vissim
     end
   end
   # returns signal controllers and their groups.
-  def parse_controllers
+  def parse_controllers(inp)
     i = 0
-    while i < @inp.length
-      unless @inp[i] =~ /^SCJ (\d+)\s+NAME \"#{Name_pat}\"/ #\s+TYPE FIXED_TIME\s+CYCLE_TIME ([\d\.]+)\s+ OFFSET ([\d\.])
+    while i < inp.length
+      unless inp[i] =~ /^SCJ (\d+)\s+NAME \"#{Name_pat}\"/ #\s+TYPE FIXED_TIME\s+CYCLE_TIME ([\d\.]+)\s+ OFFSET ([\d\.])
         i += 1
         next
       end
       
-      ctrl = SignalController.new($1.to_i,
+      ctrl = SignalController.new!($1.to_i,
         'NAME' => $2, 
         'CYCLE_TIME' => $3, 
         'OFFSET' => $4)
@@ -262,19 +248,19 @@ class Vissim
       i += 1
       # parse signal groups and signal heads
       # until the next signal controller statement is found or we run out of lines
-      until @inp[i] =~ /^SCJ/ or i > @inp.length
+      until inp[i] =~ /^SCJ/ or i > inp.length
         
         # find the signal groups
-        if @inp[i] =~ /^SIGNAL_GROUP (\d+)  NAME \"#{Name_pat}\"  SCJ #{ctrl.number}.+TRED_AMBER ([\d\.]+)\s+TAMBER ([\d\.]+)/
+        if inp[i] =~ /^SIGNAL_GROUP (\d+)  NAME \"#{Name_pat}\"  SCJ #{ctrl.number}.+TRED_AMBER ([\d\.]+)\s+TAMBER ([\d\.]+)/
           
-          grp = SignalGroup.new($1.to_i,
+          grp = SignalGroup.new!($1.to_i,
             'NAME' => $2,
             'RED_END' => $3,
             'GREEN_END' => $4,
             'TRED_AMBER' => $5,
             'TAMBER' => $6)
           ctrl.add grp
-        elsif @inp[i] =~ /SIGNAL_HEAD (\d+)\s+NAME\s+\"#{Name_pat}"\s+LABEL  0.00 0.00\s+SCJ #{ctrl.number}\s+GROUP (\d+)/
+        elsif inp[i] =~ /SIGNAL_HEAD (\d+)\s+NAME\s+\"#{Name_pat}"\s+LABEL  0.00 0.00\s+SCJ #{ctrl.number}\s+GROUP (\d+)/
           num = $1.to_i
           name = $2
           grpnum = $3.to_i
@@ -283,9 +269,13 @@ class Vissim
           raise "Signal head '#{name}' is missing its group #{grpnum} at controller '#{ctrl}'" unless grp
           
           # optionally match against the TYPE flag (eg. left arrow)
-          @inp[i] =~ /POSITION LINK (\d+)\s+LANE (\d)\s+AT (\d+\.\d+)/
+          inp[i] =~ /POSITION LINK (\d+)\s+LANE (\d)\s+AT (\d+\.\d+)/
             
-          head = SignalHead.new($1.to_i, 'NAME' => name, 'POSITION LINK' => @links_map[$1.to_i], 'LANE' => $2.to_i, 'AT' => $3.to_f)
+          head = SignalHead.new!($1.to_i, 
+            :name => name, 
+            :position_link => @links_map[$1.to_i], 
+            :lane => $2.to_i, 
+            :at => $3.to_f)
                     
           grp.add(head) 
         end      
@@ -296,10 +286,10 @@ class Vissim
       yield ctrl
     end
   end
-  def parse_connectors
+  def parse_connectors(inp)
     i = 0
-    while i < @inp.length
-      unless @inp[i] =~ /^CONNECTOR\s+(\d+) NAME \"#{Name_pat}\"/
+    while i < inp.length
+      unless inp[i] =~ /^CONNECTOR\s+(\d+) NAME \"#{Name_pat}\"/
         i += 1
         next
       end
@@ -311,34 +301,52 @@ class Vissim
   
       # number always in the first line after conn declaration
       # example: FROM LINK 28 LANES 1 2 AT 819.728
-      @inp[i] =~ /FROM LINK (\d+) LANES (\d )+/
+      inp[i] =~ /FROM LINK (\d+) LANES (\d )+/
       from_link = @links_map[$1.to_i]
       lanes = $2.split(' ')
   
       # next comes the knot definitions
       # and the the to-link
-      i += 1 until @inp[i] =~ /TO LINK (\d+)/
+      i += 1 until inp[i] =~ /TO LINK (\d+)/
   
       to_link = @links_map[$1.to_i]
       
       # look for any closed to declarations
       # (they are mandatory)
-      i += 1 until @inp[i] == "" or @inp[i] =~ /(CLOSED|CONNECTOR|-- .+ --)/
+      i += 1 until inp[i] == "" or inp[i] =~ /(CLOSED|CONNECTOR|-- .+ --)/
       
       closed_to = if $1 == "CLOSED"
-        @inp[i+1] =~ /VEHICLE_CLASSES ([\d ]+)+/
+        inp[i+1] =~ /VEHICLE_CLASSES ([\d ]+)+/
         $1.split(' ').map{|str| str.to_i}
       else
         []
       end
   
-      yield Connector.new!(number, :name => name, :from => from_link, :to => to_link, :lanes => lanes, :closed_to => closed_to)     
+      conn = Connector.new!(number, 
+        :name => name, 
+        :from => from_link, 
+        :to => to_link, 
+        :lanes => lanes, 
+        :closed_to => closed_to) 
+      
+      # check if this connector is a decision
+      if name =~ /([NSEW])(\d+)([LTR])(\d+)?/
+        # only one connector object represents each physical connector
+        conn.dec = Decision.new!(
+          :from => $1,
+          :intersection => $2.to_i,
+          :turning_motion => $3,
+          :option_no => $4,  # optional, might be nil
+          :connector => conn) 
+      end
+      
+      yield conn
     end
   end
-  def parse_links    
+  def parse_links(inp)
     i = 0
-    while i < @inp.length
-      unless @inp[i] =~ /^LINK\s+(\d+) NAME \"#{Name_pat}\"/
+    while i < inp.length
+      unless inp[i] =~ /^LINK\s+(\d+) NAME \"#{Name_pat}\"/
         i += 1
         next
       end
@@ -348,11 +356,12 @@ class Vissim
       
       i += 1
       
-      @inp[i] =~ /LENGTH\s+(\d+\.\d+) LANES\s+(\d+)/
-      
-      opts = {'NAME' => name, 'LENGTH' => $1.to_f, 'LANES' => $2.to_i}
+      inp[i] =~ /LENGTH\s+(\d+\.\d+) LANES\s+(\d+)/
   
-      yield Link.new!(number,opts)
+      yield Link.new!(number,
+        :name => name,
+        :length => $1.to_f,
+        :lanes => $2.to_i)
     end
   end
 end
@@ -360,13 +369,14 @@ end
 if __FILE__ == $0
   vissim = Vissim.new(Default_network)
   
-  for sc in vissim.sc_map.values.sort
-    puts sc
-    for grp in sc.groups.values
-      puts "\t#{grp}"
-      for head in grp.heads
-        puts "\t\t#{head} on #{head.link} at #{head.at}"
-      end
-    end
-  end
+puts vissim.input_links.inspect  
+#  for sc in vissim.sc_map.values.sort
+#    puts sc
+#    for grp in sc.groups.values
+#      puts "\t#{grp}"
+#      for head in grp.heads
+#        puts "\t\t#{head} on #{head.link} at #{head.at}"
+#      end
+#    end
+#  end
 end
