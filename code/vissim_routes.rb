@@ -20,6 +20,7 @@ class Route
   def initialize links,connectors
     @links,@connectors = links,connectors
     @decisions = @connectors.map{|conn| conn.dec} - [nil]
+    #puts "Decisions in #{self.to_s}: #{@decisions.join(', ')}" unless @decisions.empty?
   end
   def length; @links.length; end
   def start; @links.first; end
@@ -49,7 +50,7 @@ end
 def discover start, exits, links = [start], connectors = [], &callback
   for adj,conn in start.adjacent
     # avoid loops by checking if the path contain this link
-    next if links.include? adj or adj.closed_to_any?(Cars_and_trucks)
+    next if links.include?(adj) or adj.closed_to_any?(Cars_and_trucks)
     if exits.include? adj
       # found an exit link for this path
       yield Route.new(links + [adj], connectors + [conn]) 
@@ -74,7 +75,7 @@ def prune_identical routes
     for r1 in routes.find_all{|r| r.start == start_link}
       next if routes_to_remove.include? r1
       duplicates = exiting_at[r1.exit].find_all{|r2| r2 != r1 and r2.start == start_link}
-      routes_to_remove += duplicates
+      routes_to_remove.concat(duplicates)
     end
   end
   

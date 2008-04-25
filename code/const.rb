@@ -2,8 +2,8 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-Project = 'dtu'
-#Project = 'cowi'
+#Project = 'dtu'
+Project = 'cowi'
 
 if Project == 'dtu'
   Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
@@ -165,6 +165,12 @@ class Class
       obj = new(&block)
     end
     obj
+  end
+end
+
+class Object  
+  def update opts
+    opts.each{|k,v| instance_variable_set("@#{k}",v)}
   end
 end
 

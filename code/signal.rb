@@ -7,9 +7,8 @@ require 'vissim_elem'
 
 class SignalController < VissimElem
   attr_reader :controller_type,:cycle_time,:offset,:groups,:program
-  def initialize number, attributes
-    super
-    update attributes
+  def initialize number
+    super(number)
     @groups = {}
   end
   def update attributes
@@ -104,18 +103,9 @@ class Stage < VissimElem
 end
 class SignalGroup < VissimElem
   attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads,:priority
-  def initialize(number,attributes)
-    super
-    update attributes
+  def initialize(number)
+    super(number)
     @heads = [] # signal heads in this group
-  end
-  def update attributes
-    super
-    @red_end = attributes['RED_END'].to_i
-    @green_end = attributes['GREEN_END'].to_i
-    @tred_amber = attributes['TRED_AMBER'].to_i
-    @tamber = attributes['TAMBER'].to_i
-    @priority = attributes['PRIORITY'] # The DOGS priority level for this group
   end
   def add head
     @heads << head
@@ -144,14 +134,4 @@ class SignalGroup < VissimElem
 end
 class SignalHead < VissimElem
   attr_reader :link,:lane,:at
-  def initialize number, attributes
-    super
-    update attributes
-  end
-  def update attributes
-    super
-    @link = attributes['POSITION LINK']
-    @lane = attributes['LANE'].to_i
-    @at = attributes['AT']
-  end
 end

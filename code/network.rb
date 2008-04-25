@@ -4,18 +4,28 @@
 
 require 'vissim_elem'
 
-class Link < VissimElem
-#  attr_reader :from,:link_type,:adjacent,:predecessors,:lanes,:length
+class RoadSegment < VissimElem  
+  attr_reader :lanes,:closed_to
+  def closed_to_any?(veh_types)
+    return false unless @closed_to # nil => no closures
+    not (@closed_to & veh_types).empty?
+  end
+end
+class Connector < RoadSegment
+  attr_reader :from,:to
+  attr_accessor :dec # nil unless this conn is a decision (to turn)
+  def <=>(c2)
+    @intersection == c2.intersection ? @from_direction <=> c2.from_direction : @intersection <=> c2.intersection
+  end
+end
+class Link < RoadSegment
+  attr_reader :from,:link_type,:adjacent,:predecessors,:lanes,:length
   attr_accessor :is_bus_input
-#  def initialize number,attributes    
-#    super
-#    update attributes
-#    
-#    # map from adjacent links, which can be reached from self, 
-#    # to the used connector
-#    @adjacent = {}
-#    @predecessors = []
-#  end
+  def initialize number
+    super(number)
+    @adjacent = {}
+    @predecessors = []
+  end
   def update opts
     opts.each{|k,v| instance_variable_set("@#{k}",v)}
   end
@@ -34,7 +44,7 @@ class Link < VissimElem
   def input?; @link_type == 'IN'; end
   def to_s
     str = super
-    str += ' ' + @direction if @direction
+    str << "#{@direction}" if @direction
     str
   end
 end
@@ -44,6 +54,14 @@ class DecisionPoint
     @from,@intersection = from,intersection
     @decisions = []
     @link = nil
+  end
+  # retrieve a combined set of time intervals
+  # for the flows defined on all decisions in this 
+  # decision point.
+  # note that the decisions might not have flows in the same
+  # time intervals
+  def time_intervals
+    @decisions.map{|d|d.time_intervals}.flatten.uniq
   end
   # locates the common origin link for the decisions in this decision point
   # do this by finding a link from which there is a route to all decision 
@@ -93,43 +111,62 @@ class DecisionPoint
   def add decision
     @decisions << decision
   end  
-  def check_prob_assigned
-    for veh_type in @decisions.map{|dec| dec.p.keys}.flatten.uniq
-      sum = @decisions.map{|dec| dec.p[veh_type]}.sum
-      raise "The sum of turning probabilities for #{veh_type} at decision point #{@from}#{@intersection} was #{sum}! 
-           Found these connectors / decisions: #{@decisions.join(',')}
-           Maybe you forgot to mark a connector?" if (sum-1.0).abs > 0.01
-    end
-  end
+  #  def check_prob_assigned
+  #    for veh_type in @decisions.map{|dec| dec.p.keys}.flatten.uniq
+  #      sum = @decisions.map{|dec| dec.p[veh_type]}.sum
+  #      raise "The sum of turning probabilities for #{veh_type} at decision point #{@from}#{@intersection} was #{sum}! 
+  #           Found these connectors / decisions: #{@decisions.join(',')}
+  #           Maybe you forgot to mark a connector?" if (sum-1.0).abs > 0.01
+  #    end
+  #  end
   def to_s
-    str = "Decision point #{@from}#{@intersection}:"
-    for dec in @decisions
-      successors = dec.successors
-      str += "\n\t#{dec.turning_motion}, successors: #{successors.empty? ? '(none)' : successors.join(' ')}"
-    end
-    str
+    "Decision point #{@from}#{@intersection}, decisions: #{@decisions.join(' ')}"
   end
 end
 class Decision
-  attr_reader :from,:intersection,:turning_motion,:successors,:connector,:option_no,
-    :p # probability of reaching this decision per vehicle type
-  def initialize from,intersection,turning_motion, option_no, connector
-    @from,@intersection,@turning_motion = from,intersection,turning_motion 
+  attr_reader :from,:intersection,:turning_motion,:successors,:connector,:fractions
+  class Interval
+    attr_reader :tstart, :tend
+    def hash; @tstart.hash + @tend.hash; end
+    def eql?(other); @tstart == other.tstart and @tend == other.tend; end
+    def to_vissim; "FROM #{@tstart} UNTIL #{@tend}"; end
+    def to_s
+      "#{@tstart} to #{@tend}"
+    end
+    def <=>(i2)
+      @tstart <=> i2.tstart
+    end
+  end
+  class Fraction
+    attr_reader :interval, :veh_type, :quantity
+    def <=>(f2)
+      @interval <=> f2.interval
+    end
+    def to_s
+      "Fraction from #{@interval} = #{quantity} #{@veh_type}"
+    end
+    def to_vissim
+      "FRACTION #{@quantity}"
+    end
+  end
+  def initialize
     # the numbered option for this turning motion, when altertives for the
-    # same turning motion exist.
-    @option_no = option_no
-    @connector = connector
-    @p = Hash.new(0.0)
+    # same turning motion exist
     @successors = []
+    @fractions = []
+  end
+  def time_intervals
+    @fractions.map{|f| f.interval}
+  end
+  def add_fraction(tstart, tend, vehtype, quantity)
+    interval = Interval.new!(:tstart => tstart, :tend => tend)
+    raise "Fractions at #{to_s} for #{vehtype} from #{interval} already exist!" if @fractions.any?{|f| f.interval == interval and f.veh_type == vehtype}
+    @fractions << Fraction.new!(:interval => interval, :veh_type => vehtype, :quantity => quantity)
   end
   def <=>(d2)
     @intersection == d2.intersection ? 
     (@from == d2.from ? @turning_motion <=> d2.turning_motion : @from <=> d2.from) : 
     @intersection <=> d2.intersection
-  end
-  def add_succ dec
-    raise "Warning: nil successors are not allowed" unless dec
-    @successors << dec unless @successors.include?(dec)
   end
   # a decision is an input if it has no predecessors
   # input decisions are assigned flow
@@ -137,27 +174,9 @@ class Decision
     ObjectSpace.each_object(Decision) do |dec|
       return false if dec.successors.include?(self)
     end
-    return true
+    true
   end
   def to_s
     "#{@from}#{@intersection}#{@turning_motion}"
-  end
-end
-class RoadSegment < VissimElem  
-  attr_reader :lanes,:closed_to
-  def closed_to_any? veh_types
-    not (closed_to & veh_types).empty?
-  end
-end
-class Connector < RoadSegment
-  attr_reader :from,:to,:dec
-  def initialize number
-    if @name =~ /([NSEW])(\d+)([LTR])(\d+)?/
-      # only one connector object represents each physical connector
-      @dec = Decision.new!($1,$2.to_i,$3, ($4 ? $4.to_i : nil),self)
-    end
-  end
-  def <=>(c2)
-    @intersection == c2.intersection ? @from_direction <=> c2.from_direction : @intersection <=> c2.intersection
   end
 end
