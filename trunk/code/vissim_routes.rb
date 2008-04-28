@@ -87,7 +87,8 @@ def find_routes start,dest
   discover(start,[dest]) do |r|
     routes << r
   end
-  prune_identical routes
+  #prune_identical routes
+  routes
 end
 
 # finds all full ie. start-to-end routes
@@ -101,7 +102,8 @@ def get_full_routes(vissim, start_links = vissim.input_links)
     end
   end
   
-  prune_identical routes
+  #prune_identical routes
+  routes
 end
 
 if __FILE__ == $0
