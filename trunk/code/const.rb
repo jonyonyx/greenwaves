@@ -2,8 +2,8 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-#Project = 'dtu'
-Project = 'cowi'
+Project = 'dtu'
+#Project = 'cowi'
 
 if Project == 'dtu'
   Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
@@ -71,8 +71,6 @@ Accname = "acc_#{Res}m.csv"
 ACCFILE = "#{Data_dir}#{Accname}"
 ENABLE_VAP_TRACING = {:master => false, :slave => false} # write trace statements in vap code?
 
-MIN_ROUTE_LENGTH = 5 # the minimum length of routes which are measured on for travel times
-
 PERIOD_START, PERIOD_END = '07:00', '09:00' # used in input and route generation
 
 require 'dbi'
@@ -102,7 +100,6 @@ def change_in_file(file, find, replace)
   end
 end
 def exec_query sql, conn_str = CS
-  #puts conn_str
   DBI.connect(conn_str) do |dbh|  
     return dbh.select_all(sql)
   end
@@ -115,12 +112,6 @@ class Array
     when 0 then sort[size/2-1,2].mean
     when 1 then sort[size/2].to_f
     end if size > 0
-  end
-  # not quite correct version of quantile
-  def quantile p
-    i = (size*p).ceil - 1
-    #puts i
-    sort[i]
   end
   def squares ; inject{|a,x|x**2+a} ; end
   def variance ; squares.to_f/size - mean**2; end
