@@ -93,9 +93,7 @@ class DecisionPoint
     # link to place the decision upon
     all_pred_links = dec_pred_links.values.flatten.uniq#.reverse
     link_candidates = all_pred_links.find_all{|pred_link| @decisions.all?{|dec| dec_pred_links[dec].include? pred_link}}    
-    
-    #puts "#{@from}#{@intersection}: #{link_candidates.join(' ')}" if link_candidates.length > 1
-    
+        
     l = link_candidates.first
     
     unless l
@@ -111,20 +109,12 @@ class DecisionPoint
   def add decision
     @decisions << decision
   end  
-  #  def check_prob_assigned
-  #    for veh_type in @decisions.map{|dec| dec.p.keys}.flatten.uniq
-  #      sum = @decisions.map{|dec| dec.p[veh_type]}.sum
-  #      raise "The sum of turning probabilities for #{veh_type} at decision point #{@from}#{@intersection} was #{sum}! 
-  #           Found these connectors / decisions: #{@decisions.join(',')}
-  #           Maybe you forgot to mark a connector?" if (sum-1.0).abs > 0.01
-  #    end
-  #  end
   def to_s
     "Decision point #{@from}#{@intersection}, decisions: #{@decisions.join(' ')}"
   end
 end
 class Decision
-  attr_reader :from,:intersection,:turning_motion,:successors,:connector,:fractions
+  attr_reader :from,:intersection,:turning_motion,:successors,:connector,:fractions, :weight
   class Interval
     attr_reader :tstart, :tend
     def hash; @tstart.hash + @tend.hash; end
@@ -177,6 +167,6 @@ class Decision
     true
   end
   def to_s
-    "#{@from}#{@intersection}#{@turning_motion}"
+    "#{@from}#{@intersection}#{@turning_motion}#{@weight ? @weight : ''}"
   end
 end

@@ -3,9 +3,10 @@ require 'vissim_routes'
 
 def get_vissim_routes vissim
 
-  routes = get_full_routes vissim
-  
-  decisions = routes.map{|r|r.decisions}.flatten.uniq
+  # find all relevant ie. reacheable decisions in the network
+  # a decision is reacheable if it is traversed by a full route
+  # ie. a route, which starts at an input link and exits the network on completion
+  decisions = vissim.conn_map.values.map{|c|c.dec} - [nil]
 
   turning_sql = "SELECT INTSECT.Number,
                   [From], 
@@ -34,20 +35,15 @@ def get_vissim_routes vissim
       decision_points << dp
     end
     
-    for dec in decisions.find_all{|d| d.intersection == dp.intersection and d.from == dp.from and row['TURN'][0..0] == d.turning_motion}
-      for veh_type in Cars_and_trucks_str
-        # set the probability of making this turning decisions 
-        # as given in the traffic counts
-        # turning_motion must equal L(eft), T(hrough) or R(ight)
-        
-        q = row[veh_type]
-        
-        next unless q
-        
+    # turning_motion must equal L(eft), T(hrough) or R(ight)
+    turning_motion = row['TURN'][0..0]
+    
+    for dec in decisions.find_all{|d| d.intersection == dp.intersection and d.from == dp.from and turning_motion == d.turning_motion}
+      for veh_type in Cars_and_trucks_str                
         dec.add_fraction(
-          (Time.parse(row['TSTART'][-8..-1]) - period_start).to_i, 
-          (Time.parse(row['TEND'][-8..-1]) - period_start).to_i, 
-          veh_type, q)
+          Time.parse(row['TSTART'][-8..-1]) - period_start, 
+          Time.parse(row['TEND'][-8..-1]) - period_start, 
+          veh_type, row[veh_type])
       end
       dp.add(dec) unless dp.decisions.include?(dec)
     end
@@ -66,16 +62,17 @@ def get_vissim_routes vissim
       rd = RoutingDecision.new!(:input_link => input_link, :veh_type => veh_type, :time_intervals => dp.time_intervals)
   
       # add routes to the decision point
-      for d_end in dp.decisions
-        dest = d_end.connector.to # where vehicles are "dropped off"
+      for dec in dp.decisions
+        dest = dec.connector.to # where vehicles are "dropped off"
     
-        local_routes = find_routes input_link,dest
-    
-        raise "Found multiple routes (#{local_routes.length}) from #{input_link} to #{dest}" if local_routes.length > 1
-        raise "No routes from #{input_link} to #{dest}!" if local_routes.empty?
-        
-        route = local_routes.first
-        rd.add_route(route, d_end.fractions.find_all{|f| f.veh_type == veh_type})
+        # find the route through the intersection (ie. the turning motion)
+        local_route = find_routes(input_link,dest).find{|r| r.decisions.include?(dec)}
+        raise "No routes from #{input_link} to #{dest}!" if local_route.nil?
+            
+        rd.add_route(
+          local_route, 
+          dec.fractions.find_all{|f| f.veh_type == veh_type}
+        )
       end
   
       routing_decisions << rd 
@@ -89,7 +86,7 @@ if __FILE__ == $0
   vissim = Vissim.new(Default_network)
   
   routingdec = get_vissim_routes vissim
-  puts routingdec.write
+  #puts routingdec.to_vissim
     
   puts "END"
 end

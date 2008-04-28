@@ -336,7 +336,7 @@ class Vissim
           :from => $1,
           :intersection => $2.to_i,
           :turning_motion => $3,
-          :option_no => $4,  # optional, might be nil
+          :weight => ($4 ? $4.to_i : nil),  # for multiple connectors in same turning motion
           :connector => conn) 
       end
       

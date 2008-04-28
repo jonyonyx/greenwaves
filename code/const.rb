@@ -22,7 +22,7 @@ elsif Project == 'cowi'
   USEDOGS = false
   
   # associated numbers with these vehicle types
-  Type_map = {'Cars' => 5, 'Trucks' => 6, 'Buses' => 7}
+  Type_map = {'Cars' => 10, 'Trucks' => 20}
 end
 
 Tempdir = ENV['TEMP'].gsub("\\",'/')
