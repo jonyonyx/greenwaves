@@ -32,7 +32,6 @@ class Band
     Band.new(common.min, common.max)
   end
   def to_s
-    #"(#{@tstart}..#{@tend}) (#{width})"
     ar = to_a
     "#{ar.inspect} (#{ar.size})"
   end
@@ -102,10 +101,11 @@ class Coordination
   # from stop-light to stop-light
   def mismatches_in_horizon h, o1, o2
     
-    bands1 = @sc1.bands_in_horizon(h, (o1 + traveltime).round)
-    bands2 = @sc2.bands_in_horizon(h, o2)
+    bands1 = @sc1.bands_in_horizon(h, o1)
+    tt = traveltime
     
     for b1 in bands1
+      bands2 = @sc2.bands_in_horizon([b1.tstart + tt, b1.tend + tt], o2)
       overlapping_band = bands2.find{|b| b1.is_overlapping?(b)}
       if overlapping_band.nil?
         yield b1
@@ -314,8 +314,8 @@ end
 
 if __FILE__ == $0
   parse_coordinations do |coords, scs|
-#    problem = CoordinationProblem.new(coords, scs, H)
-#    siman = SimulatedAnnealing.new(problem, 1, :start_temp => 100.0, :alpha => 0.5)        
+    #    problem = CoordinationProblem.new(coords, scs, H)
+    #    siman = SimulatedAnnealing.new(problem, 1, :start_temp => 100.0, :alpha => 0.5)        
     
     coord = coords[0]
     puts coord
