@@ -2,8 +2,8 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-Project = 'dtu'
-#Project = 'cowi'
+#Project = 'dtu'
+Project = 'cowi'
 
 if Project == 'dtu'
   Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
@@ -77,6 +77,7 @@ PERIOD_START, PERIOD_END = '07:00', '09:00' # used in input and route generation
 
 require 'dbi'
 require 'fileutils'
+require 'win32ole'
 
 module VissimOutput 
   def write
@@ -105,6 +106,32 @@ def exec_query sql, conn_str = CS
   DBI.connect(conn_str) do |dbh|  
     return dbh.select_all(sql)
   end
+end
+def to_xls rows, sheetname, xlsfile = DATAFILE
+   
+  begin
+    excel = WIN32OLE::new('Excel.Application')
+    wb = excel.Workbooks.Open(xlsfile)
+    
+    datash = wb.Sheets(sheetname)    
+    
+    datash.cells.clear
+    
+    rows.each_with_index do |row, i|
+      row.each_with_index do |val, j|
+        datash.cells(i+1,j+1).Value = val
+      end
+    end
+      
+    datash.Range("a1").Autofilter
+    datash.Rows(1).Font.Bold = true
+    datash.Columns.Autofit
+    
+    wb.Save
+  ensure
+    excel.DisplayAlerts = false # avoid excel nag to save book
+    excel.Quit
+  end      
 end
 class Array
   def sum ; inject{|a,x|x+a} ; end

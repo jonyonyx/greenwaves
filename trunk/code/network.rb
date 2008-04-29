@@ -26,18 +26,13 @@ class Link < RoadSegment
     @adjacent = {}
     @predecessors = []
   end
-  def update opts
-    opts.each{|k,v| instance_variable_set("@#{k}",v)}
-  end
   def adjacent_links; @adjacent.keys; end
-  # connects self to given adjacent link by given connector
-  def add proximtype, link, conn
-    case proximtype
-    when :successor
-      @adjacent[link] = conn
-    when :predecessor      
-      @predecessors << link
-    end
+  # connects self to link by connector
+  # note there may be multiple connectors to the same link
+  def add_successor link, conn
+    connector_list = @adjacent[link] || []
+    connector_list << conn
+    @adjacent[link] = connector_list
   end
   # is this link an exit (from the network) link?
   def exit?; @adjacent.empty?; end
@@ -106,9 +101,6 @@ class DecisionPoint
     l
     
   end
-  def add decision
-    @decisions << decision
-  end  
   def to_s
     "Decision point #{@from}#{@intersection}, decisions: #{@decisions.join(' ')}"
   end
