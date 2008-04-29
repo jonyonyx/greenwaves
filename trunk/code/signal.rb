@@ -29,14 +29,15 @@ class SignalController < VissimElem
   def recipient_stage; @buspriority['RCPT'].to_i; end
   def is_donor? stage; stage.number == donor_stage; end
   def is_recipient? stage; stage.number == recipient_stage; end
-  
-  # returns the distance from this signal controller to sc
-  def dist_to sc
     
+  # check if all groups have a signal plan plus
+  # generel checks
+  def has_plans?
+    @cycle_time and @offset and @groups.values.all?{|grp| grp.has_plan?}
   end
   
-  def add group
-    @groups[group.number] = group
+  def add_group(number, opts)
+    @groups[number] = SignalGroup.new!(number,opts)
   end
   def interstage_active?(cycle_sec)
     # all-red phases are considered interstage
@@ -83,12 +84,43 @@ class SignalController < VissimElem
     end
     stagear
   end
-  def to_s
-    str = super + "\n"    
-    for grpnum in @groups.keys.sort
-      str += "   #{@groups[grpnum]}\n"
+  
+  class SignalGroup < VissimElem
+    attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads,:priority
+    def initialize(number)
+      super(number)
+      @heads = [] # signal heads in this group
     end
-    str
+    def add_head number, opts
+      @heads << SignalHead.new!(number,opts)
+    end
+    def has_plan?
+      @red_end and @green_end and @tred_amber and @tamber
+    end
+    def color cycle_sec
+      case cycle_sec
+      when active_seconds
+        GREEN 
+      when (@red_end+1..@red_end+@tred_amber)
+        AMBER
+      when (@green_end..@green_end+@tamber)
+        YELLOW
+      else
+        RED
+      end
+    end
+    def active_seconds
+      green_start = @red_end + @tred_amber + 1
+      if green_start < green_end
+        (green_start..green_end)
+      else
+        # (green_end+1..green_start) defines the red time
+        (1..green_end) # todo: handle the case of green time which wraps around
+      end
+    end
+    class SignalHead < VissimElem
+      attr_reader :link,:lane,:at
+    end
   end
 end
 class Stage < VissimElem
@@ -100,38 +132,4 @@ class Stage < VissimElem
   def to_s
     @number.to_s
   end
-end
-class SignalGroup < VissimElem
-  attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads,:priority
-  def initialize(number)
-    super(number)
-    @heads = [] # signal heads in this group
-  end
-  def add head
-    @heads << head
-  end
-  def color cycle_sec
-    case cycle_sec
-    when active_seconds
-      GREEN 
-    when (@red_end+1..@red_end+@tred_amber)
-      AMBER
-    when (@green_end..@green_end+@tamber)
-      YELLOW
-    else
-      RED
-    end
-  end
-  def active_seconds
-    green_start = @red_end + @tred_amber + 1
-    if green_start < green_end
-      (green_start..green_end)
-    else
-      # (green_end+1..green_start) defines the red time
-      (1..green_end) # todo: handle the case of green time which wraps around
-    end
-  end
-end
-class SignalHead < VissimElem
-  attr_reader :link,:lane,:at
 end

@@ -137,8 +137,59 @@ class Vissim
     @input_links = @links.find_all{|l| l.input?}
     @exit_links = @links.find_all{|l| l.exit?}
     
+    begin
+      plan_sql = "SELECT 
+        INSECTS.Number As ISNUM, 
+        PLANS.PROGRAM,
+        [Group Name] As GRPNAME,
+        [Group Number] As GRPNUM, 
+        #{USEDOGS ? 'PRIORITY,' : ''}
+        [Red End] As RED_END, 
+        [Green End] As GREEN_END, 
+        [Red-Amber] As TRED_AMBER, 
+        Amber As TAMBER
+       FROM [plans$] As PLANS
+       INNER JOIN [intersections$] As INSECTS ON PLANS.Intersection = INSECTS.Name
+       WHERE PLANS.PROGRAM = '#{PROGRAM}'"
+
+      plans = exec_query(plan_sql)
+    rescue
+      puts "No signal plans found."
+      plans = []
+    end
+    
+    begin
+      sc_sql = "SELECT 
+        Number As ISNUM,
+        PROGRAMS.[Cycle Time] As CYCLE_TIME,
+        OFFSET
+       FROM (([offsets$] As OFFSETS
+       INNER JOIN [intersections$] As INSECTS ON INSECTS.Name = OFFSETS.Intersection)
+       INNER JOIN [programs$] AS PROGRAMS ON OFFSETS.Program = PROGRAMS.Name)
+       WHERE OFFSETS.PROGRAM = '#{PROGRAM}'"
+      
+      scinfo = exec_query(sc_sql)
+    rescue
+      puts "No signal controllers found."
+      scinfo = []      
+    end
+    
     @sc_map = {}
     parse_controllers(inp) do |sc|
+      # enrich this signal controller with signal plans, if any
+      
+      scrow = scinfo.find{|r| r['ISNUM'] == sc.number}      
+      sc.update(:cycle_time => scrow['CYCLE_TIME'].to_i, :offset => scrow['OFFSET']) if scrow
+      
+      for row in plans.find_all{|r| r['ISNUM'] == sc.number}
+        grp = sc.groups[row['GRPNUM'].to_i]
+        grp.update(:red_end => row['RED_END'].to_i,
+          :green_end => row['GREEN_END'].to_i,
+          :tred_amber => row['TRED_AMBER'].to_i,
+          :tamber => row['TAMBER'].to_i,
+          :priority => row['PRIORITY'])
+      end
+      
       @sc_map[sc.number] = sc
     end
     
@@ -241,9 +292,9 @@ class Vissim
       end
       
       ctrl = SignalController.new!($1.to_i,
-        'NAME' => $2, 
-        'CYCLE_TIME' => $3, 
-        'OFFSET' => $4)
+        :name => $2, 
+        :cycle_time => $3, 
+        :offset => $4)
       
       i += 1
       # parse signal groups and signal heads
@@ -253,13 +304,13 @@ class Vissim
         # find the signal groups
         if inp[i] =~ /^SIGNAL_GROUP (\d+)  NAME \"#{Name_pat}\"  SCJ #{ctrl.number}.+TRED_AMBER ([\d\.]+)\s+TAMBER ([\d\.]+)/
           
-          grp = SignalGroup.new!($1.to_i,
-            'NAME' => $2,
-            'RED_END' => $3,
-            'GREEN_END' => $4,
-            'TRED_AMBER' => $5,
-            'TAMBER' => $6)
-          ctrl.add grp
+          grp = ctrl.add_group($1.to_i,
+            :name => $2,
+            :red_end => $3,
+            :green_end => $4,
+            :tred_amber => $5,
+            :tamber => $6)
+          
         elsif inp[i] =~ /SIGNAL_HEAD (\d+)\s+NAME\s+\"#{Name_pat}"\s+LABEL  0.00 0.00\s+SCJ #{ctrl.number}\s+GROUP (\d+)/
           num = $1.to_i
           name = $2
@@ -270,14 +321,12 @@ class Vissim
           
           # optionally match against the TYPE flag (eg. left arrow)
           inp[i] =~ /POSITION LINK (\d+)\s+LANE (\d)\s+AT (\d+\.\d+)/
-            
-          head = SignalHead.new!($1.to_i, 
+                                
+          grp.add_head(num, 
             :name => name, 
             :position_link => @links_map[$1.to_i], 
             :lane => $2.to_i, 
             :at => $3.to_f)
-                    
-          grp.add(head) 
         end      
       
         i += 1
@@ -369,14 +418,7 @@ end
 if __FILE__ == $0
   vissim = Vissim.new(Default_network)
   
-puts vissim.input_links.inspect  
-#  for sc in vissim.sc_map.values.sort
-#    puts sc
-#    for grp in sc.groups.values
-#      puts "\t#{grp}"
-#      for head in grp.heads
-#        puts "\t\t#{head} on #{head.link} at #{head.at}"
-#      end
-#    end
-#  end
+  #  for sc in vissim.sc_map.values.sort
+  #    puts sc.to_s
+  #  end
 end

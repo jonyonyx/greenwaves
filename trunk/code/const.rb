@@ -10,6 +10,8 @@ if Project == 'dtu'
   Network_name = "tilpasset_model.inp"
   Vissim_dir = "#{Base_dir}Vissim\\o3_roskildevej-herlevsygehus\\"
   
+  PROGRAM = 'P1'
+  
   USEDOGS = true
   
   # associated numbers with these vehicle types
@@ -156,12 +158,6 @@ class Class
       obj = new(&block)
     end
     obj
-  end
-end
-
-class Object  
-  def update opts
-    opts.each{|k,v| instance_variable_set("@#{k}",v)}
   end
 end
 
