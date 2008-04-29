@@ -48,15 +48,17 @@ class Route
 end
 
 def discover start, exits, links = [start], connectors = [], &callback
-  for adj,conn in start.adjacent
+  for adj,connlist in start.adjacent
     # avoid loops by checking if the path contain this link
     next if links.include?(adj) or adj.closed_to_any?(Cars_and_trucks)
-    if exits.include? adj
-      # found an exit link for this path
-      yield Route.new(links + [adj], connectors + [conn]) 
-    else
-      # copy the path to avoid backreferences among routes
-      discover adj, exits, links + [adj], connectors + [conn], &callback # look further
+    connlist.each do |conn|
+      if exits.include? adj
+        # found an exit link for this path
+        yield Route.new(links + [adj], connectors + [conn])
+      else
+        # copy the path to avoid backreferences among routes
+        discover adj, exits, links + [adj], connectors + [conn], &callback # look further
+      end
     end
   end
 end

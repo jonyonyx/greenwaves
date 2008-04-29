@@ -3,9 +3,6 @@ require 'vissim_routes'
 
 def get_vissim_routes vissim
 
-  # find all relevant ie. reacheable decisions in the network
-  # a decision is reacheable if it is traversed by a full route
-  # ie. a route, which starts at an input link and exits the network on completion
   decisions = vissim.conn_map.values.map{|c|c.dec} - [nil]
 
   turning_sql = "SELECT INTSECT.Number,
@@ -14,7 +11,7 @@ def get_vissim_routes vissim
                   [Period Start] As TSTART,
                   [Period End] As TEND,
                   Cars, Trucks
-                FROM [vd_data$] As COUNTS
+                FROM [counts$] As COUNTS
                 INNER JOIN [intersections$] As INTSECT
                 ON COUNTS.Intersection = INTSECT.Name
                 WHERE [Period End] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#"
@@ -38,14 +35,21 @@ def get_vissim_routes vissim
     # turning_motion must equal L(eft), T(hrough) or R(ight)
     turning_motion = row['TURN'][0..0]
     
-    for dec in decisions.find_all{|d| d.intersection == dp.intersection and d.from == dp.from and turning_motion == d.turning_motion}
+    # extract all decisions relevant to this turning count row
+    rowdecisions = decisions.find_all{|d| d.intersection == dp.intersection and d.from == dp.from and turning_motion == d.turning_motion}
+    
+    # find the sum of weights in order to distributed this rows quantity over the relevant decisions
+    sum_of_weights = rowdecisions.map{|dec| dec.weight ? dec.weight : 1}.sum    
+    
+    for dec in rowdecisions    
       for veh_type in Cars_and_trucks_str                
         dec.add_fraction(
           Time.parse(row['TSTART'][-8..-1]) - period_start, 
           Time.parse(row['TEND'][-8..-1]) - period_start, 
-          veh_type, row[veh_type])
+          veh_type, 
+          (row[veh_type] * (dec.weight ? dec.weight : 1)) / sum_of_weights)
       end
-      dp.add(dec) unless dp.decisions.include?(dec)
+      dp.decisions << dec unless dp.decisions.include?(dec)
     end
   end
 
@@ -66,13 +70,13 @@ def get_vissim_routes vissim
         dest = dec.connector.to # where vehicles are "dropped off"
     
         # find the route through the intersection (ie. the turning motion)
-        local_route = find_routes(input_link,dest).find{|r| r.decisions.include?(dec)}
-        raise "No routes from #{input_link} to #{dest}!" if local_route.nil?
+        local_routes = find_routes(input_link,dest)
+        local_route = local_routes.find{|r| r.decisions.include?(dec)}
+        raise "No routes from #{input_link} to #{dest} over #{dec}! Found these routes:
+               #{local_routes.join("\n")}" if local_route.nil?
             
-        rd.add_route(
-          local_route, 
-          dec.fractions.find_all{|f| f.veh_type == veh_type}
-        )
+        rd.add_route(local_route, 
+          dec.fractions.find_all{|f| f.veh_type == veh_type})
       end
   
       routing_decisions << rd 
@@ -87,6 +91,7 @@ if __FILE__ == $0
   
   routingdec = get_vissim_routes vissim
   #puts routingdec.to_vissim
+  routingdec.write
     
   puts "END"
 end

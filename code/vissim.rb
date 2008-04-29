@@ -123,13 +123,13 @@ class Vissim
       for conn in @conn_map.values.find_all{|c| c.from == link}
         @conn_map.delete(conn.number)
       end
-    end
+    end    
     
     # notify the links of connected links
     for conn in @conn_map.values
       from_link = conn.from
       to_link = conn.to
-      from_link.add :successor, to_link, conn
+      from_link.add_successor to_link, conn
     end
     
     @links = @links_map.values
@@ -417,6 +417,8 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new(Default_network)
+  
+  puts vissim.links_map[51].adjacent
   
   #  for sc in vissim.sc_map.values.sort
   #    puts sc.to_s
