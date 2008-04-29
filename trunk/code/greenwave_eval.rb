@@ -102,7 +102,7 @@ class Coordination
   def mismatches_in_horizon h, o1, o2
     
     bands1 = @sc1.bands_in_horizon(h, o1)
-    tt = traveltime
+    tt = traveltime.round
     
     for b1 in bands1
       bands2 = @sc2.bands_in_horizon([b1.tstart + tt, b1.tend + tt], o2)
