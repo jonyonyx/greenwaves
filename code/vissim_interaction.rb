@@ -71,7 +71,7 @@ CPUCOUNT.times do |i|
       simname = parms[:testname]
   
       # creates vap and pua files respecting the simulation parameters
-      generate_controllers parms, workdir 
+      generate_controllers vissimnet, parms, workdir 
   
       print "Vissim instance #{threadnum+1} running #{RUNS} simulation#{RUNS != 1 ? 's' : ''} of '#{simname}'... "
   

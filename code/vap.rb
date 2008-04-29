@@ -368,54 +368,29 @@ MasterInfo = [
   {:name => 'Glostrup', :dn => 14, :ds => 1, :occ_dets => [1,2,5,8,9,10,11,12,13,14], :cnt_dets => [1,2,5,8,9,10,11,12,13,14]}
 ]
 
-def generate_controllers attributes = {}, outputdir = Vissim_dir
+def generate_controllers vissim, attributes, outputdir
   for opts in MasterInfo
     gen_master opts.merge(attributes), outputdir
   end
 
-  plan_sql = "SELECT 
-        PLAN.Intersection, PLAN.PROGRAM,
-        NAME,
-        NUMBER, 
-        PRIORITY,
-        80 As CYCLE_TIME,
-        OFFSET,
-        [Red End] As RED_END, 
-        [Green End] As GREEN_END, 
-        [Red-Amber] As TRED_AMBER, 
-        Amber As TAMBER
-       FROM [plans$] As PLAN
-       INNER JOIN [offsets$] As OFFSET 
-        ON PLAN.Intersection = OFFSET.Intersection AND PLAN.Program = OFFSET.Program"
-
-  scs = []
-  sc = nil
-  for row in exec_query plan_sql
-    isname = row['Intersection']
-    isnum = row['Number']
-    prog = row['PROGRAM']
-    if not sc or not sc.name == isname or not sc.program == prog
-      if attributes[:buspriority]
-        # fetch the bus detectors attached to this intersection, if any
-        busprior = exec_query("SELECT 
+  if attributes[:buspriority]
+    # fetch the bus detectors attached to this intersection, if any
+    busprior = exec_query("SELECT INSECTS.Number,
                         [Detector North Suffix], [Detector South Suffix],
                         [Donor Stage], [Recipient Stage]
-                       FROM [buspriority$] WHERE Intersection = '#{isname}'").flatten - [nil]
+                       FROM [buspriority$]
+                       INNER JOIN [intersections$] As INSECTS ON INSECTS.Name = Intersection")
     
-        #puts "Bus detectors for #{isname}: #{busprior.inspect}"
-      end
-      sc = SignalController.new(isnum, 
-        'NAME' => isname, 
-        'PROGRAM' => prog,
-        'CYCLE_TIME' => row['CYCLE_TIME'],
-        'OFFSET' => row['OFFSET'],
-        'BUSPRIORITY' => ((busprior.nil? or busprior.empty?) ? {} : {'DETN' => busprior[0], 'DETS' => busprior[1], 'DONOR' => busprior[2].to_i, 'RCPT' => busprior[3].to_i}) )
-      scs << sc
-    end
-  
-    sc.add SignalGroup.new(row['NUMBER'].to_i,row)
   end
-  for sc in scs
+  
+  for sc in vissim.sc_map.values.find_all{|x| x.has_plans?}
+    buspriorow = busprior.find{|r| r['Number'] == sc.number}
+    if attributes[:buspriority] and buspriorow
+      sc.update :buspriority => 
+        {'DETN' => busprior[0], 'DETS' => busprior[1], 'DONOR' => busprior[2].to_i, 'RCPT' => busprior[3].to_i}
+    else
+      sc.update :buspriority => {}        
+    end
     gen_vap sc, outputdir
     gen_pua sc, outputdir
   end

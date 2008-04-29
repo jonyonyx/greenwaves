@@ -22,8 +22,8 @@ class RoadTimeDiagram < Frame
     
     @normal_pen = Pen.new(BLACK)
     
-    @greenwave_brush = Brush.new(Colour.new(0,255,255,160))
-    @bluewave_brush = Brush.new(Colour.new(0,0,255,160))
+    @left2right_brush = Brush.new(Colour.new(0,255,255,160))
+    @right2left_brush = Brush.new(Colour.new(0,0,255,160))
     set_background_colour WHITE    
     
     @green_pen = Pen.new(Colour.new(0,255,0))
@@ -33,19 +33,20 @@ class RoadTimeDiagram < Frame
     @red_pen.set_width FATPENWIDTH * 2
     
     problem = CoordinationProblem.new(coords, scs, h)
-    siman = SimulatedAnnealing.new(problem, 1, :start_temp => 100.0, :alpha => 0.5)
+    siman = SimulatedAnnealing.new(problem, 2, :start_temp => 100.0, :alpha => 0.99)
     
     problem.create_initial_solution
     @offset = problem.solution
     
     queue = Queue.new
     
-    Thread.new do    
-      siman.run do |newval, prevval, new_offsets|
+    solthread = Thread.new do    
+      result = siman.run do |newval, prevval, new_offsets|
         puts "Found new encumbent #{newval} vs. #{prevval}"
         queue << new_offsets
       end
-    end.join
+      puts "Solver finished at #{result[:iter_per_sec]} iterations per second"
+    end
     
     Timer.every(1000) do       
       unless queue.empty?
@@ -58,6 +59,8 @@ class RoadTimeDiagram < Frame
     evt_size { on_paint }
     
     show     
+    
+    solthread.join
   end
   def on_paint
     paint_buffered do | dc |
@@ -117,7 +120,7 @@ class RoadTimeDiagram < Frame
       # in the arterial direction       
       @coordinations.each do |coord|
         
-        gdc.set_brush(coord.left_to_right ? @greenwave_brush : @bluewave_brush) # for filling wave bands
+        gdc.set_brush(coord.left_to_right ? @left2right_brush : @right2left_brush) # for filling wave bands
       
         sc1, sc2 = coord.sc1, coord.sc2
         if coord.left_to_right
@@ -129,7 +132,7 @@ class RoadTimeDiagram < Frame
         end
         sc1.bands_in_horizon(@horizon, @offset[sc1]).each do |band|
           t1 = band.tstart
-          t2 = band.tend
+          t2 = t1 + band.width
           t1, t2 = t2, t1 unless coord.left_to_right
         
           x1 = (lstart * xscale).round + @ox
@@ -160,7 +163,8 @@ class RoadTimeDiagram < Frame
         
         x = (coord.conflict_position * xscale).round + @ox
         coord.mismatches_in_horizon(@horizon, @offset[sc1], @offset[sc2]) do |band|
-          t1, t2 = band.tstart, band.tend
+          t1 = band.tstart
+          t2 = t1 + band.width # paint tend inclusive
           gdc.stroke_line(x, ybase - (t2 * yscale).round, x, ybase - (t1 * yscale).round)
         end
       end
