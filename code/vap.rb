@@ -368,7 +368,7 @@ MasterInfo = [
   {:name => 'Glostrup', :dn => 14, :ds => 1, :occ_dets => [1,2,5,8,9,10,11,12,13,14], :cnt_dets => [1,2,5,8,9,10,11,12,13,14]}
 ]
 
-def generate_controllers vissim, attributes, outputdir
+def generate_controllers vissim, attributes = {}, outputdir = Vissim_dir
   for opts in MasterInfo
     gen_master opts.merge(attributes), outputdir
   end
@@ -380,7 +380,8 @@ def generate_controllers vissim, attributes, outputdir
                         [Donor Stage], [Recipient Stage]
                        FROM [buspriority$]
                        INNER JOIN [intersections$] As INSECTS ON INSECTS.Name = Intersection")
-    
+  else
+    busprior = []
   end
   
   for sc in vissim.sc_map.values.find_all{|x| x.has_plans?}
@@ -397,5 +398,6 @@ def generate_controllers vissim, attributes, outputdir
 end
 
 if __FILE__ == $0
-  generate_controllers 
+  vissim = Vissim.new(Default_network)
+  generate_controllers vissim
 end

@@ -21,6 +21,8 @@ elsif Project == 'cowi'
   Network_name = "amagermotorvejen_avedore-havnevej.inp"
   Vissim_dir = "#{Base_dir}network\\"
   
+  PROGRAM = 'M80'
+  
   USEDOGS = false
   
   # associated numbers with these vehicle types

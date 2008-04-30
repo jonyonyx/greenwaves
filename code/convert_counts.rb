@@ -7,14 +7,14 @@ for turning_motion in ['Left', 'Through', 'Right']
          [Period End],
          [From], 
          'TURN' As [Turning Motion], 
-         [Cars TURN] As Cars, 
-         [Trucks TURN] As Trucks
-        FROM [counts$]
+         ([Cars TURN] + 0) As Cars, 
+         ([Trucks TURN] + 0) As Trucks
+        FROM [counts_old$]
         WHERE Intersection LIKE 'Gammel%'"
   
   rows = exec_query(sql.gsub('TURN',turning_motion))    
   
-  count_rows.concat(rows.find_all{|r| ['Cars','Trucks'].all?{|vehtype| r[vehtype] and r[vehtype].to_f > EPS}})
+  count_rows.concat(rows)
 end
 
 to_xls count_rows, 'conversion'
