@@ -136,6 +136,7 @@ def gen_vap sc, outputdir
   cp.add_verb ''
   
   stages = sc.stages
+  
   uniq_stages = stages.uniq.find_all{|s| s.instance_of? Stage}
   # prepare the split of DOGS extra time between major and minor stages
   minor_stages = uniq_stages.find_all{|s| sc.priority(s) == MINOR}
@@ -144,6 +145,7 @@ def gen_vap sc, outputdir
   minor_fact = minor_stages.length > 1 ? 1 : 2
   # arterial optimization: there is always exactly 1 major priority stage
   major_fact = DOGS_TIME - minor_fact * minor_stages.length
+  
     
   cp.add_verb "CONST"
   # calculate stage lengths
@@ -384,7 +386,7 @@ def generate_controllers vissim, attributes = {}, outputdir = Vissim_dir
     busprior = []
   end
   
-  for sc in vissim.sc_map.values.find_all{|x| x.has_plans?}
+  for sc in vissim.sc_map.values.find_all{|x| x.has_plans?}#.find_all{|x| x.number == 3}
     buspriorow = busprior.find{|r| r['Number'] == sc.number}
     if attributes[:buspriority] and buspriorow
       sc.update :buspriority => 
@@ -392,6 +394,7 @@ def generate_controllers vissim, attributes = {}, outputdir = Vissim_dir
     else
       sc.update :buspriority => {}        
     end
+    puts "Generating VAP and PUA for #{sc}"
     gen_vap sc, outputdir
     gen_pua sc, outputdir
   end

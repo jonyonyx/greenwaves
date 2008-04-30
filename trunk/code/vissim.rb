@@ -32,7 +32,7 @@ class RoutingDecision
     # AT must be AFTER the input point
     # place decisions as early as possibly to give vehicles time to changes lanes
     
-    str << "     LINK #{@input_link.number} AT #{@input_link.length * 0.2}\n"
+    str << "     LINK #{@input_link.number} AT #{@input_link.length * 0.1}\n"
     str << "     TIME #{@time_intervals.sort.map{|int|int.to_vissim}.join(' ')}\n"
     str << "     NODE 0\n"
     str << "      VEHICLE_CLASSES #{Type_map[@veh_type]}\n"
@@ -44,7 +44,7 @@ class RoutingDecision
       exit_link = route.exit
       # dump vehicles late on the route exit link to avoid placing the destination
       # upstream of the last connector
-      str << "     ROUTE     #{j}  DESTINATION LINK #{exit_link.number}  AT   #{exit_link.length * 0.1}\n"
+      str << "     ROUTE     #{j}  DESTINATION LINK #{exit_link.number}  AT   #{exit_link.length * 0.1 + 1}\n"
       str << "     #{fractions.sort.map{|f|f.to_vissim}.join(' ')}\n"
       str << "     OVER #{route.to_vissim}\n"
       j += 1
@@ -419,6 +419,6 @@ end
 if __FILE__ == $0
   vissim = Vissim.new(Default_network)
   for sc in vissim.sc_map.values
-    puts sc
+    puts "#{sc} has plans? #{sc.has_plans?}"
   end
 end
