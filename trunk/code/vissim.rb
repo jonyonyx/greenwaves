@@ -71,7 +71,8 @@ class Node < VissimElem
   
 end
 
-Name_pat = "([,\\w\\s\\d\\/']*)" # pattern for names in vissim network files
+# vissim element names. match anything that isn't the last quotation mark
+NAMEPATTERN = '\"([^\"]*)\"'
 
 class Vissim
   attr_reader :links_map,:conn_map,:sc_map,:tt_map,:node_map,:qc_map,:links,:input_links,:exit_links
@@ -177,7 +178,7 @@ class Vissim
     @sc_map = {}
     parse_controllers(inp) do |sc|
       # enrich this signal controller with signal plans, if any
-      
+            
       scrow = scinfo.find{|r| r['ISNUM'] == sc.number}      
       sc.update(:cycle_time => scrow['CYCLE_TIME'].to_i, :offset => scrow['OFFSET']) if scrow
       
@@ -242,7 +243,7 @@ class Vissim
   def parse_traveltimes(inp)
     i = 0
     while i < inp.length
-      unless inp[i] =~ /^TRAVEL_TIME   (\d+) NAME \"#{Name_pat}\"/
+      unless inp[i] =~ /^TRAVEL_TIME   (\d+) NAME #{NAMEPATTERN}/
         i += 1
         next
       end
@@ -261,7 +262,7 @@ class Vissim
   def parse_nodes(inp)
     i = 0
     while i < inp.length
-      unless inp[i] =~ /NODE\s+(\d+)\s+NAME\s+\"#{Name_pat}\"/
+      unless inp[i] =~ /NODE\s+(\d+)\s+NAME #{NAMEPATTERN}/
         i += 1
         next
       end
@@ -286,7 +287,7 @@ class Vissim
   def parse_controllers(inp)
     i = 0
     while i < inp.length
-      unless inp[i] =~ /^SCJ (\d+)\s+NAME \"#{Name_pat}\"/ #\s+TYPE FIXED_TIME\s+CYCLE_TIME ([\d\.]+)\s+ OFFSET ([\d\.])
+      unless inp[i] =~ /^SCJ (\d+)\s+NAME #{NAMEPATTERN}/ #\s+TYPE FIXED_TIME\s+CYCLE_TIME ([\d\.]+)\s+ OFFSET ([\d\.])
         i += 1
         next
       end
@@ -302,7 +303,7 @@ class Vissim
       until inp[i] =~ /^SCJ/ or i > inp.length
         
         # find the signal groups
-        if inp[i] =~ /^SIGNAL_GROUP (\d+)  NAME \"#{Name_pat}\"  SCJ #{ctrl.number}.+TRED_AMBER ([\d\.]+)\s+TAMBER ([\d\.]+)/
+        if inp[i] =~ /^SIGNAL_GROUP (\d+)  NAME #{NAMEPATTERN}  SCJ #{ctrl.number}.+TRED_AMBER ([\d\.]+)\s+TAMBER ([\d\.]+)/
           
           grp = ctrl.add_group($1.to_i,
             :name => $2,
@@ -311,7 +312,7 @@ class Vissim
             :tred_amber => $5,
             :tamber => $6)
           
-        elsif inp[i] =~ /SIGNAL_HEAD (\d+)\s+NAME\s+\"#{Name_pat}"\s+LABEL  0.00 0.00\s+SCJ #{ctrl.number}\s+GROUP (\d+)/
+        elsif inp[i] =~ /SIGNAL_HEAD (\d+)\s+NAME #{NAMEPATTERN}\s+LABEL  0.00 0.00\s+SCJ #{ctrl.number}\s+GROUP (\d+)/
           num = $1.to_i
           name = $2
           grpnum = $3.to_i
@@ -338,7 +339,7 @@ class Vissim
   def parse_connectors(inp)
     i = 0
     while i < inp.length
-      unless inp[i] =~ /^CONNECTOR\s+(\d+) NAME \"#{Name_pat}\"/
+      unless inp[i] =~ /^CONNECTOR\s+(\d+) NAME #{NAMEPATTERN}/
         i += 1
         next
       end
@@ -395,7 +396,7 @@ class Vissim
   def parse_links(inp)
     i = 0
     while i < inp.length
-      unless inp[i] =~ /^LINK\s+(\d+) NAME \"#{Name_pat}\"/
+      unless inp[i] =~ /^LINK\s+(\d+) NAME #{NAMEPATTERN}/
         i += 1
         next
       end
@@ -417,10 +418,7 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new(Default_network)
-  
-  puts vissim.links_map[51].adjacent
-  
-  #  for sc in vissim.sc_map.values.sort
-  #    puts sc.to_s
-  #  end
+  for sc in vissim.sc_map.values
+    puts sc
+  end
 end

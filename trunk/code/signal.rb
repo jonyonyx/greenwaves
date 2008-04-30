@@ -11,18 +11,9 @@ class SignalController < VissimElem
     super(number)
     @groups = {}
   end
-  def update attributes
-    super
-    @controller_type = attributes['TYPE']
-    @cycle_time = attributes['CYCLE_TIME'].to_f
-    @offset = attributes['OFFSET'].to_f
-    @program = attributes['PROGRAM']    
-    @buspriority = attributes['BUSPRIORITY'] # for SCs with bus priority bp is a hash
-    @node = attributes['NODE']
-  end
   
   # Methods used in bus priority
-  def has_bus_priority?; not @buspriority.empty?; end
+  def has_bus_priority?; @buspriority and not @buspriority.empty?; end
   def bus_detector_n; @buspriority['DETN']; end
   def bus_detector_s; @buspriority['DETS']; end
   def donor_stage; @buspriority['DONOR'].to_i; end
@@ -77,7 +68,8 @@ class SignalController < VissimElem
         if @groups.values.all?{|grp| grp.color(t) == grp.color(t-1)}
           stagear << last_stage
         else
-          last_stage = Stage.new(last_stage ? last_stage.number+1 : 1,@groups.values.find_all{|grp| grp.active_seconds === t})
+          last_stage = Stage.new!((last_stage ? last_stage.number+1 : 1),
+            :groups => @groups.values.find_all{|grp| grp.active_seconds === t})
           stagear << last_stage
         end
       end
@@ -125,10 +117,6 @@ class SignalController < VissimElem
 end
 class Stage < VissimElem
   attr_reader :groups
-  def initialize number, groups
-    super number,{}
-    @groups = groups
-  end
   def to_s
     @number.to_s
   end
