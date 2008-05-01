@@ -86,6 +86,10 @@ class Vissim
       @links_map[l.number] = l
     end
     
+    for row in LINKS.filter(:type => 'IN')
+      puts row.inspect
+    end
+    
     # enrich the existing object with data from the database
     for row in exec_query "SELECT NUMBER, Intersection AS NAME, [FROM], TYPE FROM [links$] As LINKS WHERE TYPE = 'IN'"
       number = row['NUMBER'].to_i

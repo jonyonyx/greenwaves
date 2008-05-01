@@ -2,8 +2,8 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-#Project = 'dtu'
-Project = 'cowi'
+Project = 'dtu'
+#Project = 'cowi'
 
 if Project == 'dtu'
   Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
@@ -68,9 +68,9 @@ DOGS_LEVEL_GREEN = 10 # seconds green time associated with each dogs level chang
 BASE_CYCLE_TIME = 80 # seconds
 CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source="
 DATAFILE = "#{Data_dir}data.xls" # main data file containing counts, sgp's, you name it
-CS = "#{CSPREFIX}#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\";"
-CSVCS = "#{CSPREFIX}#{Data_dir};Extended Properties=\"Text;HDR=YES;FTM=Delimited\";"
-CSRESDB = "#{CSPREFIX}#{Vissim_dir}results.mdb;"
+CS = "#{CSPREFIX}#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\""
+CSVCS = "#{CSPREFIX}#{Data_dir};Extended Properties=\"Text;HDR=YES;FTM=Delimited\""
+CSRESDB = "#{CSPREFIX}#{Vissim_dir}results.mdb"
 Accname = "acc_#{Res}m.csv"
 ACCFILE = "#{Data_dir}#{Accname}"
 ENABLE_VAP_TRACING = {:master => false, :slave => false} # write trace statements in vap code?
@@ -80,6 +80,10 @@ PERIOD_START, PERIOD_END = '07:00', '09:00' # used in input and route generation
 require 'dbi'
 require 'fileutils'
 require 'win32ole'
+require 'sequel'
+
+DB = Sequel.dbi CS
+LINKS = DB[:'[links$]']
 
 module VissimOutput 
   def write
