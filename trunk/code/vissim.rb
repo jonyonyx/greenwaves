@@ -86,16 +86,16 @@ class Vissim
       @links_map[l.number] = l
     end
     
-    for row in LINKS.filter(:type => 'IN')
-      puts row.inspect
+    for r in LINKS.filter(:type => 'IN').select(:number)
+      puts r.inspect
     end
     
     # enrich the existing object with data from the database
-    for row in exec_query "SELECT NUMBER, Intersection AS NAME, [FROM], TYPE FROM [links$] As LINKS WHERE TYPE = 'IN'"
-      number = row['NUMBER'].to_i
+    for row in LINKS.filter(:type => 'IN')
+      number = row[:number].to_i
     
       next unless @links_map.has_key?(number)
-      links_map[number].update :from => row['FROM'], :link_type => row['TYPE'], :name => row['NAME']
+      links_map[number].update :from => row[:from], :link_type => row[:type], :name => row[:name]
     end
     
     begin # fetch bus inputs
@@ -422,7 +422,7 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new(Default_network)
-  for sc in vissim.sc_map.values
-    puts "#{sc} has plans? #{sc.has_plans?}"
-  end
+#  for sc in vissim.sc_map.values
+#    puts "#{sc} has plans? #{sc.has_plans?}"
+#  end
 end

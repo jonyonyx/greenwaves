@@ -83,7 +83,7 @@ require 'win32ole'
 require 'sequel'
 
 DB = Sequel.dbi CS
-LINKS = DB[:'[links$]']
+LINKS = DB['SELECT number, [from], intersection, type FROM [links$]']
 
 module VissimOutput 
   def write
