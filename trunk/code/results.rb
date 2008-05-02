@@ -65,69 +65,52 @@ class NodeEvals < Array
   end
   def to_xls xlsfile = "#{Base_dir}results\\results.xls"
         
-    insect_info = exec_query "SELECT Name, Number FROM [intersections$]"
-          
-    begin
-      excel = WIN32OLE::new('Excel.Application')
-      wb = excel.Workbooks.Open(xlsfile)
+    insect_info = exec_query "SELECT Name, Number FROM [intersections$]"          
     
-      datash = wb.Sheets('data')    
+    rows = [['Node',
+      'Test Name', 
+      'Intersection', 
+      'From', 
+      'Motion', 
+      'Traffic Type', 
+      'Period Start', 
+      'Period End',
+      *COLS_TO_HEADERS.map{|k,h| h}]]
     
-      datash.cells.clear
-    
-      ['Node','Test Name', 'Intersection', 'From', 'Motion', 'Traffic Type', 'Period Start', 'Period End',
-        *COLS_TO_HEADERS.map{|k,h| h}].each_with_index do |header,i|
-        datash.cells(1,i+1).Value = header
+    for nodeeval in sort{|ne1, ne2| ne1.node <=> ne2.node}
+      from, to = nodeeval.fromlink, nodeeval.tolink
+      routes = find_routes(from, to)
+      raise "No route found from #{from} to #{to}!" if routes.empty?
+      raise "Multiple routes found from #{from} to #{to}!" if routes.length > 1
+      
+      route = routes.first
+      
+      # extract the decisions which are traversed first and last on this route
+      decision = route.decisions.first
+      
+      intersection = insect_info.find{|r| r['Number'] == decision.intersection}['Name']
+            
+      # 'arterial' traffic exits in either end of the arterial
+      traffic_type = if ['N','S'].include?(decision.from) and decision.turning_motion == 'T'
+        'Arterial'
+      else
+        'Crossing'
       end
-    
-      j = 2 # excel row number
-      for nodeeval in sort{|ne1, ne2| ne1.node <=> ne2.node}
-        from, to = nodeeval.fromlink, nodeeval.tolink
-        routes = find_routes(from, to)
-        raise "No route found from #{from} to #{to}!" if routes.empty?
-        raise "Multiple routes found from #{from} to #{to}!" if routes.length > 1
       
-        route = routes.first
+      node = nodeeval.node
       
-        # extract the decisions which are traversed first and last on this route
-        decision = route.decisions.first
-      
-        intersection = insect_info.find{|r| r['Number'] == decision.intersection}['Name']
-      
-        #veh_types = ne.vehicle_classes.join(' & ')
-      
-        # 'arterial' traffic exits in either end of the arterial
-        traffic_type = if ['N','S'].include?(decision.from) and decision.turning_motion == 'T'
-          'Arterial'
-        else
-          'Crossing'
-        end
-        #aveq = nodeeval.results[:aveq]
-        node = nodeeval.node
-      
-        [node.number, 
-          nodeeval.testname, 
-          intersection, 
-          decision.from, 
-          decision.turning_motion, 
-          traffic_type, 
-          nodeeval.tstart,
-          nodeeval.tend,
-          *COLS_TO_HEADERS.map{|k,h| nodeeval.results[k]}].each_with_index do |value,i|
-          datash.cells(j,i+1).Value = value
-        end
-        j += 1
-      end
-    
-      datash.Range("a1").Autofilter
-      datash.Rows(1).Font.Bold = true
-      datash.Columns.Autofit
-    
-      wb.Save
-    ensure
-      excel.DisplayAlerts = false # avoid excel nag to save book
-      excel.Quit
+      rows << [node.number, 
+        nodeeval.testname, 
+        intersection, 
+        decision.from, 
+        decision.turning_motion, 
+        traffic_type, 
+        nodeeval.tstart,
+        nodeeval.tend,
+        *COLS_TO_HEADERS.map{|k,h| nodeeval.results[k]}]
     end
+    
+    to_xls rows, 'data', xlsfile
   end
 end
 

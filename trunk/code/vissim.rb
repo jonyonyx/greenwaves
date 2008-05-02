@@ -86,10 +86,6 @@ class Vissim
       @links_map[l.number] = l
     end
     
-    for r in LINKS.filter(:type => 'IN').select(:number)
-      puts r.inspect
-    end
-    
     # enrich the existing object with data from the database
     for row in LINKS.filter(:type => 'IN')
       number = row[:number].to_i
