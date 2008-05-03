@@ -83,25 +83,9 @@ require 'win32ole'
 require 'sequel'
 
 DB = Sequel.dbi CS
-LINKS = DB['SELECT number, [from], intersection, type FROM [links$]']
+LINKS = DB['SELECT number, [from], intersection, type as link_type FROM [links$]']
+BUSES = DB['SELECT bus, [In Link] As input_link, [Out Link] As exit_link, frequency FROM [buses$]']
 
-module VissimOutput 
-  def write
-    section_contents = to_vissim # make sure this can be successfully generated before opening the network file!
-    network = Default_network
-    networkname = network.split("\\").last
-    FileUtils.cp network, "#{ENV['TEMP']}\\#{networkname}#{rand}" # backup
-    inp = IO.readlines(network)
-    section_start = (0...inp.length).to_a.find{|i| inp[i] =~ section_header} + 1
-    section_end = (section_start...inp.length).to_a.find{|i| inp[i] =~ /-- .+ --/ } - 1 
-    File.open(network, "w") do |file| 
-      file << inp[0..section_start]
-      file << "\n#{section_contents}\n"
-      file << inp[section_end..-1]
-    end
-    puts "Wrote#{respond_to?(:length) ? " #{length}" : ''} #{self.class} to '#{network}'"
-  end
-end
 def change_in_file(file, find, replace)
   text = File.read file
   File.open(file, 'w') do |f| 
@@ -194,3 +178,8 @@ class Class
   end
 end
 
+class Hash
+  def retain_keys!(*keys)
+    delete_if{|k,v| not keys.include? k}
+  end
+end
