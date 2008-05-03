@@ -9,7 +9,7 @@ class SignalController < VissimElem
   attr_reader :controller_type,:cycle_time,:offset,:groups,:program
   def initialize number
     super(number)
-    @groups = {}
+    @groups = []
   end
   
   # Methods used in bus priority
@@ -24,18 +24,18 @@ class SignalController < VissimElem
   # check if all groups have a signal plan plus
   # generel checks
   def has_plans?
-    @cycle_time and @offset and @groups.values.all?{|grp| grp.has_plan?}
-  end
-  
+    @cycle_time and @offset and @groups.all?{|grp| grp.has_plan?}
+  end  
   def add_group(number, opts)
-    @groups[number] = SignalGroup.new!(number,opts)
+    @groups << SignalGroup.new!(number,opts)
   end
+  def group(number); @groups.find{|grp|grp.number == number}; end
   def interstage_active?(cycle_sec)
     # all-red phases are considered interstage
-    return true if @groups.values.all?{|grp| grp.color(cycle_sec) == RED}
+    return true if @groups.all?{|grp| grp.color(cycle_sec) == RED}
     
     # check for ordinary interstages
-    @groups.values.any?{|grp| [YELLOW,AMBER].include? grp.color(cycle_sec)}
+    @groups.any?{|grp| [YELLOW,AMBER].include? grp.color(cycle_sec)}
   end
   def priority stage
     return NONE unless stage.instance_of?(Stage) # interstages are fixed length
@@ -49,7 +49,7 @@ class SignalController < VissimElem
     end
   end
   def find_groups_by_priority p
-    @groups.values.find_all{|grp| grp.priority == p}
+    @groups.find_all{|grp| grp.priority == p}
   end
   def stages
     last_stage = nil
@@ -69,7 +69,7 @@ class SignalController < VissimElem
           stagear << last_stage
         else
           last_stage = Stage.new!((last_stage ? last_stage.number+1 : 1),
-            :groups => @groups.values.find_all{|grp| grp.active_seconds === t})
+            :groups => @groups.find_all{|grp| grp.active_seconds === t})
           stagear << last_stage
         end
       end

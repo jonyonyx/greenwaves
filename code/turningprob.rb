@@ -1,6 +1,55 @@
 require 'network'
 require 'vissim_routes'
 
+class RoutingDecisions < Array
+  include VissimOutput
+  def section_header; /^-- Routing Decisions: --/; end
+  def to_vissim
+    str = ''
+    each_with_index do |rd,i|
+      str << "#{rd.to_vissim(i+1)}"
+    end
+    str
+  end
+end
+class RoutingDecision
+  attr_reader :input_link, :veh_type
+  def initialize
+    @routes = []
+  end
+  def add_route route, fractions
+    raise "Warning: starting link (#{route.start}) of route was different 
+             from the input link of the routing decision(#{@input_link})!" unless route.start == @input_link
+      
+    raise "Wrong vehicle types detected among fractions, expecting only #{@veh_type}" if fractions.any?{|f| f.veh_type != @veh_type}
+    raise "Wrong number of fractions, #{fractions.size}, expected #{@time_intervals.size}\n#{fractions.sort.join("\n")}" unless fractions.size == @time_intervals.size
+    @routes << [route, fractions]
+  end
+  def to_vissim i
+    str = "ROUTING_DECISION #{i} NAME \"#{@desc ? @desc : (@veh_type)} from #{@input_link}\" LABEL  0.00 0.00\n"
+    # AT must be AFTER the input point
+    # place decisions as early as possibly to give vehicles time to changes lanes
+    
+    str << "     LINK #{@input_link.number} AT #{@input_link.length * 0.1}\n"
+    str << "     TIME #{@time_intervals.sort.map{|int|int.to_vissim}.join(' ')}\n"
+    str << "     NODE 0\n"
+    str << "      VEHICLE_CLASSES #{Type_map[@veh_type]}\n"
+    
+    j = 1
+    
+    for route, fractions in @routes
+      
+      exit_link = route.exit
+      # dump vehicles late on the route exit link to avoid placing the destination
+      # upstream of the last connector
+      str << "     ROUTE     #{j}  DESTINATION LINK #{exit_link.number}  AT   #{exit_link.length * 0.1 + 1}\n"
+      str << "     #{fractions.sort.map{|f|f.to_vissim}.join(' ')}\n"
+      str << "     OVER #{route.to_vissim}\n"
+      j += 1
+    end
+    str
+  end
+end
 def get_vissim_routes vissim
 
   decisions = vissim.conn_map.values.map{|c|c.dec} - [nil]

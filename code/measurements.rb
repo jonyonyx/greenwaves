@@ -12,6 +12,18 @@ def insert_measurements vissim = Vissim.new(Default_network)
   #insert_queuecounters vissim, routes
   insert_traveltimes routes, :buses => true
 end
+class QueueCounter < VissimElem
+  attr_reader :link
+  def to_s; "#{super} at #{@link}"; end
+end
+class TravelTime < VissimElem
+  attr_reader :from,:to,:vehicle_classes
+  def to_s; "#{super} from #{@from} to #{@to}"; end
+  def <=>(tt2)
+    (@from == tt2.from) ? (@to <=> tt2.to) : (@from <=> tt2.from)
+  end
+end
+class Node < VissimElem; end
 
 class QueueCounters < Array
   include VissimOutput
