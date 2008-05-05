@@ -19,13 +19,14 @@ class Connector < RoadSegment
   end
 end
 class Link < RoadSegment
-  attr_reader :from,:link_type,:adjacent,:predecessors,:lanes,:length
+  attr_reader :from_point,:to_point,:link_type,:adjacent,:predecessors,:lanes,:length
   attr_accessor :is_bus_input
   def initialize number
     super(number)
     @adjacent = {}
     @predecessors = []
   end
+  def calculate_length; @from_point.distance(@to_point); end
   def adjacent_links; @adjacent.keys; end
   # connects self to link by connector
   # note there may be multiple connectors to the same link

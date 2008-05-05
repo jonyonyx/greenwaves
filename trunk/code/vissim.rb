@@ -18,7 +18,7 @@ SECTION_PARSERS = {
 class Vissim
   attr_reader :connectors,:controllers
   def initialize inpfile = Default_network
-    inp = IO.readlines(inpfile).map!{|link| link.strip}.delete_if{|link| link.empty?}
+    inp = IO.readlines(inpfile).map!{|line| line.strip}.delete_if{|line| line.empty?}
       
     # find relevant sections of the vissim file
     section_start = section_name = nil
@@ -38,9 +38,9 @@ class Vissim
     end       
     
     # remove non-input links which cannot be reached
-    @links_map.delete_if do |num, link|
+    @links_map.delete_if do |num, line|
       # a predecessor exists if there is a connector to this link
-      not (link.input? or link.is_bus_input) and not @connectors.any?{|c| c.to == link}
+      not (line.input? or line.is_bus_input) and not @connectors.any?{|c| c.to == line}
     end
         
     # remove all outgoing connectors which no longer have a from link
@@ -51,10 +51,30 @@ class Vissim
       from_link = conn.from
       to_link = conn.to
       from_link.add_successor(to_link, conn)
-    end    
+    end
+    
+    if ARTERY
+      # attempt to mark links as arterial
+      # and note the direction of the link;
+      # this is used by the signal optimization routines
+      sc1 = ARTERY[:sc1][:scno]
+      sc2 = ARTERY[:sc2][:scno]
+      from1 = ARTERY[:sc1][:from_direction]
+      from2 = ARTERY[:sc2][:from_direction] 
+
+      # look for routes passing decisions Through
+      require 'vissim_routes'
+      routes = get_full_routes(self)
+      
+      puts "Found #{routes.size} routes"
+      
+      for route in routes.find_all{|r| r.decisions.map{|d| d.name}.include?("#{from1}#{sc1}")}
+        puts route
+      end
+    end
   end
-  def input_links; @links.find_all{|l| l.input?}; end
-  def exit_links; @links.find_all{|l| l.exit?}; end
+  def input_links; links.find_all{|l| l.input?}; end
+  def exit_links; links.find_all{|l| l.exit?}; end
   def links; @links_map.values; end
   def link(number); @links_map[number]; end
   # parse signal controllers and their groups + heads
@@ -198,24 +218,32 @@ class Vissim
   end
   def parse_links(inp)
 
+    # we do a lot of lookups on link numbers later on
+    # this map will save time.
     @links_map = {}
     
-    inp.each_cons(2) do |line1, line2|
-      next unless line1 =~ /^LINK\s+(\d+) NAME #{NAMEPATTERN}/
+    inp.each_with_index do |line, i|
+      next unless line =~ /^LINK\s+(\d+) NAME #{NAMEPATTERN}/
       
       number = $1.to_i
-      name = $2
+      opts = {:name => $2}
       
-      line2 =~ /LENGTH\s+(\d+\.\d+)\s+LANES\s+(\d+)/
+      inp[i+1] =~ /LENGTH\s+(\d+\.\d+)\s+LANES\s+(\d+)/
+      opts[:length] = $1.to_f
+      opts[:lanes] = $2.to_i
+      
+      inp[i+2..-1].each do |line2|
+        break if line2 =~ /^LINK/
+        if line2 =~ /(FROM|TO)\s+(\d+.\d+)\s+(\d+.\d+)/
+          opts["#{$1.downcase}_point".to_sym] = Point.new!(:x => $2.to_f, :y => $3.to_f)
+        end
+      end
   
-      @links_map[number] = Link.new!(number,
-        :name => name,
-        :length => $1.to_f,
-        :lanes => $2.to_i)
+      @links_map[number] = Link.new!(number, opts)
     end
     
     # enrich the existing link objects with data from the database
-    for row in LINKS.filter(:link_type => 'IN')      
+    for row in LINKS.find_all{|r| r[:link_type] == 'IN'} # dataset.filter doesn't work...
       next unless link = link(row[:number].to_i)
       link.update row.retain_keys!(:from, :link_type, :name)
     end
@@ -236,7 +264,8 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new
-  for sc in vissim.controllers.find_all{|x| x.has_plans?}.sort
-    puts sc
-  end
+  
+  #  for sc in vissim.controllers.find_all{|x| x.has_plans?}.sort
+  #    puts sc
+  #  end
 end
