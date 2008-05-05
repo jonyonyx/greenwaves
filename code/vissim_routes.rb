@@ -10,9 +10,6 @@
 #   from B to C. This can be determined by following the outgoing connectors
 #   from A and then B until a connector, which ends in C, is found
 
-require 'const'
-require 'vissim'
-
 class Route  
   attr_reader :links,:connectors,:decisions
   # a route is a list of links which are followed by using

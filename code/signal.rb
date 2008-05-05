@@ -42,14 +42,11 @@ class SignalController < VissimElem
     
     # a stage has major priority if it contains all groups (for this SC)
     # which should receive major priority rather than just some of them
-    if (find_groups_by_priority(MAJOR) - stage.groups).empty?
+    if (@groups.find_all{|grp| grp.priority == MAJOR}- stage.groups).empty?
       MAJOR
     else
       stage.groups.any?{|grp| grp.priority == MINOR} ? MINOR : NONE
     end
-  end
-  def find_groups_by_priority p
-    @groups.find_all{|grp| grp.priority == p}
   end
   def stages
     last_stage = nil
@@ -76,7 +73,6 @@ class SignalController < VissimElem
     end
     stagear
   end
-  
   class SignalGroup < VissimElem
     attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads,:priority
     def initialize(number)
@@ -117,7 +113,16 @@ class SignalController < VissimElem
 end
 class Stage < VissimElem
   attr_reader :groups
-  def to_s
-    @number.to_s
+  def to_s; @number.to_s; end
+  # determine if this stage and otherstage are
+  # compatible wrt direction ie their groups give way
+  # for traffic
+  #
+  # return true if there exist a connection from 
+  # from 
+  def self.direction_compatible?(fromstage, tostage)
+    fromstage.groups.each do |fromgrp|
+      return true if tostage.groups.any?{|togrp| fromgrp.direction == togrp.direction}
+    end
   end
 end

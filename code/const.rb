@@ -14,6 +14,12 @@ if Project == 'dtu'
   
   USEDOGS = true
   
+  # definition of extreme ends of artery
+  ARTERY = {
+    :sc1 => {:from_direction => 'N', :scno => 1}, 
+    :sc2 => {:from_direction => 'S', :scno => 12}
+  }
+  
   # associated numbers with these vehicle types
   Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
 elsif Project == 'cowi'
@@ -140,6 +146,19 @@ class Array
     return [] if pieces.zero?
     piece_size = (length.to_f / pieces).ceil
     [first(piece_size), *last(length - piece_size).chunk(pieces - 1)]
+  end
+end
+
+class Point
+  attr_reader :x, :y
+  def to_s
+    "#{@x} #{@y}"
+  end
+  # calculate the distance between self and point
+  def distance point
+    dx = @x - point.x
+    dy = @y - point.y
+    Math.sqrt(dx**2 + dy**2)
   end
 end
 
