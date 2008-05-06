@@ -63,18 +63,28 @@ class Vissim
       from1 = ARTERY[:sc1][:from_direction]
       from2 = ARTERY[:sc2][:from_direction] 
       
-      # look for routes passing decisions Through
+      
+      scs_to_pass = (sc1..sc2)
+      
+      artery_decisions = Hash.new{|h,k| h[k] = []}
+      @decisions.each do |d| 
+        if scs_to_pass === d.intersection and d.turning_motion == "T" and [from1,from2].include?(d.from_direction)
+          artery_decisions[d.from_direction] << d
+        end
+      end
+      
+      # look for routes passing the artery decisions
       require 'vissim_routes'
       routes = get_full_routes(self)
       
-      artery_decisions = @decisions.find_all do |d| 
-        (sc1..sc2) === d.intersection and 
-          d.turning_motion == "T" and
-          d.from_direction == from1
-      end
-      
-      for route in routes.find_all{|r| artery_decisions.all?{|d| r.connectors.include?(d)}}
-        puts route.to_vissim
+      for from_direction, decisions in artery_decisions
+       artery_routes = routes.find_all{|r| decisions.all?{|d| r.connectors.include?(d)}}
+       puts "Warning: #{artery_routes.size} routes were found from #{from_direction}; expected only one." if artery_routes.size > 1
+       route = artery_routes.first
+       
+       # mark links and connectors in the artery route so that the signal controllers may see which
+       # direction they give green to.
+       route.mark_arterial from_direction
       end
     end
   end
@@ -142,12 +152,15 @@ class Vissim
           grpnum = $3.to_i
           grp = sc.group(grpnum)
           
-          raise "Signal head '#{opts[:name]}' is missing its group #{grpnum} at controller '#{sc}'" unless grp
+          raise "Signal head '#{opts[:name]}' is missing its group #{grpnum} at controller '#{sc}'" if grp.nil?
           
           # optionally match against the TYPE flag (eg. left arrow)
           line =~ /POSITION LINK\s+(\d+)\s+LANE\s+(\d)\s+AT\s+(\d+\.\d+)/
                                 
-          opts[:position_link] = link($1.to_i)
+          pos_link_num = $1.to_i # heads can be placed on both links and connectors (RoadSegment)
+          opts[:position_link] = link(pos_link_num) || @connectors.find{|c|c.number == pos_link_num}
+          raise "Position link #{pos_link_num} for head #{opts[:name]} at #{sc} could not be found!" if opts[:position_link].nil?
+          
           opts[:lane] = $2.to_i
           opts[:at] = $3.to_f
           
@@ -277,13 +290,14 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new  
+  
   #puts vissim
   #raise "Found dangling connectors" if vissim.connectors.any?{|c| c.from_link.nil? or c.to_link.nil?}
   #  for conn in vissim.connectors
   #    puts conn
   #  end
   
-  #  for sc in vissim.controllers.find_all{|x| x.has_plans?}.sort
-  #    puts sc
-  #  end
+  for sc in vissim.controllers.find_all{|x| x.has_plans?}.sort
+    puts "#{sc}: #{sc.arterial_groups.join(' ')}"    
+  end
 end

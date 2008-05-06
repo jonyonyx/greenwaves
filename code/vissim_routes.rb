@@ -18,6 +18,9 @@ class Route
     @links,@connectors = links,connectors
     @decisions = @connectors.find_all{|conn| conn.instance_of?(Decision)}
   end
+  def mark_arterial from_direction
+    (@links+@connectors).each{|road_segment| road_segment.update(:arterial_from => from_direction)}
+  end
   def length; @links.length; end
   def start; @links.first; end
   def exit; @links.last; end
