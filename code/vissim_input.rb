@@ -97,7 +97,9 @@ def get_inputs vissim
   # traffic counts  
   
   if Project == 'dtu'
-    for det in ['D3','D01','D03','D06']
+    for det in ['D3', # northern input from herlev sygehus
+        'D01','D03','D06' # roskildevej
+        ]
         
       #fetch the link input number    
       number = exec_query("SELECT LINKS.Number 

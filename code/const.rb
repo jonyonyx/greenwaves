@@ -113,11 +113,15 @@ def to_xls rows, sheetname, xlsfile = DATAFILE
     
     datash.cells.clear
     
-    rows.each_with_index do |row, i|
-      row.each_with_index do |val, j|
-        datash.cells(i+1,j+1).Value = val
-      end
-    end
+    # all-in-one insertion
+    datash.range("a1").resize(rows.size, rows[0].size).Value = rows
+    
+    # per-cell insertion (slow)
+#    rows.each_with_index do |row, i|
+#      row.each_with_index do |val, j|
+#        datash.cells(i+1,j+1).Value = val
+#      end
+#    end
       
     datash.Range("a1").Autofilter
     datash.Rows(1).Font.Bold = true
