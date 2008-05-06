@@ -52,7 +52,7 @@ class RoutingDecision
 end
 def get_vissim_routes vissim
 
-  decisions = vissim.conn_map.values.map{|c|c.dec} - [nil]
+  decisions = vissim.decisions
 
   turning_sql = "SELECT INTSECT.Number,
                   [From], 
@@ -111,7 +111,7 @@ def get_vissim_routes vissim
   for dp in decision_points
     
     for veh_type in Cars_and_trucks_str
-      input_link = dp.link # the common starting point for decision in this point
+      input_link = dp.link(vissim) # the common starting point for decision in this point
       rd = RoutingDecision.new!(:input_link => input_link, :veh_type => veh_type, :time_intervals => dp.time_intervals)
   
       # add routes to the decision point

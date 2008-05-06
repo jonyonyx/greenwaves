@@ -16,8 +16,7 @@ class Route
   # the given connectors
   def initialize links,connectors
     @links,@connectors = links,connectors
-    @decisions = @connectors.map{|conn| conn.dec} - [nil]
-    #puts "Decisions in #{self.to_s}: #{@decisions.join(', ')}" unless @decisions.empty?
+    @decisions = @connectors.find_all{|conn| conn.instance_of?(Decision)}
   end
   def length; @links.length; end
   def start; @links.first; end
@@ -49,6 +48,7 @@ def discover start, exits, links = [start], connectors = [], &callback
     # avoid loops by checking if the path contain this link
     next if links.include?(adj) or adj.closed_to_any?(Cars_and_trucks)
     connlist.each do |conn|
+      next if conn.closed_to_any?(Cars_and_trucks)
       if exits.include? adj
         # found an exit link for this path
         yield Route.new(links + [adj], connectors + [conn])
@@ -92,11 +92,11 @@ end
 
 # finds all full ie. start-to-end routes
 # in the given vissim network
-def get_full_routes(vissim, start_links = vissim.input_links)
+def get_full_routes(vissim, start_links = vissim.input_links, exit_links = vissim.exit_links)
   
   routes = []
   for start in start_links
-    discover(start, vissim.exit_links) do |route|
+    discover(start, exit_links) do |route|
       routes << route
     end
   end

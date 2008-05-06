@@ -89,8 +89,8 @@ require 'win32ole'
 require 'sequel'
 
 DB = Sequel.dbi CS
-LINKS = DB['SELECT number, [from], intersection, type as link_type FROM [links$]']
-BUSES = DB['SELECT bus, [In Link] As input_link, [Out Link] As exit_link, frequency FROM [buses$]']
+LINKS = DB[:'[links$]']
+BUSES = DB[:'[buses$]']
 
 def change_in_file(file, find, replace)
   text = File.read file
