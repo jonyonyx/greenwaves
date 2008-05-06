@@ -80,12 +80,9 @@ Info = {
   'Glostrup' => {:dir => Glostrup_dir, :southgoing => ['D02','D08','D010','D012','D014']}
 }
 
-# create an empty csv file with the expected headers  
-File.open(ACCFILE, 'w') do |csvfile|  
-  csvfile << ['Date','Time','DoW','Detector','Direction','Detected','Area'].join(';')
-  csvfile << "\n"
-end
-
+# The header row of the excel data sheet; more rows are appended later
+rows = [['Date','Time','DoW','Detector','Direction','Detected','Area']]
+  
 for area,info in Info
   puts "Processing DOGS detector data from #{area}"
   Dir.chdir info[:dir]
@@ -108,29 +105,24 @@ for area,info in Info
       #break if cur_date == '14-11-2007'
     end	
     puts 
-  end
+  end  
 
-  # Now put the combined results into a csv-file for processing in excel
-  #CSV.open(ACCFILE,'a',';') do |csv|
   # find the entry with the most detector names
-  det_names = time_det_map.values.max {|dets1, dets2| dets1.length <=> dets2.length}.keys
+  det_names = time_det_map.values.max {|dets1, dets2| dets1.length <=> dets2.length}.keys  
   
-  File.open(ACCFILE, 'a') do |csvfile|
-  
-    for t in time_det_map.keys.sort
-      #puts "#{get_date_time(t)}: #{Time_det_map[t].inspect}"  
-      map_t = time_det_map[t]
+  for t in time_det_map.keys.sort
+    #puts "#{get_date_time(t)}: #{Time_det_map[t].inspect}"  
+    map_t = time_det_map[t]
     
-      # skip entries, which do not have data for all detectors
-      next if map_t.length < det_names.length
-      date,time,dow = get_date(t),get_time(t),t.strftime('%a')
-      for dn in det_names
-        values = [date,time,dow,dn,info[:southgoing].include?(dn) ? 'S' : 'N',map_t[dn],area]
-        csvfile << values.join(';')
-        csvfile << "\n"
-      end
+    # skip entries, which do not have data for all detectors
+    next if map_t.length < det_names.length
+    date,time,dow = get_date(t),get_time(t),t.strftime('%a')
+    det_names.each do |dn| 
+      rows << [date,time,dow,dn,info[:southgoing].include?(dn) ? 'S' : 'N',map_t[dn],area]      
     end
   end
 end
+
+to_xls(rows, 'data', "#{Data_dir}aggr.xls")
 
 puts "END"

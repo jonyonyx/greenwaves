@@ -1,10 +1,10 @@
-\section{Data Analysis}
+\section{Traffic Analysis}
 \label{data}
-For the two areas of interest, Glostrup and Herlev, TTS supplied data from detectors for a period of a couple of weeks in november 2007.
+For the two areas of interest, Glostrup and Herlev, TTS supplied data from detectors for a period of a couple of weeks in november 2007. 
 
-This period is generally accepted as the beginning of the winter season and as such the traffic is expected to be high and as such the data serves as a worst-case scenario.
+This period is generally accepted as the beginning of the winter season and as such the traffic is expected to be high.
 
-The detector input data is used to establish traffic input levels according to the day and time of day. Also, since the data does not represent exactly what traffic each link observed during the period, it is analyzed to establish some estimates of the traffic for missing links.
+This is a supplement to the traffic counts, which were given by DRD. Since the detector data is anonymous with respect to vehicles types, for links in the ends of the arterial (Herlev Sygehus from north and Roskildevej from east, west and south) the data from the corresponding detectors was used in the project to scale the input sizes of the traffic counts.
 
 The format of the data is:
 
@@ -38,21 +38,76 @@ Glostrup & 13-11-2007 08:45 & 26-11-2007 14:15 & D1-D14 \\
 \label{tab:dataperiod}
 \end{table}
 
-I have performed analyses for each area in order to reach the required estimates for input sizes and proportions in route choice in Vissim.
-
-\subsection{Herlev}
-
-The first graph I present, see Figure \ref{fig:herlev_props} shows how the overall traffic fluctuates between workdays and weekends. It also shows that there is slightly more northgoing traffic.
-
-\begin{figure}[!ht]
+The cleaned data was exported to a single table of more than 30.000 rows in the format:
+\begin{table}[!ht]
 \begin{center}
-\includegraphics[scale=0.35]{herlev_direction_proportions.png} 
+\begin{tabular}{c|c|c|c|c|c}
+\textbf{Date} & \textbf{Time} & \textbf{Area} & \textbf{Detector Name} & \textbf{From Direction} & \textbf{Vehicles} \\
+\end{tabular}
 \end{center}
-\caption{Daily- and directional variations in Herlev}
-\label{fig:herlev_props}
+\caption{Format of cleaned data set}
+\label{tab:cleandataformat}
+\end{table}
+
+In the next section I will use the cleaned data to make some analyses and comparisons of the areas to discover facts on \textit{directional proportions} and \textit{distribution of traffic on a daily basis}.
+
+\subsection{Detector Data Analysis}
+
+The first four graphs (Figures \ref{fig:herlev_props_morning}-\ref{fig:glostrup_props_afternoon}) shows the overall fluctuation of traffic (mean-value) on workdays and in weekends split on mornings (7-9) and afternoons (15-17).
+
+\begin{figure}[ht]
+
+    \begin{minipage}[b]{0.5\linewidth}
+
+\begin{center}
+\includegraphics[scale=0.25]{herlev_direction_proportions_morning.png} 
+\end{center}
+\caption{Herlev - morning}
+\label{fig:herlev_props_morning}
+
+    \end{minipage}
+    \hspace{0.5cm}
+    \begin{minipage}[b]{0.5\linewidth}
+
+\begin{center}
+\includegraphics[scale=0.25]{herlev_direction_proportions_afternoon.png} 
+\end{center}
+\caption{Herlev - afternoon}
+\label{fig:herlev_props_afternoon}
+
+    \end{minipage}
+
 \end{figure}
 
-XXXTest forskellen på retningsfordeling formiddag og eftermiddagXXX
+
+
+\begin{figure}[ht]
+
+    \begin{minipage}[b]{0.5\linewidth}
+
+\begin{center}
+\includegraphics[scale=0.25]{glostrup_direction_proportions_morning.png} 
+\end{center}
+\caption{Glostrup - morning}
+\label{fig:glostrup_props_morning}
+
+    \end{minipage}
+    \hspace{0.5cm}
+    \begin{minipage}[b]{0.5\linewidth}
+    
+\begin{center}
+\includegraphics[scale=0.25]{glostrup_direction_proportions_afternoon.png} 
+\end{center}
+\caption{Glostrup - afternoon}
+\label{fig:glostrup_props_afternoon}
+
+    \end{minipage}
+
+\end{figure}
+
+We can see that there is an overweight of northgoing traffic. This overweight is more profound in the Glostrup area and increases in the afternoon for both areas.
+
+From these graphs we can also see that, in the weekend, most traffic happens in the afternoon, since most danes go to church in the mornings.
 
 The next graph, see Figure \ref{fig:herlev_commuter}, shows the usual commuter- and lunch traffic patterns. The data from all mondays to fridays in the dataset have almost identical temporal distributions and thus the graph shows summarized data from workdays.
 
@@ -100,3 +155,5 @@ In Figure \ref{fig:herlev_southgoing} - the northgoing direction - we see a bump
 
 (For either direction these proportions do not vary in particular between workday and weekend.)
 
+\subsection{Glostrup}
+This area is better covered with respect to detectors and we even have data from detectors on the "minor roads" at roskildevej.
