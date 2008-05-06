@@ -38,16 +38,69 @@ For travel times (offset) it is possible to rely on the speed limitations / free
 
 DRD has traditionally used TRANSYT to obtain coordination but often it is necessary to manually adjust the offsets in order to obtain a good two-way coordination. It is possible to have two-way green waves by compromise, which could be either some sacrifice in the quality of the green waves or that each direction have perfect green waves but only in some ratio of the intersections (see \cite{artc}). A third alternative is to a perfect progression band in one direction for a some ratio of time, corresponding to the ratios of traffic in either direction.
 
+\subsection{Metaheuristic Search}
+
 In this project we have formalized the green wave concept so that it is possible to evaluate a proposal for offsets. This opens up for the application of a metaheuristic search procedure.
 
 In this first cycle-based approach the variable to be optimized is, of course, the offset for each signal controller. The signal controllers themselves operate under cyclic plans which are shifted in time according to the chosen offset. In addition the allowed speeds from a signal to the next may be changed to obtain better results.
 
-For evaluation of a \textit{coordination} between $sc_1$ and $sc_2$ (directed) in the context of a time horizon $H = h_min .. h_max$ we examine each green band, which is emitted from $sc_1$. Given the distance and chosen speed from $sc_1$ to $sc_2$ we can count how many seconds worth of green band, which is not being let through by $sc_2$. The band from $sc_1$ may be cut in three ways, if $sc_2$ does not provide a green light, when the band reaches it 1) completely ie. there is a red light for the duration of the band 2) the front is cut off 3) the tail is cut off.
+\label{eval_coord}
+For evaluation of a \textit{coordination} between $sc_1$ and $sc_2$ (directed) in the context of a time horizon $H = h_{min} .. h_{max}$ we examine each green band, which is emitted from $sc_1$. Given the distance and chosen speed from $sc_1$ to $sc_2$ we can count how many seconds worth of green band, which is not being let through by $sc_2$. The band from $sc_1$ may be cut in three ways, if $sc_2$ does not provide a green light, when the band reaches it 1) completely ie. there is a red light for the duration of the band 2) the front is cut off 3) the tail is cut off.
 
 Obviously the first option is worst as all vehicles must halt. Second is the cutting of the leading vehicles, since they must brake or come to a halt, effectively halting the entire platoon. Least intrusive is the cutting of the tail, since then, at least, parts of the platoon actually experienced a green wave when travelling between $sc_1$ and $sc_2$.
 
-\subsection{Stage-based signals}
+\subsection*{Simulated Annealing}
+In this section I describe the metaheuristic search routing, which was chosen: Simulated Annealing (SA). 
+SA is a \textit{hill-climber} with the ability to escape from local optima ie. jump to another hill-top.
 
+What this means is that SA performs a randomized, converging search in the entire search space (for offsets that is each combination of $N \bmod C$ over the intersections) looking for the possible best set of offsets without getting stuck with the \textit{first-and-best} solution it encounters.
+
+The initial solution is chosen so that all offsets are zero. SA then works its way toward a better solution by examining neighbor solutions to the current one. A neighbor solution is found by incrementing or decrementing a single offset in the current solution.
+
+The solutions to offsets are evaluated and compared in the context of the network and, if a neighbor is found to be better than the best solution found so far, it is adopted as the new \textit{encumbent}. If the neighbor was not better it should be thrown away, but here SA avoids being caught in a local optima by \textit{with some probability} keeping the neighbor solution regardless and work on from there. This probability will decrease as the search progress and so it is subject to tuning.
+
+Generally metaheuristics give no guarantee that an optimum solution will be found, but with proper tuning and fast data structures, so that at least a couple of hundred solutions can be tested per second, it will generally yield good solutions. The strengths of metaheuristics are that they can easily support any kind of constraint, take advantage of the structure of the problem and run in O([insert seconds here]) ie. the running time is bounded by the time available.
+
+\subsection*{Data Structures}
+In this project I have developed data structures, which are fast enough to generate the necessary iterations per second and can be used in various metaheuristic search schemes, not just simulated annealing.
+
+The keys to speed in metaheuristic search are \textit{delta-evaluation} and to avoid \textit{object instantiation}.
+
+\subsubsection*{Delta-evaluation}
+To evaluate a solution for offsets for sequentially adjacent signal controllers $sc_1$ to $sc_n$ we evaluate, in accordance to description in Section \ref{eval_coord}, each coordination $(sc_1,sc_2)$, $(sc_2,sc_1)$\footnote{Coordinations between adjacent signal controllers need not be symmetrical. For instance there might be a longer way in one direction that the other or, more likely, different \textit{speeds} might be allowed} and so forth. This gives us a value for each coordination and we then perform some kind of aggregation in order to obtain a single figure, the solution value.
+
+Every time a neighbor solution is generated we normally immediately want to evaluate it as well. This can be done by going through the routine described above, but we can also use delta-evaluation to speed up the evaluation, if we have information on the structure of the problem.
+
+A change in the offset of signal controller $sc_i$ will affect the coordinations between $sc_{i-1}$ and $sc_{i}$ and also between $sc_{i}$ and $sc_{i+1}$. Since we didn't change the offset $sc_{i-1}$ or $sc_{i+1}$ or any other offset, all coordinations but those mentioned will remain just as good - or bad - as before the offset change for $sc_i$. This is illustrated in Figure \ref{fig:delta_eval}.
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.3]{delta_eval.png} 
+\end{center}
+\caption{Local nature of coordinations. This illustrates the quality of coordinations between three signal controllers before and after changing the offset of the middle controller. Notice that the coordinations between the outer controllers and $sc_{i-2}$ and $sc_{i+2}$ remain the same.}
+\label{fig:delta_eval}
+\end{figure}
+
+So, rather than evaluating every coordination again we may safely assume that only coordinations $(sc_{i-1},sc_{i})$, $(sc_{i-1},sc_{i})$ and $(sc_{i},sc_{i+1})$, $(sc_{i+1},sc_{i})$ need to be reevaluated. 
+
+We now need only to evaluate at most four coordinations\footnote{Changing offsets for controllers in the ends of the arterial will only change the value of two coordinations.} to obtain the neighbor solution value. In total there are $2\cdot (n-1)$ coordinations to evaluate since each signal controller has an outgoing coordination in each direction except at the ends, which have only one. Thus we exchange a linearly growing reevaluation time (in the number of signal controllers) for a constant one and rough tests have shown that, even for small networks, the savings are in excess of a factor two, in spite of the extra overhead due to bookkeeping.
+
+\subsubsection*{Neighbor solutions}
+In previous studies of metaheuristics, where the object oriented programming model was completely adopted, it was found that the overhead of object instantiation, whenever a neighbor solution was generated, would result in tremendous time consumption. 
+
+Instead I have minimized the need for copying information from a solution to its neighbor by introducing the dual keywords \textit{change} and \textit{undo\_changes}. The purpose of these methods is to allow a solution to temporarily take the form of its neighbor and switch back to its former self, if requested. 
+When the metaheuristic runs it will constantly ask for neighbor solutions but throw away most of them. This approach avoids much copying of solution attributes and at the same time the details of the switching of identify are relayed to the solution object.
+
+\subsubsection*{Bookkeeping outline}
+The \textit{change} and \textit{undo\_changes} methods are closely integrated with delta-evaluation. The initial solution obviously cannot be delta-evaluated so, during full evaluation, the \textit{contribution} from each coordination is noted. 
+
+When \textit{change} is called a signal controller whose offset to change is chosen as well as a new offset value. Next we find the affected coordinations and update the value of the solution by swapping the old contributions with the new ones, when evaluated under the changed offset.
+
+We must be ready to undo the changes we just made, so we track all these changes: which offset we changed and by how much as well as the previous contributions from the affected coordinations.
+
+The extra time spent on bookkeeping is bounded by the number of affected coordinations, as explained previously and does increase the complexity of the codes by a great amount.
+
+\subsection{Stage-based signals}
 Assuming fixed signal plans we have expressions for the offset and cycle time which causes coordination. Fixed signal plans are identical for each cycle iteration. It is possible to include green time extensions such as the ones used for bus priority but it is always necessary to take the seconds from some other stage. Likewise with stage skipping, you must always "spend" $C$ cycle seconds.
 
 For stage based signals the plans cannot be written down in advance in terms of $C$ but rather must be defined dynamically on the basis of \textit{signal rules} and the measured traffic conditions. For coordination the rule is:
