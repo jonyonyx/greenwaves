@@ -5,7 +5,8 @@
 require 'vissim_elem'
 
 class RoadSegment < VissimElem  
-  attr_reader :lanes,:closed_to
+  attr_reader :lanes,:closed_to,
+    :arterial_from # if set, indicates this road is part of the artery direction and from which direction
   def closed_to_any?(veh_types)
     #return false if @closed_to.nil?
     raise "Vehicle lanes closure was not defined for #{self}!" if @closed_to.nil?

@@ -30,6 +30,9 @@ class SignalController < VissimElem
     @groups << SignalGroup.new!(number,opts)
   end
   def group(number); @groups.find{|grp|grp.number == number}; end
+  def arterial_groups
+    @groups.find_all{|grp| grp.serves_artery?}
+  end
   def interstage_active?(cycle_sec)
     # all-red phases are considered interstage
     return true if @groups.all?{|grp| grp.color(cycle_sec) == RED}
@@ -106,23 +109,48 @@ class SignalController < VissimElem
         (1..green_end) # todo: handle the case of green time which wraps around
       end
     end
+    def serves_artery?
+      @heads.any?{|h| h.position_link.arterial_from}
+    end
+    # Scan over the signal heads in this group extracting all
+    # road segments, which are arterial and the from direction.
+    # If none such markings are found among the heads, this group serves
+    # only minor-road traffic. Otherwise at least some heads
+    # serve the arterial (major road) and the direction from which is served
+    # becomes the answer
+    def arterial_from
+      art_links = @heads.map{|h| h.position_link.arterial_from}.uniq - [nil]
+      raise "Artery is being served in multiple directions (#{art_links.join(', ')}) by heads in #{self}" if art_links.size > 1
+      art_links.empty? ? nil : art_links.first
+    end
+    # (see description for Stage-method of same name)
+    # This check depends on each signal head and the link on which it is placed.
+    # When the vissim network was loaded the arterial links and connectors were marked
+    # with the from direction by which they serve traffic.
+    # To be direction compatible this group must serve arterial traffic
+    # as well as the other group and they must serve the same from direction
+    def direction_compatible(downstream_group)      
+      serves_artery? and arterial_from == downstream_group.arterial_from    
+    end
     class SignalHead < VissimElem
-      attr_reader :link,:lane,:at
+      attr_reader :position_link,:lane,:at
     end
   end
 end
+# A stage defines a period of time in which one or more signal groups are
+# active ie. green simultaneously.
 class Stage < VissimElem
   attr_reader :groups
   def to_s; @number.to_s; end
   # determine if this stage and otherstage are
   # compatible wrt direction ie their groups give way
-  # for traffic
+  # for the same traffic stream through the artery
   #
-  # return true if there exist a connection from 
-  # from 
-  def self.direction_compatible?(fromstage, tostage)
-    fromstage.groups.each do |fromgrp|
-      return true if tostage.groups.any?{|togrp| fromgrp.direction == togrp.direction}
+  # return true if there exist a connection from
+  def direction_compatible?(downstream_stage)
+    @groups.each do |grp|
+      return true if downstream_stage.groups.any?{|togrp| grp.direction_compatible(togrp)}
     end
+    false
   end
 end
