@@ -2,8 +2,8 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-Project = 'dtu'
-#Project = 'cowi'
+#Project = 'dtu'
+Project = 'cowi'
 
 if Project == 'dtu'
   Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
@@ -20,6 +20,18 @@ if Project == 'dtu'
     :sc2 => {:from_direction => 'S', :scno => 12}
   }
   
+  Herlev_dir = "#{Data_dir}DOGS Herlev 2007\\"
+  Glostrup_dir = "#{Data_dir}DOGS Glostrup 2007\\"
+
+  # DOGS priority levels
+  MINOR = 'Minor'
+  MAJOR = 'Major'
+  NONE = 'None'
+  DOGS_LEVELS = 8
+  DOGS_LEVEL_GREEN = 10 # seconds green time associated with each dogs level change
+  DOGS_LEVELDOWN_BUFFER = 0.1 # percentage of threshold value for current level
+  DOGS_TIME = 10 # number of seconds by which cycle time is increased for each dogs level
+  BUS_TIME = 10 # number of seconds to extend green time for bus stages
   # associated numbers with these vehicle types
   Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
 elsif Project == 'cowi'
@@ -37,8 +49,6 @@ end
 
 Tempdir = ENV['TEMP'].gsub("\\",'/')
 Data_dir = "#{Base_dir}data\\"
-Herlev_dir = "#{Data_dir}DOGS Herlev 2007\\"
-Glostrup_dir = "#{Data_dir}DOGS Glostrup 2007\\"
 Default_network = "#{Vissim_dir}#{Network_name}"
 
 Time_fmt = '%H:%M:%S'
@@ -49,16 +59,11 @@ Seconds_per_minute = 60
 
 RED,YELLOW,GREEN,AMBER = 'R','Y','G','A'
 
-# DOGS priority levels
-MINOR = 'Minor'
-MAJOR = 'Major'
-NONE = 'None'
-
 # reverse the type map so that composition numbers point to the text description
 # assume 1-to-1 mapping
 Type_map_rev = []
 Type_map.each{|k,v| Type_map_rev[v] = k}
-  
+
 # strings and composition numbers for cars and trucks (buses are handled separately
 Cars_and_trucks_str = ['Cars','Trucks']
 Cars_and_trucks = Type_map.map{|k,v| Cars_and_trucks_str.include?(k) ? v : nil} - [nil]
@@ -66,11 +71,6 @@ Cars_and_trucks = Type_map.map{|k,v| Cars_and_trucks_str.include?(k) ? v : nil} 
 EPS = 0.01
 INPUT_FACTOR = 1.0 # factor used to adjust link inputs
 ANNUAL_INCREASE = 1.015 # used in input generation for scaling
-DOGS_LEVELS = 8
-DOGS_LEVELDOWN_BUFFER = 0.1 # percentage of threshold value for current level
-DOGS_TIME = 10 # number of seconds by which cycle time is increased for each dogs level
-BUS_TIME = 10 # number of seconds to extend green time for bus stages
-DOGS_LEVEL_GREEN = 10 # seconds green time associated with each dogs level change
 BASE_CYCLE_TIME = 80 # seconds
 CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source="
 DATAFILE = "#{Data_dir}data.xls" # main data file containing counts, sgp's, you name it
@@ -92,12 +92,6 @@ DB = Sequel.dbi CS
 LINKS = DB[:'[links$]']
 BUSES = DB[:'[buses$]']
 
-def change_in_file(file, find, replace)
-  text = File.read file
-  File.open(file, 'w') do |f| 
-    f << text.gsub(find, replace)
-  end
-end
 def exec_query sql, conn_str = CS
   DBI.connect(conn_str) do |dbh|  
     return dbh.select_all(sql)
@@ -115,13 +109,6 @@ def to_xls rows, sheetname, xlsfile = DATAFILE
     
     # all-in-one insertion
     datash.range("a1").resize(rows.size, rows[0].size).Value = rows
-    
-    # per-cell insertion (slow)
-#    rows.each_with_index do |row, i|
-#      row.each_with_index do |val, j|
-#        datash.cells(i+1,j+1).Value = val
-#      end
-#    end
       
     datash.Range("a1").Autofilter
     datash.Rows(1).Font.Bold = true
@@ -203,6 +190,6 @@ end
 
 class Hash
   def retain_keys!(*keys)
-    delete_if{|k,v| not keys.include? k}
+    delete_if{|k,| not keys.include? k}
   end
 end

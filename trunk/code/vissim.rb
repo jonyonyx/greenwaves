@@ -54,15 +54,14 @@ class Vissim
       from_link.add_successor(to_link, conn)
     end
     
-    if ARTERY
+    if Project == 'dtu'
       # attempt to mark links as arterial
       # and note the direction of the link;
       # this is used by the signal optimization routines
       sc1 = ARTERY[:sc1][:scno]
       sc2 = ARTERY[:sc2][:scno]
       from1 = ARTERY[:sc1][:from_direction]
-      from2 = ARTERY[:sc2][:from_direction] 
-      
+      from2 = ARTERY[:sc2][:from_direction]
       
       scs_to_pass = (sc1..sc2)
       
@@ -102,9 +101,7 @@ class Vissim
         [Group Number] As grpnum, 
         #{USEDOGS ? 'priority,' : ''}
         [Red End] As red_end, 
-        [Green End] As green_end, 
-        [Red-Amber] As tred_amber, 
-        Amber As tamber
+        [Green End] As green_end
        FROM [plans$] As PLANS
        INNER JOIN [intersections$] As INSECTS ON PLANS.Intersection = INSECTS.Name
        WHERE PLANS.PROGRAM = '#{PROGRAM}'"].all      
@@ -137,14 +134,12 @@ class Vissim
         end
         
         # find the signal groups
-        if line =~ /^SIGNAL_GROUP\s+(\d+)\s+NAME\s+#{NAMEPATTERN}\s+SCJ #{sc.number}.+TRED_AMBER\s+([\d\.]+)\s+TAMBER\s+([\d\.]+)/
+        if line =~ /^SIGNAL_GROUP\s+(\d+)\s+NAME\s+#{NAMEPATTERN}\s+SCJ\s+#{sc.number}.+TRED_AMBER\s+([\d\.]+)\s+TAMBER\s+([\d\.]+)/
           
           sc.add_group($1.to_i,
             :name => $2,
-            :red_end => $3,
-            :green_end => $4,
-            :tred_amber => $5,
-            :tamber => $6)
+            :tred_amber => $3.to_i,
+            :tamber => $4.to_i)
           
         elsif line =~ /SIGNAL_HEAD\s+(\d+)\s+NAME\s+#{NAMEPATTERN}\s+LABEL\s+0.00\s+0.00\s+SCJ\s+#{sc.number}\s+GROUP\s+(\d+)/
           num = $1.to_i
@@ -156,7 +151,7 @@ class Vissim
           
           # optionally match against the TYPE flag (eg. left arrow)
           line =~ /POSITION LINK\s+(\d+)\s+LANE\s+(\d)\s+AT\s+(\d+\.\d+)/
-                                
+          
           pos_link_num = $1.to_i # heads can be placed on both links and connectors (RoadSegment)
           opts[:position_link] = link(pos_link_num) || @connectors.find{|c|c.number == pos_link_num}
           raise "Position link #{pos_link_num} for head #{opts[:name]} at #{sc} could not be found!" if opts[:position_link].nil?
@@ -174,7 +169,7 @@ class Vissim
       
       for row in plans.find_all{|r| r[:isnum] == sc.number}
         grp = sc.group(row[:grpnum].to_i)
-        grp.update(row.retain_keys!(:red_end, :green_end, :tred_amber, :tamber, :priority))
+        grp.update(row.retain_keys!(:red_end, :green_end, :priority))
       end
       
       @controllers << sc
@@ -253,7 +248,7 @@ class Vissim
       
       # extract from and to coordinates
       while line2 = inp.shift
-        if line2 =~ /(FROM|TO)\s+(\d+.\d+)\s+(\d+.\d+)/
+        if line2 =~ /(FROM|TO)\s+(\-?\d+.\d+)\s+(\-?\d+.\d+)/
           opts[:"#{$1.downcase}_point"] = Point.new!(:x => $2.to_f, :y => $3.to_f)
           break if $1 == 'TO' # next line will be a new LINK definition
         end
@@ -266,7 +261,10 @@ class Vissim
     
     # enrich the existing link objects with data from the database
     for row in LINKS.filter(:link_type => 'IN')
-      link(row[:number].to_i).update(row.retain_keys!(:from, :link_type, :name))
+      link_num = row[:number].to_i
+      link = link(link_num)
+      raise "Link number #{link_num} was marked as an input link, but could not be found!" if link.nil?
+      link.update(row.retain_keys!(:from_direction, :intersection_number, :link_type, :name))
     end
     
     begin # note which links have bus inputs (mandatory)
@@ -291,13 +289,11 @@ end
 if __FILE__ == $0
   vissim = Vissim.new  
   
-  #puts vissim
-  #raise "Found dangling connectors" if vissim.connectors.any?{|c| c.from_link.nil? or c.to_link.nil?}
-  #  for conn in vissim.connectors
-  #    puts conn
-  #  end
+  puts vissim
+  raise "Found dangling connectors" if vissim.connectors.any?{|c| c.from_link.nil? or c.to_link.nil?}
   
-  for sc in vissim.controllers.find_all{|x| x.has_plans?}.sort
-    puts "#{sc}: #{sc.arterial_groups.join(' ')}"    
+  for sc in vissim.controllers#.find_all{|x| x.has_plans?}.sort
+    puts "#{sc}: #{sc.groups.join(', ')}"
+    #puts "#{sc}: #{sc.arterial_groups.join(' ')}"    
   end
 end

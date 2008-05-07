@@ -1,9 +1,11 @@
 require 'network'
+require 'vissim'
 require 'vissim_routes'
+require 'vissim_output'
 
 class RoutingDecisions < Array
   include VissimOutput
-  def section_header; /^-- Routing Decisions: --/; end
+  def section_header; /^-- Routing Decisions: --/; end  
   def to_vissim
     str = ''
     each_with_index do |rd,i|
@@ -30,19 +32,18 @@ class RoutingDecision
     # AT must be AFTER the input point
     # place decisions as early as possibly to give vehicles time to changes lanes
     
-    str << "     LINK #{@input_link.number} AT #{@input_link.length * 0.1}\n"
+    str << "     LINK #{@input_link.number} AT #{@input_link.length * 0.1 + 10}\n"
     str << "     TIME #{@time_intervals.sort.map{|int|int.to_vissim}.join(' ')}\n"
     str << "     NODE 0\n"
     str << "      VEHICLE_CLASSES #{Type_map[@veh_type]}\n"
     
     j = 1
     
-    for route, fractions in @routes
-      
+    for route, fractions in @routes      
       exit_link = route.exit
       # dump vehicles late on the route exit link to avoid placing the destination
       # upstream of the last connector
-      str << "     ROUTE     #{j}  DESTINATION LINK #{exit_link.number}  AT   #{exit_link.length * 0.1 + 1}\n"
+      str << "     ROUTE     #{j}  DESTINATION LINK #{exit_link.number}  AT   #{exit_link.length * 0.1}\n"
       str << "     #{fractions.sort.map{|f|f.to_vissim}.join(' ')}\n"
       str << "     OVER #{route.to_vissim}\n"
       j += 1
@@ -74,7 +75,7 @@ def get_vissim_routes vissim
     from = row['From'][0..0] # extract the first letter of the From
 
     # see if this decision point was created for a different time slice
-    dp = decision_points.find{|x| x.intersection == isnum and x.from == from}
+    dp = decision_points.find{|x| x.intersection == isnum and x.from_direction == from}
     
     unless dp
       dp = DecisionPoint.new(from,isnum)
@@ -85,7 +86,7 @@ def get_vissim_routes vissim
     turning_motion = row['TURN'][0..0]
     
     # extract all decisions relevant to this turning count row
-    rowdecisions = decisions.find_all{|d| d.intersection == dp.intersection and d.from == dp.from and turning_motion == d.turning_motion}
+    rowdecisions = decisions.find_all{|d| d.intersection == dp.intersection and d.from_direction == dp.from_direction and turning_motion == d.turning_motion}
     
     # find the sum of weights in order to distributed this rows quantity over the relevant decisions
     sum_of_weights = rowdecisions.map{|dec| dec.weight ? dec.weight : 1}.sum    
@@ -116,7 +117,7 @@ def get_vissim_routes vissim
   
       # add routes to the decision point
       for dec in dp.decisions
-        dest = dec.connector.to # where vehicles are "dropped off"
+        dest = dec.to_link # where vehicles are "dropped off"
     
         # find the route through the intersection (ie. the turning motion)
         local_routes = find_routes(input_link,dest)
@@ -136,7 +137,7 @@ end
 
 if __FILE__ == $0  
   puts "BEGIN"
-  vissim = Vissim.new(Default_network)
+  vissim = Vissim.new
   
   routingdec = get_vissim_routes vissim
   #puts routingdec.to_vissim

@@ -65,7 +65,7 @@ class SignalController < VissimElem
         stagear << last_interstage
       else
         # check if any colors have changed
-        if @groups.values.all?{|grp| grp.color(t) == grp.color(t-1)}
+        if @groups.all?{|grp| grp.color(t) == grp.color(t-1)}
           stagear << last_stage
         else
           last_stage = Stage.new!((last_stage ? last_stage.number+1 : 1),
