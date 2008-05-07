@@ -35,8 +35,8 @@ class Decision < Connector
   end
   def <=>(d2)
     @intersection == d2.intersection ? 
-    (@from == d2.from ? @turning_motion <=> d2.turning_motion : @from <=> d2.from) : 
-    @intersection <=> d2.intersection
+      (@from == d2.from ? @turning_motion <=> d2.turning_motion : @from <=> d2.from) : 
+      @intersection <=> d2.intersection
   end  
   # helper-classes for Decision
   class Interval
@@ -55,7 +55,7 @@ class Decision < Connector
   end
 end
 class Link < RoadSegment
-  attr_reader :from_point,:to_point,:link_type,:adjacent,:lanes,:length
+  attr_reader :from_point,:to_point,:link_type,:adjacent,:lanes,:length,:intersection_number,:from_direction
   attr_accessor :is_bus_input
   def initialize number
     super(number)
@@ -79,9 +79,9 @@ class Link < RoadSegment
   end
 end
 class DecisionPoint
-  attr_reader :from,:intersection,:decisions
+  attr_reader :from_direction,:intersection,:decisions
   def initialize from,intersection
-    @from,@intersection = from,intersection
+    @from_direction,@intersection = from,intersection
     @decisions = []
     @link = nil
   end
@@ -98,6 +98,13 @@ class DecisionPoint
   # destination links
   def link vissim
     
+    # check if this decision point routes traffic directly from an input link
+    # if so, place the decision point there
+    input_link = vissim.links.find{|l| l.intersection_number == @intersection and l.from_direction == @from_direction}
+    
+    return input_link if input_link
+    
+    # otherwise, perform a backwards search for the best common starting point...    
     raise "Decision point #{@from}#{@intersection} has no decisions!" if @decisions.empty?
     
     dec_pred_links = {}
@@ -107,12 +114,12 @@ class DecisionPoint
       dec_pred_links[dec] = pred_links
       # go backwards collecting predecessor links, assuming only one route
       # from the common origin link to the position of each decision
-      conn = dec.connector
+      conn = dec
       begin
-        pred_link = conn.from
+        pred_link = conn.from_link
         break if pred_links.include? pred_link # avoid loops
         pred_links << pred_link
-        conn = vissim.connectors.find{|c| c.to == pred_link}
+        conn = vissim.connectors.find{|c| c.to_link == pred_link}
       end while conn and not conn.instance_of?(Decision)
     end
     

@@ -138,14 +138,16 @@ def gen_vap sc, outputdir
   stages = sc.stages
   
   uniq_stages = stages.uniq.find_all{|s| s.instance_of? Stage}
-  # prepare the split of DOGS extra time between major and minor stages
-  minor_stages = uniq_stages.find_all{|s| sc.priority(s) == MINOR}
-    
-  # make sure that exactly DOGS_TIME will be distributed to extended stages
-  minor_fact = minor_stages.length > 1 ? 1 : 2
-  # arterial optimization: there is always exactly 1 major priority stage
-  major_fact = DOGS_TIME - minor_fact * minor_stages.length
   
+  if USEDOGS
+    # prepare the split of DOGS extra time between major and minor stages
+    minor_stages = uniq_stages.find_all{|s| sc.priority(s) == MINOR}
+    
+    # make sure that exactly DOGS_TIME will be distributed to extended stages
+    minor_fact = minor_stages.length > 1 ? 1 : 2
+    # arterial optimization: there is always exactly 1 major priority stage
+    major_fact = DOGS_TIME - minor_fact * minor_stages.length
+  end
     
   cp.add_verb "CONST"
   # calculate stage lengths
@@ -163,10 +165,10 @@ def gen_vap sc, outputdir
   # calculate stage end times based on stage lengths, respecting dogs level and bus priorities
   for i in (0...uniq_stages.length)
     prev, cur = uniq_stages[i-1], uniq_stages[i]
-    curprio = sc.priority cur
     stage_end = "stage#{cur}_end := STAGE#{cur}_TIME"
     
     if USEDOGS
+      curprio = sc.priority cur
       # assign priority to major and minor stages
       stage_end += " + #{curprio == MAJOR ? major_fact : minor_fact} * DOGS_LEVEL" if curprio != NONE
     end
@@ -211,7 +213,7 @@ def gen_vap sc, outputdir
   end  
   
   cp.add "C := BASE_CYCLE_TIME + #{DOGS_TIME} * DOGS_LEVEL;" if USEDOGS
-  cp.add "t_loc := (TIME + OFFSET) % #{USEDOGS ? 'C' : 'BASE_CYCLE_TIME'} + 1;"
+  cp.add "t_loc := (TIME - OFFSET) % #{USEDOGS ? 'C' : 'BASE_CYCLE_TIME'} + 1;"
   cp.add 'SetT(t_loc);'
   
   if sc.has_bus_priority?
@@ -289,7 +291,7 @@ def gen_pua sc, outputdir
   cp = CodePrinter.new
   cp.add_verb '$SIGNAL_GROUPS'
   cp.add_verb '$'
-  for grp in sc.groups.values.sort{|g1,g2| g1.number <=> g2.number}
+  for grp in sc.groups.sort{|g1,g2| g1.number <=> g2.number}
     cp.add_verb "#{grp.name}\t#{grp.number}"
   end
   
@@ -302,7 +304,7 @@ def gen_pua sc, outputdir
   
   for stage in uniq_stages
     cp.add_verb "Stage_#{stage.number}\t#{stage.groups.map{|g|g.name}.join(' ')}"
-    cp.add_verb "red\t#{(sc.groups.values - stage.groups).map{|g|g.name}.join(' ')}"
+    cp.add_verb "red\t#{(sc.groups - stage.groups).map{|g|g.name}.join(' ')}"
   end
   
   cp.add_verb ''  
@@ -331,12 +333,12 @@ def gen_pua sc, outputdir
     
     cp.add_verb "Length [s]: #{islen}"
     cp.add_verb "From Stage: #{fromstage}"
-    cp.add_verb "To Stage: #{tostage ? tostage : uniq_stages.first}" # wrap around cycle
+    cp.add_verb "To Stage: #{tostage || uniq_stages.first}" # wrap around cycle
     cp.add_verb "$\tredend\tgrend"
     
     # capture all changes in this interstage
     for it in (0..islen)
-      for grp in sc.groups.values
+      for grp in sc.groups
         # compare the colors of the previous and
         # current heads        
         
@@ -371,22 +373,22 @@ MasterInfo = [
 ]
 
 def generate_controllers vissim, attributes = {}, outputdir = Vissim_dir
-  for opts in MasterInfo
-    gen_master opts.merge(attributes), outputdir
+  if Project == 'dtu'
+    for opts in MasterInfo
+      gen_master opts.merge(attributes), outputdir
+    end
   end
 
-  if attributes[:buspriority]
+  busprior = if attributes[:buspriority]
     # fetch the bus detectors attached to this intersection, if any
-    busprior = exec_query("SELECT INSECTS.Number,
+    exec_query("SELECT INSECTS.Number,
                         [Detector North Suffix], [Detector South Suffix],
                         [Donor Stage], [Recipient Stage]
                        FROM [buspriority$]
                        INNER JOIN [intersections$] As INSECTS ON INSECTS.Name = Intersection")
-  else
-    busprior = []
-  end
+  else; []; end
   
-  for sc in vissim.sc_map.values.find_all{|x| x.has_plans?}#.find_all{|x| x.number == 3}
+  for sc in vissim.controllers.find_all{|x| x.has_plans?}#.find_all{|x| x.number == 3}
     buspriorow = busprior.find{|r| r['Number'] == sc.number}
     if attributes[:buspriority] and buspriorow
       sc.update :buspriority => 
@@ -401,6 +403,6 @@ def generate_controllers vissim, attributes = {}, outputdir = Vissim_dir
 end
 
 if __FILE__ == $0
-  vissim = Vissim.new(Default_network)
+  vissim = Vissim.new
   generate_controllers vissim
 end
