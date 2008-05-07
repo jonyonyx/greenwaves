@@ -66,32 +66,35 @@ def get_vissim_routes vissim
                 ON COUNTS.Intersection = INTSECT.Name
                 WHERE [Period End] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#"
 
+  
+  # pre-generation of decision points
   decision_points = []
+  for dec in decisions
+    dp = decision_points.find{|x| x.routes_traffic_for?(isnum, from_direction, turning_motion)}
+    
+    unless dp
+      dp = DecisionPoint.new(from_direction,isnum)
+      decision_points << dp
+    end
+    
+  end
   
   period_start = Time.parse(PERIOD_START)
 
   for row in exec_query turning_sql
     isnum = row['Number'].to_i
-    from = row['From'][0..0] # extract the first letter of the From
-
-    # see if this decision point was created for a different time slice
-    dp = decision_points.find{|x| x.intersection == isnum and x.from_direction == from}
-    
-    unless dp
-      dp = DecisionPoint.new(from,isnum)
-      decision_points << dp
-    end
-    
-    # turning_motion must equal L(eft), T(hrough) or R(ight)
-    turning_motion = row['TURN'][0..0]
+    from_direction = row['From'][0..0] # extract the first letter (N, S, E or W)    
+    turning_motion = row['TURN'][0..0] # turning_motion must equal L(eft), T(hrough) or R(ight)
     
     # extract all decisions relevant to this turning count row
-    rowdecisions = decisions.find_all{|d| d.intersection == dp.intersection and d.from_direction == dp.from_direction and turning_motion == d.turning_motion}
+    rowdecisions = decisions.find_all{|d| d.intersection == isnum and d.from_direction == from_direction and turning_motion == d.turning_motion}
     
     # find the sum of weights in order to distributed this rows quantity over the relevant decisions
     sum_of_weights = rowdecisions.map{|dec| dec.weight ? dec.weight : 1}.sum    
     
-    for dec in rowdecisions    
+    dp = decision_points.find{|x| x.routes_traffic_for?(isnum, from_direction, turning_motion)}
+    
+    for dec in dp.decisions    
       for veh_type in Cars_and_trucks_str                
         dec.add_fraction(
           Time.parse(row['TSTART'][-8..-1]) - period_start, 
@@ -117,7 +120,15 @@ def get_vissim_routes vissim
   
       # add routes to the decision point
       for dec in dp.decisions
-        dest = dec.to_link # where vehicles are "dropped off"
+        # check if a dropoff link was defined
+        dest = vissim.links.find{|l| l.name.split(',').include?("#{dec.name}-drop")}
+    
+        if dest
+          puts "Found drop #{dest}"
+        else
+          # where vehicles are "dropped off" unless a specific link is marked
+          dest = dec.to_link
+        end
     
         # find the route through the intersection (ie. the turning motion)
         local_routes = find_routes(input_link,dest)
