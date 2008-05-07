@@ -85,6 +85,13 @@ class DecisionPoint
     @decisions = []
     @link = nil
   end
+  def routes_traffic_for?(isnum, from_direction, turning_motion)
+    @decisions.any? do |dec|
+      dec.intersection == isnum and 
+        dec.from_direction == from_direction and
+        dec.turning_motion == turning_motion
+    end
+  end
   # retrieve a combined set of time intervals
   # for the flows defined on all decisions in this 
   # decision point.
