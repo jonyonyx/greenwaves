@@ -2,8 +2,8 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-#Project = 'dtu'
-Project = 'cowi'
+Project = 'dtu'
+#Project = 'cowi'
 
 if Project == 'dtu'
   Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
@@ -19,9 +19,6 @@ if Project == 'dtu'
     :sc1 => {:from_direction => 'N', :scno => 1}, 
     :sc2 => {:from_direction => 'S', :scno => 12}
   }
-  
-  Herlev_dir = "#{Data_dir}DOGS Herlev 2007\\"
-  Glostrup_dir = "#{Data_dir}DOGS Glostrup 2007\\"
 
   # DOGS priority levels
   MINOR = 'Minor'
@@ -50,7 +47,10 @@ end
 Tempdir = ENV['TEMP'].gsub("\\",'/')
 Data_dir = "#{Base_dir}data\\"
 Default_network = "#{Vissim_dir}#{Network_name}"
-
+  
+Herlev_dir = "#{Data_dir}DOGS Herlev 2007\\"
+Glostrup_dir = "#{Data_dir}DOGS Glostrup 2007\\"
+  
 Time_fmt = '%H:%M:%S'
 EU_date_fmt = '%d-%m-%Y'
 Res = 15 # resolution in minutes of inputs
@@ -97,6 +97,25 @@ def exec_query sql, conn_str = CS
     return dbh.select_all(sql)
   end
 end
+
+def to_tex(table, user_opts = {})
+  default_opts = {:center => true, :sep_cols => true, :col_align => 'l'}
+  opts = default_opts.merge(user_opts)  
+  lines = ['\begin{table}[!ht]']
+  lines << '\begin{center}' if opts[:center]
+  headers = table.first
+  lines << "\\begin{tabular}{#{headers.map{opts[:col_align]}.join(opts[:sep_cols] ? '|' : '')}}"
+  headers_in_bold = headers.map{|header| (header.nil? or header.empty?) ? '' : "\\textbf{#{header}}"}
+  lines << headers_in_bold.join(' & ') + '\\\\ \\hline'
+  table[1..-1].each{|row| lines << row.join(' & ') + '\\\\'}
+  lines << '\end{tabular}'
+  lines << '\end{center}' if opts[:center]
+  lines << "\\caption{#{opts[:caption]}}" if opts[:caption]
+  lines << "\\label{#{opts[:label]}}" if opts[:label]
+  lines << '\end{table}'
+  lines.join("\n")
+end
+
 def to_xls rows, sheetname, xlsfile = DATAFILE
    
   begin
