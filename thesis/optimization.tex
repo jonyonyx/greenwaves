@@ -30,16 +30,28 @@ This equation is quite constrained, however. For cycle time we require that is l
 
 In addition green waves usually span over more than two intersections with may have different distances and average speeds between them, all this making it hard or impossible to find an integer $n$. Thus green waves are most obvious in one, main direction. It is possible to affect the average speeds between intersections by changing the allowed speed-signs. If this is not sufficient one might accept that the green wave is not perfect by, for instance, prioritizing one direction over the other.
 
-Priority can be given entirely to one direction or distributed by some weight, for instance based on the ratio of traffic in each direction. An obvious choice for the first option would be for an arterial with traffic between some suburbs and a major city. In the morning full priority should be given in the direction towards the city when people go to work and opposite in the afternoon. For ring road 3, which was simulated in this project, there is no clear distinction between the direction of morning and afternoon traffic (see Section \ref{data}) and the second option is preferable.
+Priority can be given entirely to one direction or distributed by some weight, for instance based on the ratio of traffic in each direction. An obvious choice for the first option would be for an arterial with traffic between some suburbs and a major city. In the morning full priority should be given in the direction towards the city when people go to work and opposite in the afternoon. A third alternative is to a perfect progression band in one direction for a some ratio of time, corresponding to the ratios of traffic in either direction.
+For ring road 3, which was simulated in this project, there is no clear distinction between the direction of morning and afternoon traffic (see Section \ref{data}) and a solution which weights the green wave quality according to direction ratio. 
 
-The distance between one signal head (intersection) and the next can be extracted from the Vissim network file in both directions and is static. The signal heads for both directions of the arterial are marked using a naming convention similar to the one mentioned in Section \ref{routefractions} only less information is required since the relation of the head to its signal controller can be deduced directly from the network file.
+The distance between one signal head (intersection) and the next can be extracted from the Vissim network file in both directions and is static. The signal heads for both directions of the arterial are marked using a naming convention similar to the one mentioned in Section \ref{routefractions} only less information is required since the relation of the head to its signal controller can be deduced directly from the network file. Further details on this process can be read in Section \ref{signal_details}.
 
-For travel times (offset) it is possible to rely on the speed limitations / free flow speeds for offset calculation, however under congestion speeds will decrease causing the travel times to increase. A better solution is to continously inspect the smoothened travel times which are inserted for each stretch. 
+For travel times (which is a key component in finding a proper offset) it is possible to rely on the speed limitations / free flow speeds for offset calculation, however under congestion speeds will decrease causing the travel times to increase. A better solution is to continously inspect the smoothened travel times which are inserted for each stretch. 
 
-DRD has traditionally used TRANSYT to obtain coordination but often it is necessary to manually adjust the offsets in order to obtain a good two-way coordination. It is possible to have two-way green waves by compromise, which could be either some sacrifice in the quality of the green waves or that each direction have perfect green waves but only in some ratio of the intersections (see \cite{artc}). A third alternative is to a perfect progression band in one direction for a some ratio of time, corresponding to the ratios of traffic in either direction.
+\subsection*{Manipulating speed}
+Except on sundays and in parts of western Denmark, most motorists will obey the speed signs. The travel time between intersections, which largely determines the offset, could then be increased or decreased by changing the speed signs.
+
+Some considerations should be made in this respect. For instance we must ensure that the speeds do not divert too much from the norm of the relevant type of road. In addition the number of speed changes, which a motorist travelling throughout the arterial experience, must be minimized. And if speed changes do occur, it is a good idea to keep them small so that the speeds don't go from 50 to 70 from one stretch of road to the next.
+
+From a security perspective it might seem risky to not persist a common speed level through the artery. But considering that a change of speed might improve the quality of a green wave, this problem can be negated. This also applies to the additional acceleration and deceleration since, if a green wave does not exist the vehicles must be stopped altogether at the red light causing even more acceleration.
+
+The current infrastructure on O3 does not offer this fine-grained level of adjustment but electronic speed signs are common practice nowadays and is, for instance, used on the almost-parallel motorring 3 to smoothen out queues.
 
 \subsection{Metaheuristic Search}
-In this project we have formalized the green wave concept so that it is possible to evaluate a proposal for offsets. This opens up for the application of a metaheuristic search procedure.
+DRD has traditionally used TRANSYT to obtain coordination but often it is necessary to manually adjust the offsets in order to obtain a good two-way coordination. 
+
+This manual process involves creating good two-way green waves by compromise, which could be either some sacrifice in the quality of the green waves. 
+
+In this project the green wave concept has been formalized so that it is possible to evaluate a proposal for offsets. This opens up for the application of a metaheuristic search procedure.
 
 In this first cycle-based approach the variable to be optimized is, of course, the offset for each signal controller. The signal controllers themselves operate under cyclic plans which are shifted in time according to the chosen offset. In addition the allowed speeds from a signal to the next may be changed to obtain better results.
 
@@ -54,7 +66,7 @@ SA is a \textit{hill-climber} with the ability to escape from local optima ie. j
 
 What this means is that SA performs a randomized, converging search in the entire search space (for offsets that is each combination of $N \bmod C$ over the intersections) looking for the possible best set of offsets without getting stuck with the \textit{first-and-best} solution it encounters.
 
-The initial solution is chosen so that all offsets are zero. SA then works its way toward a better solution by examining neighbor solutions to the current one. A neighbor solution is found by incrementing or decrementing a single offset in the current solution.
+The initial solution is chosen so that all offsets are zero. SA then works its way toward a better solution by examining neighbor solutions to the current one. A neighbor solution is found by incrementing or decrementing a single offset in the current solution or changing the allowed speed between the intersections by 5$km/h$.
 
 The solutions to offsets are evaluated and compared in the context of the network and, if a neighbor is found to be better than the best solution found so far, it is adopted as the new \textit{encumbent}. If the neighbor was not better it should be thrown away, but here SA avoids being caught in a local optima by \textit{with some probability} keeping the neighbor solution regardless and work on from there. This probability will decrease as the search progress and so it is subject to tuning.
 
@@ -87,13 +99,13 @@ We now need only to evaluate at most four coordinations\footnote{Changing offset
 \subsubsection*{Neighbor solutions}
 In previous studies of metaheuristics, where the object oriented programming model was completely adopted, it was found that the overhead of object instantiation, whenever a neighbor solution was generated, would result in tremendous time consumption. 
 
-Instead I have minimized the need for copying information from a solution to its neighbor by introducing the dual keywords \textit{change} and \textit{undo\_changes}. The purpose of these methods is to allow a solution to temporarily take the form of its neighbor and switch back to its former self, if requested. 
+Instead I have minimized the need for copying information from a solution to its neighbor by introducing the dual methods \verb|change| and \verb|undo_changes|. The purpose of these methods is to allow a solution to temporarily take the form of its neighbor and switch back to its former self, if requested. 
 When the metaheuristic runs it will constantly ask for neighbor solutions but throw away most of them. This approach avoids much copying of solution attributes and at the same time the details of the switching of identify are relayed to the solution object.
 
 \subsubsection*{Bookkeeping outline}
-The \textit{change} and \textit{undo\_changes} methods are closely integrated with delta-evaluation. The initial solution obviously cannot be delta-evaluated so, during full evaluation, the \textit{contribution} from each coordination is noted. 
+The \verb|change| and \verb|undo_changes| methods are closely integrated with delta-evaluation. The initial solution obviously cannot be delta-evaluated so, during full evaluation, the \textit{contribution} from each coordination is noted. 
 
-When \textit{change} is called a signal controller whose offset to change is chosen as well as a new offset value. Next we find the affected coordinations and update the value of the solution by swapping the old contributions with the new ones, when evaluated under the changed offset.
+When \verb|change| is called a signal controller whose offset to change is chosen as well as a new offset value. Next we find the affected coordinations and update the value of the solution by swapping the old contributions with the new ones, when evaluated under the changed offset.
 
 We must be ready to undo the changes we just made, so we track all these changes: which offset we changed and by how much as well as the previous contributions from the affected coordinations.
 
