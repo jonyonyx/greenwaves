@@ -289,11 +289,15 @@ end
 if __FILE__ == $0
   vissim = Vissim.new  
   
-  puts vissim
+  #puts vissim
   raise "Found dangling connectors" if vissim.connectors.any?{|c| c.from_link.nil? or c.to_link.nil?}
   
-  for sc in vissim.controllers#.find_all{|x| x.has_plans?}.sort
-    puts "#{sc}: #{sc.groups.join(', ')}"
-    #puts "#{sc}: #{sc.arterial_groups.join(' ')}"    
+  rows = [[nil,'Intersection','Arterial Groups']]
+  
+  for sc in vissim.controllers.find_all{|x| x.has_plans?}.sort
+    rows << [sc.number, sc.name, sc.arterial_groups.map{|grp|grp.name}.join(', ')]
   end
+
+  puts rows.inspect  
+  puts to_tex(rows,:caption => 'Groups for main traffic direction as perceived by traffic signal designer', :label => 'lab:arterial_groups')
 end
