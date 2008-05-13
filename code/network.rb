@@ -5,17 +5,28 @@
 require 'vissim_elem'
 
 class RoadSegment < VissimElem  
-  attr_reader :lanes,:closed_to,
+  attr_reader :lanes,:closed_to, :over_points,
     :arterial_from # if set, indicates this road is part of the artery direction and from which direction
   def closed_to_any?(veh_types)
-    #return false if @closed_to.nil?
     raise "Vehicle lanes closure was not defined for #{self}!" if @closed_to.nil?
     not (@closed_to & veh_types).empty?
+  end
+  def allows_private_vehicles?
+    not closed_to_any?(Cars_and_trucks)
+  end
+  def length
+    return 0.0 if @over_points.empty?
+    (0...@over_points.size-1).map do |i|
+      @over_points[i].distance(@over_points[i+1])
+    end.sum
   end
 end
 # Connectors establish a one-way connection from a link to another
 class Connector < RoadSegment
-  attr_reader :from_link,:to_link
+  attr_reader :from_link,:at_from_link,:to_link,:at_to_link
+  def length
+    (@from_link.length - @at_from_link) + super + (@to_link.length - @at_to_link)
+  end
 end
 # A decision is a connector, which, whenever taken, has a deciding effect
 # on the final route of the motorist
@@ -55,22 +66,18 @@ class Decision < Connector
   end
 end
 class Link < RoadSegment
-  attr_reader :from_point,:to_point,:link_type,:adjacent,:lanes,:length,:intersection_number,:from_direction
+  attr_reader :from_point,:to_point,
+    :link_type,:lanes,:length,
+    :intersection_number,:from_direction,
+    :outgoing_connectors
   attr_accessor :is_bus_input
   def initialize number
     super(number)
-    @adjacent = Hash.new{|h,k| h[k] = []}
+    @outgoing_connectors = [] # a list of outgoing connectors from this link
   end
   def calculate_length; @from_point.distance(@to_point); end
-  def adjacent_links; @adjacent.keys; end
-  # connects self to link by connector
-  # note there may be multiple connectors to the same link
-  def add_successor link, conn
-    raise "#{self} cannot be adjacent to itself!" if link == self
-    @adjacent[link] << conn
-  end
   # is this link an exit (from the network) link?
-  def exit?; @adjacent.empty?; end
+  def exit?; @outgoing_connectors.empty?; end
   def input?; @link_type == 'IN'; end
   def to_s
     str = super

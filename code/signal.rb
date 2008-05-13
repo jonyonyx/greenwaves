@@ -4,6 +4,7 @@
 # - group representation and states
 
 require 'vissim_elem'
+require 'vissim_routes'
 
 class SignalController < VissimElem
   attr_reader :controller_type,:cycle_time,:offset,:groups,:program
@@ -52,29 +53,27 @@ class SignalController < VissimElem
     end
   end
   def stages
-    last_stage = nil
-    last_interstage = nil
-    stagear = []
-    for t in (1..@cycle_time)
+    last_stage, last_interstage = nil
+    (1..@cycle_time).map do |t|
       if interstage_active?(t)
-        if last_interstage
-          last_interstage = last_interstage.succ unless stagear.last == last_interstage
-        else
+        last_interstage = if last_interstage.nil?
           last_interstage = 'a'
+        else
+          (stagear.last == last_interstage) ? last_interstage : last_interstage.succ
         end
-        stagear << last_interstage
       else
         # check if any colors have changed
         if @groups.all?{|grp| grp.color(t) == grp.color(t-1)}
-          stagear << last_stage
+          last_stage
         else
           last_stage = Stage.new!((last_stage ? last_stage.number+1 : 1),
             :groups => @groups.find_all{|grp| grp.active_seconds === t})
-          stagear << last_stage
         end
       end
     end
-    stagear
+  end
+  def served_arterial_links(from_direction)
+    arterial_groups.find{|grp| grp.arterial_from.include? from_direction}.served_arterial_links
   end
   class SignalGroup < VissimElem
     attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads,:priority
@@ -82,12 +81,8 @@ class SignalController < VissimElem
       super(number)
       @heads = [] # signal heads in this group
     end
-    def add_head number, opts
-      @heads << SignalHead.new!(number,opts)
-    end
-    def has_plan?
-      @red_end and @green_end and @tred_amber and @tamber
-    end
+    def add_head number, opts; @heads << SignalHead.new!(number,opts); end
+    def has_plan?; @red_end and @green_end and @tred_amber and @tamber; end
     def color cycle_sec
       case cycle_sec
       when active_seconds
@@ -102,15 +97,16 @@ class SignalController < VissimElem
     end
     def active_seconds
       green_start = @red_end + @tred_amber + 1
-      if green_start < green_end
-        (green_start..green_end)
+      if green_start < @green_end
+        (green_start..@green_end)
       else
         # (green_end+1..green_start) defines the red time
-        (1..green_end) # todo: handle the case of green time which wraps around
+        (1..@green_end) # todo: handle the case of green time which wraps around
       end
     end
-    def serves_artery?
-      @heads.any?{|h| h.position_link.arterial_from}
+    def serves_artery?; @heads.any?{|h| h.serves_artery?}; end
+    def served_arterial_links
+      arterial_heads.map{|h| h.position_link}.uniq
     end
     # Scan over the signal heads in this group extracting all
     # road segments, which are arterial and the from direction.
@@ -119,9 +115,10 @@ class SignalController < VissimElem
     # serve the arterial (major road) and the direction from which is served
     # becomes the answer
     def arterial_from
-      art_links = @heads.map{|h| h.position_link.arterial_from}.uniq - [nil]
-      raise "Artery is being served in multiple directions (#{art_links.join(', ')}) by heads in #{self}" if art_links.size > 1
-      art_links.empty? ? nil : art_links.first
+      @heads.map{|h| h.arterial_from}.uniq - [nil]
+    end
+    def arterial_heads
+      @heads.find_all{|h| h.serves_artery?}
     end
     # (see description for Stage-method of same name)
     # This check depends on each signal head and the link on which it is placed.
@@ -134,6 +131,11 @@ class SignalController < VissimElem
     end
     class SignalHead < VissimElem
       attr_reader :position_link,:lane,:at
+      def serves_artery?; not arterial_from.nil?; end
+      def arterial_from; @position_link.arterial_from; end
+      def to_s
+        "Head #{number} on #{@position_link} at #{at}"
+      end
     end
   end
 end
@@ -148,9 +150,8 @@ class Stage < VissimElem
   #
   # return true if there exist a connection from
   def direction_compatible?(downstream_stage)
-    @groups.each do |grp|
-      return true if downstream_stage.groups.any?{|togrp| grp.direction_compatible(togrp)}
+    @groups.any? do |grp|
+      downstream_stage.groups.any?{|togrp| grp.direction_compatible(togrp)}
     end
-    false
   end
 end
