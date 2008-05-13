@@ -6,6 +6,7 @@ require 'vissim_elem'
 # vissim element names. match anything that isn't the last quotation mark
 NAMEPATTERN = '\"([^\"]*)\"'
 SECTIONPATTERN = /-- ([^-:]+): --/ # section start
+COORDINATEPATTERN = '(\-?\d+.\d+) (\-?\d+.\d+)' # x, y
 
 # sections, which are parsed from the network file
 # and symbols for the methods, which handle them
@@ -47,12 +48,8 @@ class Vissim
     @connectors.delete_if{|c| @links_map[c.from_link.number].nil?}
     @decisions = @connectors.find_all{|c| c.instance_of?(Decision)}
     
-    # notify the links of connected links
-    for conn in @connectors
-      from_link = conn.from_link
-      to_link = conn.to_link
-      from_link.add_successor(to_link, conn)
-    end
+    # notify the links of their outgoing connectors
+    @connectors.each{|conn| conn.from_link.outgoing_connectors << conn}
     
     if Project == 'dtu'
       # attempt to mark links as arterial
@@ -73,17 +70,19 @@ class Vissim
       end
       
       # look for routes passing the artery decisions
-      require 'vissim_routes'
-      routes = get_full_routes(self)
+      routes = get_full_routes
       
       for from_direction, decisions in artery_decisions
-       artery_routes = routes.find_all{|r| decisions.all?{|d| r.connectors.include?(d)}}
-       puts "Warning: #{artery_routes.size} routes were found from #{from_direction}; expected only one." if artery_routes.size > 1
-       route = artery_routes.first
+        artery_routes = routes.find_all{|r| decisions.all?{|d| r.decisions.include?(d)}}
+        puts "Warning: no artery routes were found!" if artery_routes.empty?
+        puts "Warning: #{artery_routes.size} routes were found from #{from_direction}; expected only one." if artery_routes.size > 1
+        if artery_routes.size == 1
+          route = artery_routes.first
        
-       # mark links and connectors in the artery route so that the signal controllers may see which
-       # direction they give green to.
-       route.mark_arterial from_direction
+          # mark links and connectors in the artery route so that the signal controllers may see which
+          # direction they give green to.
+          route.mark_arterial from_direction
+        end
       end
     end
   end
@@ -91,6 +90,7 @@ class Vissim
   def exit_links; links.find_all{|l| l.exit?}; end
   def links; @links_map.values; end
   def link(number); @links_map[number]; end
+  def controllers_with_plans; @controllers.find_all{|sc| sc.has_plans?}; end
   # parse signal controllers and their groups + heads
   def parse_controllers(inp)
     plans = begin
@@ -174,6 +174,7 @@ class Vissim
       
       @controllers << sc
     end
+    @controllers.sort!
   end
   def parse_connectors(inp)
     @connectors = []
@@ -183,19 +184,17 @@ class Vissim
       number = $1.to_i
       opts = {:name => $2}
       
-      # number always in the first line after conn declaration
-      # example: FROM LINK 28 LANES 1 2 AT 819.728
-      inp.shift =~ /FROM LINK (\d+) LANES (\d )+/
+      inp.shift =~ /FROM LINK (\d+) LANES (\d )+AT (\d+\.\d+)/
       opts[:from_link] = link($1.to_i)
-      opts[:lanes] = $2.split(' ').map{|str| str.to_i}
+      opts[:from_lanes] = $2.split(' ').map{|str| str.to_i}
+      opts[:at_from_link] = $3.to_f
   
-      # next comes the knot definitions
-      # and the the to-link
-      begin
-        line = inp.shift 
-      end until line =~ /TO LINK (\d+)/
+      set_over_points(opts, inp)
   
+      inp.shift =~ /TO LINK (\d+) LANES (\d )+AT (\d+\.\d+)/
       opts[:to_link] = link($1.to_i)
+      opts[:to_lanes] = $2.split(' ').map{|str| str.to_i}      
+      opts[:at_to_link] = $3.to_f
       
       # look for any closed to declarations (they are not mandatory)
       
@@ -215,6 +214,21 @@ class Vissim
       
       # only links which can be reached are cars and trucks are interesting 
       @connectors << conn unless conn.closed_to_any?(Cars_and_trucks)
+    end
+  end
+  # Extract knot definitions for links and connectors
+  def set_over_points opts, inp    
+    opts[:over_points] = []
+    while line = inp.shift
+      if not line =~ /^OVER/
+        inp.insert(0, line)
+        break
+      end
+      for over_part in line.split('OVER')
+        over_part.strip!
+        next if over_part.empty?
+        opts[:over_points] << Point.new(*over_part.split(' ').map{|s|s.to_f})
+      end
     end
   end
   def set_closed_to opts, inp
@@ -247,12 +261,12 @@ class Vissim
       opts[:lanes] = $2.to_i
       
       # extract from and to coordinates
-      while line2 = inp.shift
-        if line2 =~ /(FROM|TO)\s+(\-?\d+.\d+)\s+(\-?\d+.\d+)/
-          opts[:"#{$1.downcase}_point"] = Point.new!(:x => $2.to_f, :y => $3.to_f)
-          break if $1 == 'TO' # next line will be a new LINK definition
-        end
-      end
+      inp.shift =~ /FROM\s+#{COORDINATEPATTERN}/
+      opts[:from_point] = Point.new($1.to_f, $2.to_f)
+      set_over_points(opts,inp)
+      
+      inp.shift =~ /TO\s+#{COORDINATEPATTERN}/
+      opts[:to_point] = Point.new($1.to_f, $2.to_f)      
       
       set_closed_to(opts,inp)
   
@@ -281,23 +295,26 @@ class Vissim
     str << "   - exits: #{exit_links.size}\n"
     str << "Connectors: #{@connectors.size}\n"
     str << "   - decisions: #{decisions.size}\n"
-    str << "Total links & connectors: #{@connectors.size + @links_map.size}"
+    str << "Total links & connectors: #{@connectors.size + @links_map.size}\n"    
+    str << "Total knots (over-points): #{(@connectors+links).map{|rs|rs.over_points.size}.sum}"
     str
   end
 end
 
 if __FILE__ == $0
-  vissim = Vissim.new  
-  
-  #puts vissim
-  raise "Found dangling connectors" if vissim.connectors.any?{|c| c.from_link.nil? or c.to_link.nil?}
-  
-  rows = [[nil,'Intersection','Arterial Groups']]
-  
-  for sc in vissim.controllers.find_all{|x| x.has_plans?}.sort
-    rows << [sc.number, sc.name, sc.arterial_groups.map{|grp|grp.name}.join(', ')]
+  vissim = Vissim.new 
+  scs = vissim.controllers_with_plans
+  (0...scs.size-1).each do |i|
+    sc1, sc2 = *scs[i..i+1]
+    puts "Distance from #{sc1} to #{sc2}: #{vissim.distance(sc1, sc2)}"
+    puts "Distance from #{sc2} to #{sc1}: #{vissim.distance(sc2, sc1)}"
+    puts
   end
-
-  puts rows.inspect  
-  puts to_tex(rows,:caption => 'Groups for main traffic direction as perceived by traffic signal designer', :label => 'lab:arterial_groups')
+  #  for sc in vissim.controllers.find_all{|x| x.has_plans?}.sort
+  #    #rows << [sc.number, sc.name, sc.arterial_groups.map{|grp|grp.name}.join(', ')]
+  #    puts sc
+  #  end
+  #
+  #  puts rows.inspect  
+  #  puts to_tex(rows,:caption => 'Groups for main traffic direction as perceived by traffic signal designer', :label => 'lab:arterial_groups')
 end

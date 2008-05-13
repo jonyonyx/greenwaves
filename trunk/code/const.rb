@@ -160,7 +160,10 @@ class Array
 end
 
 class Point
-  attr_reader :x, :y
+  attr_reader :x, :y, :z
+  def initialize x, y, z = 0.0
+    @x, @y, @z = x, y, z
+  end
   def to_s
     "#{@x} #{@y}"
   end
