@@ -16,6 +16,7 @@ class Vissim
   class Route
     attr_reader :road_segments,:decisions
     def initialize(road_segments)
+      raise "A route cannot start and end on the same road segment (#{road_segments.first})" if road_segments.size == 1
       @road_segments = road_segments
       @decisions = @road_segments.find_all{|rs| rs.instance_of?(Decision)}
     end
@@ -29,7 +30,7 @@ class Vissim
     def exit; @road_segments.last; end
     # returns a space-separated string of the connector-link-connector... sequence
     # for use in the vissim OVER format in route decisions
-    def to_vissim; @road_segments[1..-1].map{|rs|rs.number}.join(' '); end
+    def to_vissim; @road_segments[1...-1].map{|rs|rs.number}.join(' '); end
     def to_s; "#{start} > ... (#{@road_segments.size-2}) > #{exit}"; end  
     def <=>(other); @road_segments.size <=> other.road_segments.size; end
   end
@@ -61,13 +62,18 @@ class Vissim
       for r1 in routes.find_all{|r| r.start == start_link}
         next if routes_to_remove.include? r1
         duplicates = exiting_at[r1.exit].find_all{|r2| r2 != r1 and r2.start == start_link}
-        routes_to_remove << duplicates
+        routes_to_remove.concat(duplicates)
       end
     end
   
     routes - routes_to_remove
   end
-
+  def route_exist? start,dest
+    for exit_link in [dest].flatten
+      return false if find_routes(start,exit_link).empty?
+    end
+    return true
+  end
   def find_routes start,dest  
     routes = []
     discover(start,[dest].flatten) do |r|

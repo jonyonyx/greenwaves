@@ -2,8 +2,8 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-Project = 'dtu'
-#Project = 'cowi'
+#Project = 'dtu'
+Project = 'cowi'
 
 if Project == 'dtu'
   Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
@@ -19,7 +19,7 @@ if Project == 'dtu'
     :sc1 => {:from_direction => 'N', :scno => 1}, 
     :sc2 => {:from_direction => 'S', :scno => 12}
   }
-
+   
   # DOGS priority levels
   MINOR = 'Minor'
   MAJOR = 'Major'
@@ -54,7 +54,7 @@ Glostrup_dir = "#{Data_dir}DOGS Glostrup 2007\\"
 Time_fmt = '%H:%M:%S'
 EU_date_fmt = '%d-%m-%Y'
 Res = 15 # resolution in minutes of inputs
-Minutes_per_hour = 60
+MINUTES_PER_HOUR = 60
 Seconds_per_minute = 60
 
 RED,YELLOW,GREEN,AMBER = 'R','Y','G','A'
@@ -81,7 +81,9 @@ Accname = "acc_#{Res}m.csv"
 ACCFILE = "#{Data_dir}#{Accname}"
 ENABLE_VAP_TRACING = {:master => false, :slave => false} # write trace statements in vap code?
 
-PERIOD_START, PERIOD_END = '07:00', '09:00' # used in input and route generation
+# the following is used in input and route generation
+PERIOD_START, PERIOD_END = '15:00', '17:00'
+START_TIME = Time.parse(PERIOD_START) # for counting seconds
 
 require 'dbi'
 require 'fileutils'

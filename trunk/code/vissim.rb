@@ -201,19 +201,31 @@ class Vissim
       set_closed_to(opts,inp)
       
       # check if this connector is a decision
-      conn = if opts[:name] =~ /([NSEW])(\d+)([LTR])(\d+)?/
-        Decision.new!(number,
-          opts.merge({
-              :from_direction => $1,
-              :intersection => $2.to_i,
-              :turning_motion => $3,
-              :weight => $4 ? $4.to_i : nil}))
+      conn = if opts[:name] =~ /([NSEW])(\d+)([LTR])(\d+)?/   
+        decid = "#{$1}#{$2}#{$3}" # decision identifier
+        
+        opts[:from_direction] = $1
+        opts[:intersection] = $2.to_i
+        opts[:turning_motion] = $3
+        opts[:weight] = $4 ? $4.to_i : nil
+                
+        # Extract information on an optional, alternative
+        # decision point which this decision should origin from
+        opts[:name] =~ /decide-at ([NSEW])(\d+)/
+        opts[:decide_from_direction] = $1 || opts[:from_direction]
+        opts[:decide_at_intersection] = $2 ? $2.to_i : opts[:intersection]
+        
+        # The link at which this decision should end, ie. drop
+        # the affected vehicles so they may obtain a new route
+        opts[:drop_link] = links.find{|l| l.drop_for.include?(decid)} || opts[:to_link]      
+        
+        Decision.new!(number,opts)
       else
         Connector.new!(number,opts)
       end
       
       # only links which can be reached are cars and trucks are interesting 
-      @connectors << conn unless conn.closed_to_any?(Cars_and_trucks)
+      @connectors << conn if conn.allows_private_vehicles?
     end
   end
   # Extract knot definitions for links and connectors
@@ -276,6 +288,7 @@ class Vissim
     # enrich the existing link objects with data from the database
     for row in LINKS.filter(:link_type => 'IN')
       link_num = row[:number].to_i
+      row[:intersection_number] = row[:intersection_number].to_i
       link = link(link_num)
       raise "Link number #{link_num} was marked as an input link, but could not be found!" if link.nil?
       link.update(row.retain_keys!(:from_direction, :intersection_number, :link_type, :name))
@@ -303,13 +316,20 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new 
-  scs = vissim.controllers_with_plans
-  (0...scs.size-1).each do |i|
-    sc1, sc2 = *scs[i..i+1]
-    puts "Distance from #{sc1} to #{sc2}: #{vissim.distance(sc1, sc2)}"
-    puts "Distance from #{sc2} to #{sc1}: #{vissim.distance(sc2, sc1)}"
-    puts
+  
+  for link in vissim.links
+    puts "#{link} at #{link.intersection_number}"
   end
+#  vissim.decisions.each do |dec|
+#    puts "#{dec}: #{dec.drop_link}"
+#  end
+#  scs = vissim.controllers_with_plans
+#  (0...scs.size-1).each do |i|
+#    sc1, sc2 = *scs[i..i+1]
+#    puts "Distance from #{sc1} to #{sc2}: #{vissim.distance(sc1, sc2)}"
+#    puts "Distance from #{sc2} to #{sc1}: #{vissim.distance(sc2, sc1)}"
+#    puts
+#  end
   #  for sc in vissim.controllers.find_all{|x| x.has_plans?}.sort
   #    #rows << [sc.number, sc.name, sc.arterial_groups.map{|grp|grp.name}.join(', ')]
   #    puts sc

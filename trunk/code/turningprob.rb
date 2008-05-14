@@ -53,56 +53,43 @@ class RoutingDecision
 end
 def get_vissim_routes vissim
 
-  decisions = vissim.decisions
-
-  turning_sql = "SELECT INTSECT.Number,
-                  [From], 
-                  [Turning Motion] As TURN, 
-                  [Period Start] As TSTART,
-                  [Period End] As TEND,
-                  Cars, Trucks
+  turning_sql = "SELECT INTSECT.number,
+                  [from], 
+                  [Turning Motion] As turn, 
+                  [Period Start] As tstart,
+                  [Period End] As tend,
+                  cars, trucks
                 FROM [counts$] As COUNTS
                 INNER JOIN [intersections$] As INTSECT
                 ON COUNTS.Intersection = INTSECT.Name
                 WHERE [Period End] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#"
 
-  
-  # pre-generation of decision points
-  decision_points = []
-  for dec in decisions
-    dp = decision_points.find{|x| x.routes_traffic_for?(isnum, from_direction, turning_motion)}
-    
-    unless dp
-      dp = DecisionPoint.new(from_direction,isnum)
-      decision_points << dp
-    end
-    
-  end
-  
-  period_start = Time.parse(PERIOD_START)
-
-  for row in exec_query turning_sql
-    isnum = row['Number'].to_i
-    from_direction = row['From'][0..0] # extract the first letter (N, S, E or W)    
-    turning_motion = row['TURN'][0..0] # turning_motion must equal L(eft), T(hrough) or R(ight)
+  decisions = []
+  DB[turning_sql].all.map do |row|
+    isnum = row[:number].to_i
+    from_direction = row[:from][0..0] # extract the first letter (N, S, E or W)    
+    turning_motion = row[:turn][0..0] # turning_motion must equal L(eft), T(hrough) or R(ight)
     
     # extract all decisions relevant to this turning count row
-    rowdecisions = decisions.find_all{|d| d.intersection == isnum and d.from_direction == from_direction and turning_motion == d.turning_motion}
+    rowdecisions = vissim.decisions.find_all do |d| 
+      d.intersection == isnum and 
+        d.from_direction == from_direction and 
+        turning_motion == d.turning_motion
+    end
     
     # find the sum of weights in order to distributed this rows quantity over the relevant decisions
-    sum_of_weights = rowdecisions.map{|dec| dec.weight ? dec.weight : 1}.sum    
+    sum_of_weights = rowdecisions.map{|dec| dec.weight || 1}.sum
     
-    dp = decision_points.find{|x| x.routes_traffic_for?(isnum, from_direction, turning_motion)}
-    
-    for dec in dp.decisions    
-      for veh_type in Cars_and_trucks_str                
+    for dec in rowdecisions
+      for veh_type in Cars_and_trucks_str
+        vehicles = row[veh_type.downcase.to_sym] * (dec.weight || 1) / sum_of_weights
         dec.add_fraction(
-          Time.parse(row['TSTART'][-8..-1]) - period_start, 
-          Time.parse(row['TEND'][-8..-1]) - period_start, 
-          veh_type, 
-          (row[veh_type] * (dec.weight ? dec.weight : 1)) / sum_of_weights)
+          Time.parse(row[:tstart][-8..-1]) - START_TIME, 
+          Time.parse(row[:tend][-8..-1]) - START_TIME, 
+          veh_type, vehicles)
       end
-      dp.decisions << dec unless dp.decisions.include?(dec)
+      #puts dec, row.inspect if dec.from_direction == 'E' and dec.intersection == 1
+      decisions << dec unless decisions.include?(dec)
     end
   end
 
@@ -112,30 +99,31 @@ def get_vissim_routes vissim
   
   # find the local routes from the decision point
   # to the point where the vehicles are dropped off downstream of intersection
-  for dp in decision_points
+  # 
+  #.find_all{|dp|dp.intersection == 1 and dp.from_direction == 'S'}
+  decisions.map{|dec|dec.decision_point}.uniq.sort.each do |dp|
+    decision_link = dp.link(vissim)
+    #puts "Decision taken at: #{decision_link}"
+#    puts dp
     
-    for veh_type in Cars_and_trucks_str
-      input_link = dp.link(vissim) # the common starting point for decision in this point
-      rd = RoutingDecision.new!(:input_link => input_link, :veh_type => veh_type, :time_intervals => dp.time_intervals)
+    for veh_type in Cars_and_trucks_str[0..0]
+      rd = RoutingDecision.new!(:input_link => decision_link, :veh_type => veh_type, :time_intervals => dp.time_intervals)
   
       # add routes to the decision point
       for dec in dp.decisions
-        # check if a dropoff link was defined
-        dest = vissim.links.find{|l| l.name.split(',').include?("#{dec.name}-drop")}
-    
-        if dest
-          puts "Found drop #{dest}"
-        else
-          # where vehicles are "dropped off" unless a specific link is marked
-          dest = dec.to_link
-        end
+#        puts "  #{dec} drop at #{dec.drop_link}"
+        dest = dec.drop_link
     
         # find the route through the intersection (ie. the turning motion)
-        local_routes = find_routes(input_link,dest)
+        local_routes = vissim.find_routes(decision_link,dest)
         local_route = local_routes.find{|r| r.decisions.include?(dec)}
-        raise "No routes from #{input_link} to #{dest} over #{dec}! Found these routes:
-               #{local_routes.join("\n")}" if local_route.nil?
-            
+        raise "No routes from #{decision_link} to #{dest} over #{dec} among these routes:
+               #{local_routes.map{|lr|lr.to_vissim}.join("\n")}" if local_route.nil?
+        
+#        for ldec in local_route.decisions
+#          puts "    passing #{ldec}"
+#        end
+        
         rd.add_route(local_route, 
           dec.fractions.find_all{|f| f.veh_type == veh_type})
       end
