@@ -14,7 +14,7 @@ class RoadSegment < VissimElem
   def allows_private_vehicles?
     not closed_to_any?(Cars_and_trucks)
   end
-  def length
+  def length_over_points
     return 0.0 if @over_points.empty?
     (0...@over_points.size-1).map do |i|
       @over_points[i].distance(@over_points[i+1])
@@ -25,13 +25,13 @@ end
 class Connector < RoadSegment
   attr_reader :from_link,:at_from_link,:to_link,:at_to_link
   def length
-    (@from_link.length - @at_from_link) + super + (@to_link.length - @at_to_link)
+    (@from_link.length - @at_from_link) + length_over_points + (@to_link.length - @at_to_link)
   end
 end
 # A decision is a connector, which, whenever taken, has a deciding effect
 # on the final route of the motorist
 class Decision < Connector
-  attr_reader :from_direction,:intersection,:turning_motion,:fractions,:weight
+  attr_reader :from_direction,:intersection,:turning_motion,:fractions,:weight,:drop_link
   def initialize(number)
     super(number)
     # the numbered option for this turning motion, when altertives for the
@@ -48,7 +48,21 @@ class Decision < Connector
     @intersection == d2.intersection ? 
       (@from == d2.from ? @turning_motion <=> d2.turning_motion : @from <=> d2.from) : 
       @intersection <=> d2.intersection
-  end  
+  end
+  def has_decision_point?; not @dp.nil?; end
+  def decision_point
+    return @dp if @dp # cache hit
+    ObjectSpace.each_object(DecisionPoint) do |dp|
+      if dp.from_direction == @decide_from_direction and dp.intersection == @decide_at_intersection
+        @dp = dp
+        break
+      end
+    end
+    # create new dp, if no other decision created it before
+    @dp = DecisionPoint.new(@decide_from_direction,@decide_at_intersection) unless @dp
+    @dp.decisions << self
+    @dp
+  end
   # helper-classes for Decision
   class Interval
     attr_reader :tstart, :tend
@@ -79,6 +93,12 @@ class Link < RoadSegment
   # is this link an exit (from the network) link?
   def exit?; @outgoing_connectors.empty?; end
   def input?; @link_type == 'IN'; end
+  def drop_for
+    return @drop_for if @drop_for
+    @drop_for = if @name =~ /drop (.+)/
+      $1.split(',').map{|s|s.strip}
+    else; []; end
+  end
   def to_s
     str = super
     str << "#{@direction}" if @direction
@@ -92,13 +112,6 @@ class DecisionPoint
     @decisions = []
     @link = nil
   end
-  def routes_traffic_for?(isnum, from_direction, turning_motion)
-    @decisions.any? do |dec|
-      dec.intersection == isnum and 
-        dec.from_direction == from_direction and
-        dec.turning_motion == turning_motion
-    end
-  end
   # retrieve a combined set of time intervals
   # for the flows defined on all decisions in this 
   # decision point.
@@ -107,54 +120,51 @@ class DecisionPoint
   def time_intervals
     @decisions.map{|d|d.time_intervals}.flatten.uniq
   end
-  # locates the common origin link for the decisions in this decision point
-  # do this by finding a link from which there is a route to all decision 
+  # Locates the common origin link for the decisions in this decision point.
+  # Does this by finding a link from which there is a route to all decision 
   # destination links
   def link vissim
+    return @link if @link # cache hit
     
     # check if this decision point routes traffic directly from an input link
     # if so, place the decision point there
+    
     input_link = vissim.links.find{|l| l.intersection_number == @intersection and l.from_direction == @from_direction}
     
-    return input_link if input_link
+    return @link = input_link if input_link
     
     # otherwise, perform a backwards search for the best common starting point...    
-    raise "Decision point #{@from}#{@intersection} has no decisions!" if @decisions.empty?
+    raise "Decision point #{@from_direction}#{@intersection} has no decisions!" if @decisions.empty?
     
-    dec_pred_links = {}
+    drop_links = @decisions.map{|dec|dec.drop_link}
     
-    for dec in @decisions      
-      pred_links = []
-      dec_pred_links[dec] = pred_links
-      # go backwards collecting predecessor links, assuming only one route
-      # from the common origin link to the position of each decision
-      conn = dec
-      begin
-        pred_link = conn.from_link
-        break if pred_links.include? pred_link # avoid loops
-        pred_links << pred_link
-        conn = vissim.connectors.find{|c| c.to_link == pred_link}
-      end while conn and not conn.instance_of?(Decision)
+    # Looking for a link which has routes ending at all of the drop links    
+    link_routes = {}
+    (vissim.links - drop_links).each do |link|
+      link_routes[link] = vissim.find_routes(link,drop_links)
     end
     
-    # take the found links in reverse order so as to find the earlist possible
-    # link to place the decision upon
-    all_pred_links = dec_pred_links.values.flatten.uniq#.reverse
-    link_candidates = all_pred_links.find_all{|pred_link| @decisions.all?{|dec| dec_pred_links[dec].include? pred_link}}    
-        
-    l = link_candidates.first
-    
-    unless l
-      str = ""
-      for dec,links in dec_pred_links
-        str << "#{dec}: #{links ? links.join(' ') : '(none)'}\n"
-      end
-      raise "No common links found: #{str}"
+    # remove any link which is not connected to all drop links
+    link_routes.delete_if do |link,routes|
+      not drop_links.all?{|drop_link|routes.any?{|route|route.exit == drop_link}}
     end
-    l
+#    for link,routes in link_routes
+#      puts "From #{link}:",routes
+#    end
     
+    # We now have a number of candidates. We want the one closest 
+    # to the decisions. Exploit that we *know* these links have routes to
+    # all drop links.    
+    shortest_route = link_routes.values.flatten.min
+    #puts "Shortest route: #{shortest_route}"
+    @link = shortest_route.start
+    
+    @link || raise("No link found from which #{drop_links.join(', ')} can be reached")
+  end
+  def <=>(dp2)
+    @intersection == dp2.intersection ? @from_direction <=> dp2.from_direction : @intersection <=> dp2.intersection
   end
   def to_s
-    "Decision point #{@from}#{@intersection}, decisions: #{@decisions.join(' ')}"
+    "Decision Point #{@from_direction}#{@intersection}: #{@decisions.join(', ')}"
   end
 end

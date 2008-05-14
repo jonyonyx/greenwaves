@@ -37,7 +37,7 @@ def create_aggr csvfile
   # pre-loop initialization	
   row = reader.shift	
   prev_acc_time = parse_time(row[0..1])
-  first_row_time = prev_acc_time - (prev_acc_time.sec + prev_acc_time.min*Minutes_per_hour)
+  first_row_time = prev_acc_time - (prev_acc_time.sec + prev_acc_time.min*MINUTES_PER_HOUR)
 	
   row = reader.shift
   num_det = row.length-2 # number of detectors

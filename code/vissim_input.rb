@@ -1,4 +1,5 @@
 require 'const'
+require 'vissim_output'
 require 'vissim'
 
 class Inputs < Array
@@ -11,12 +12,12 @@ class Inputs < Array
     str = ''
     inputnum = 1
     tbegin = map{|i| i.tstart}.min
-    for input in self
+    each do |input|
       link = input.link
       
       for veh_type, q in input.veh_flow_map      
-        str += "INPUT #{inputnum}\n" +
-          "      NAME \"#{veh_type} from #{link.from} on #{link.name}\" LABEL  0.00 0.00\n" +
+        str << "INPUT #{inputnum}\n" +
+          "      NAME \"#{veh_type} from #{link.from_direction}#{link.name.empty? ? '' : " ON " + link.name}\" LABEL  0.00 0.00\n" +
           "      LINK #{link.number} Q #{q * INPUT_FACTOR} COMPOSITION #{Type_map[veh_type]}\n" +
           "      TIME FROM #{input.tstart - tbegin} UNTIL #{input.tend - tbegin}\n"
         
@@ -42,16 +43,17 @@ def get_inputs vissim
 
   links = vissim.input_links
   
-  input_sql = "SELECT COUNTS.Intersection, LINKS.Number, HOUR([Period End]) As H, MINUTE([Period End]) As M, 
-              [Total Cars] As Cars,
-              [Total Trucks] As Trucks
+  # Aggregate all turning motions in the same from-direction
+  input_sql = "SELECT COUNTS.intersection As isname, LINKS.number, [Period Start] As tstart, [Period End] As tend, 
+              [from], SUM(cars) As Cars, SUM(trucks) As Trucks
               FROM [counts$] As COUNTS
               INNER JOIN [links$] As LINKS 
-              ON  COUNTS.Intersection = LINKS.Intersection AND 
-                  COUNTS.From = LINKS.From
-              WHERE LINKS.Type = 'IN'
+              ON  COUNTS.Intersection = LINKS.intersection_name AND 
+                  COUNTS.From = LINKS.from_direction
+              WHERE LINKS.link_type = 'IN'
               AND [Period End] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#
-              ORDER BY [Period End], LINKS.Number"
+              GROUP BY intersection, [from], [Period End], [Period Start], number
+              ORDER BY intersection, [Period End], [from]"
 
   insect_info = exec_query "SELECT Name, [Count Date] FROM [intersections$]"
 
@@ -59,19 +61,18 @@ def get_inputs vissim
 
   # iterate over the detected data by period to generate
   # input which varies with the defined resolution
-  for row in exec_query input_sql
+  for row in DB[input_sql].all
   
-    tend = Time.parse("#{row['H']}:#{row['M']}")  
-    link_number = row['Number'].to_i
+    tstart = Time.parse(row[:tstart][-8..-1])
+    tend = Time.parse(row[:tend][-8..-1])
+    link_number = row[:number].to_i
   
-    link = links.find{|l| l.number == link_number}
-    raise "Unable to locate link with number #{link_number}" unless link
-  
-    isname = row['Intersection']
-  
-    isrow = insect_info.find{|r| r['Name'] == isname}
-  
-    raise "Unable to find counting date for intersection '#{isname}'" unless isrow
+    input_link = links.find{|l| l.number == link_number} # insert traffic here
+    raise "Unable to locate link with number #{link_number}" unless input_link
+    
+    # scale the traffic from the counting date to now
+    isrow = insect_info.find{|r| r['Name'] == row[:isname]}  
+    raise "Unable to find counting date for intersection '#{row[:isname]}'" unless isrow
       
     count_date = Time.parse(isrow['Count Date'].to_s)
       
@@ -80,16 +81,19 @@ def get_inputs vissim
   
     veh_flow_map = {}
     # produce an input per vehicle type
-    for veh_type in ['Cars','Trucks']
-      flow = row[veh_type]
+    for veh_type in Cars_and_trucks_str
+      flow = row[veh_type.to_sym]
       next if flow < EPS
     
       # link inputs in Vissim is defined in veh/h
       # also scale the input according to the time which has passed
-      veh_flow_map[veh_type] = flow * (Minutes_per_hour/Res) * ANNUAL_INCREASE ** years_passed 
+      resolution_in_minutes = (tend-tstart) / 60
+      scaled_flow = flow * (MINUTES_PER_HOUR/resolution_in_minutes) * (ANNUAL_INCREASE ** years_passed) 
+      #puts "#{input_link}: #{flow} -> #{scaled_flow} #{scaled_flow/flow} from #{tstart} to #{tend}"
+      veh_flow_map[veh_type] = scaled_flow
     end
-    tstart = tend - Res*Minutes_per_hour
-    inputs << Input.new(link, tstart, tend, veh_flow_map)
+    
+    inputs << Input.new(input_link, tstart, tend, veh_flow_map)
   end
   
   # for northern end (by herlev sygehus) and roskildevej
@@ -142,7 +146,7 @@ end
 
 if __FILE__ == $0
   puts "BEGIN"
-  vissim = Vissim.new(Default_network)
+  vissim = Vissim.new
   
   inputs = get_inputs vissim
   

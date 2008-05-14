@@ -62,7 +62,7 @@ CPUCOUNT.times do |i|
 
     sim = vissim.Simulation
 
-    sim.Period = 2 * Minutes_per_hour * Seconds_per_minute # simulation seconds
+    sim.Period = 2 * MINUTES_PER_HOUR * Seconds_per_minute # simulation seconds
     #sim.Period = 1200 # simulation seconds
     sim.Resolution = 1 # steps per simulation second
 
