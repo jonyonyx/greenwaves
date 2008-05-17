@@ -25,7 +25,8 @@ end
 class Connector < RoadSegment
   attr_reader :from_link,:at_from_link,:to_link,:at_to_link
   def length
-    (@from_link.length - @at_from_link) + length_over_points + (@to_link.length - @at_to_link)
+    # TODO: handle case when connector is not placed in the ends of from_link or to_link
+    length_over_points 
   end
 end
 # A decision is a connector, which, whenever taken, has a deciding effect
@@ -148,6 +149,13 @@ class DecisionPoint
     link_routes.delete_if do |link,routes|
       not drop_links.all?{|drop_link|routes.any?{|route|route.exit == drop_link}}
     end
+    
+    # remove any link which has routes that does not traverse one of the decisions
+    link_routes.delete_if do |link,routes|
+      not @decisions.all?{|dec|routes.any?{|route|route.decisions.include?(dec)}}
+    end
+    
+#    puts "drop links:", drop_links,""
 #    for link,routes in link_routes
 #      puts "From #{link}:",routes
 #    end
@@ -156,7 +164,7 @@ class DecisionPoint
     # to the decisions. Exploit that we *know* these links have routes to
     # all drop links.    
     shortest_route = link_routes.values.flatten.min
-    #puts "Shortest route: #{shortest_route}"
+#    puts "Shortest route: #{shortest_route}"
     @link = shortest_route.start
     
     @link || raise("No link found from which #{drop_links.join(', ')} can be reached")

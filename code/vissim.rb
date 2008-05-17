@@ -2,6 +2,7 @@ require 'const'
 require 'network'
 require 'signal'
 require 'vissim_elem'
+require 'vissim_distance'
 
 # vissim element names. match anything that isn't the last quotation mark
 NAMEPATTERN = '\"([^\"]*)\"'
@@ -285,13 +286,18 @@ class Vissim
       @links_map[number] = Link.new!(number, opts)
     end
     
+    #     
+    link_is_sql = "SELECT LINKS.number, from_direction, link_type, INSECTS.Number AS intersection_number
+                   FROM [links$] AS LINKS
+                   INNER JOIN [intersections$] AS INSECTS ON LINKS.Intersection_Name = INSECTS.Name"
+    
     # enrich the existing link objects with data from the database
-    for row in LINKS.filter(:link_type => 'IN')
+    for row in DB[link_is_sql].all
       link_num = row[:number].to_i
       row[:intersection_number] = row[:intersection_number].to_i
       link = link(link_num)
       raise "Link number #{link_num} was marked as an input link, but could not be found!" if link.nil?
-      link.update(row.retain_keys!(:from_direction, :intersection_number, :link_type, :name))
+      link.update(row.retain_keys!(:from_direction, :intersection_number, :link_type))
     end
     
     begin # note which links have bus inputs (mandatory)
@@ -317,19 +323,19 @@ end
 if __FILE__ == $0
   vissim = Vissim.new 
   
-  for link in vissim.links
-    puts "#{link} at #{link.intersection_number}"
-  end
+#  for link in vissim.links
+#    puts "#{link} at #{link.intersection_number}"
+#  end
 #  vissim.decisions.each do |dec|
 #    puts "#{dec}: #{dec.drop_link}"
 #  end
-#  scs = vissim.controllers_with_plans
-#  (0...scs.size-1).each do |i|
-#    sc1, sc2 = *scs[i..i+1]
-#    puts "Distance from #{sc1} to #{sc2}: #{vissim.distance(sc1, sc2)}"
-#    puts "Distance from #{sc2} to #{sc1}: #{vissim.distance(sc2, sc1)}"
-#    puts
-#  end
+  scs = vissim.controllers_with_plans
+  (0...scs.size-1).to_a[-2..-2].each do |i|
+    sc1, sc2 = *scs[i..i+1]
+    puts "Distance from #{sc1.name} to #{sc2.name}: #{vissim.distance(sc1, sc2)}"
+    #puts "Distance from #{sc2.name} to #{sc1.name}: #{vissim.distance(sc2, sc1)}"
+    puts
+  end
   #  for sc in vissim.controllers.find_all{|x| x.has_plans?}.sort
   #    #rows << [sc.number, sc.name, sc.arterial_groups.map{|grp|grp.name}.join(', ')]
   #    puts sc

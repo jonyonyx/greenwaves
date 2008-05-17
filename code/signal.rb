@@ -105,21 +105,15 @@ class SignalController < VissimElem
       end
     end
     def serves_artery?; @heads.any?{|h| h.serves_artery?}; end
-    def served_arterial_links
-      arterial_heads.map{|h| h.position_link}.uniq
-    end
+    def served_arterial_links; arterial_heads.map{|h| h.position_link}.uniq; end
     # Scan over the signal heads in this group extracting all
     # road segments, which are arterial and the from direction.
     # If none such markings are found among the heads, this group serves
     # only minor-road traffic. Otherwise at least some heads
     # serve the arterial (major road) and the direction from which is served
     # becomes the answer
-    def arterial_from
-      @heads.map{|h| h.arterial_from}.uniq - [nil]
-    end
-    def arterial_heads
-      @heads.find_all{|h| h.serves_artery?}
-    end
+    def arterial_from; @heads.map{|h| h.arterial_from}.uniq - [nil]; end
+    def arterial_heads; @heads.find_all{|h| h.serves_artery?}; end
     # (see description for Stage-method of same name)
     # This check depends on each signal head and the link on which it is placed.
     # When the vissim network was loaded the arterial links and connectors were marked
@@ -133,9 +127,7 @@ class SignalController < VissimElem
       attr_reader :position_link,:lane,:at
       def serves_artery?; not arterial_from.nil?; end
       def arterial_from; @position_link.arterial_from; end
-      def to_s
-        "Head #{number} on #{@position_link} at #{at}"
-      end
+      def to_s; "Head #{number} on #{@position_link} at #{at}"; end
     end
   end
 end
