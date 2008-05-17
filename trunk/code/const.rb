@@ -2,13 +2,18 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
-#Project = 'dtu'
-Project = 'cowi'
+require 'sequel'
+Project = 'dtu'
+#Project = 'cowi'
 
+CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source="
 if Project == 'dtu'
   Base_dir = "#{Dir.pwd.split('/')[0...-1].join("\\")}\\"
   Network_name = "tilpasset_model.inp"
   Vissim_dir = "#{Base_dir}Vissim\\o3_roskildevej-herlevsygehus\\"
+  DOGSAGGRFILE = "#{Base_dir}data\\aggr.xls"
+  DOGSAGGRCS = "#{CSPREFIX}#{DOGSAGGRFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\""
+  DOGSDB = Sequel.dbi DOGSAGGRCS
   
   PROGRAM = 'P1'
   
@@ -72,7 +77,6 @@ EPS = 0.01
 INPUT_FACTOR = 1.0 # factor used to adjust link inputs
 ANNUAL_INCREASE = 1.015 # used in input generation for scaling
 BASE_CYCLE_TIME = 80 # seconds
-CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source="
 DATAFILE = "#{Data_dir}data.xls" # main data file containing counts, sgp's, you name it
 CS = "#{CSPREFIX}#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\""
 CSVCS = "#{CSPREFIX}#{Data_dir};Extended Properties=\"Text;HDR=YES;FTM=Delimited\""
@@ -82,13 +86,14 @@ ACCFILE = "#{Data_dir}#{Accname}"
 ENABLE_VAP_TRACING = {:master => false, :slave => false} # write trace statements in vap code?
 
 # the following is used in input and route generation
-PERIOD_START, PERIOD_END = '15:00', '17:00'
-START_TIME = Time.parse(PERIOD_START) # for counting seconds
+# denotes the *end* times of data collection intervals eg 7:00 to 7:15
+#PERIOD_START, PERIOD_END = '15:15', '17:00'
+PERIOD_START, PERIOD_END = '7:15', '9:00'
+START_TIME = Time.parse('7:00') # for counting seconds
 
 require 'dbi'
 require 'fileutils'
 require 'win32ole'
-require 'sequel'
 
 DB = Sequel.dbi CS
 LINKS = DB[:'[links$]']

@@ -54,7 +54,7 @@ end
 def get_vissim_routes vissim
 
   turning_sql = "SELECT INTSECT.number,
-                  [from], 
+                  from_direction, 
                   [Turning Motion] As turn, 
                   [Period Start] As tstart,
                   [Period End] As tend,
@@ -65,9 +65,9 @@ def get_vissim_routes vissim
                 WHERE [Period End] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#"
 
   decisions = []
-  DB[turning_sql].all.map do |row|
+  DB[turning_sql].each do |row|
     isnum = row[:number].to_i
-    from_direction = row[:from][0..0] # extract the first letter (N, S, E or W)    
+    from_direction = row[:from_direction][0..0] # extract the first letter (N, S, E or W)    
     turning_motion = row[:turn][0..0] # turning_motion must equal L(eft), T(hrough) or R(ight)
     
     # extract all decisions relevant to this turning count row
@@ -106,12 +106,12 @@ def get_vissim_routes vissim
     #puts "Decision taken at: #{decision_link}"
 #    puts dp
     
-    for veh_type in Cars_and_trucks_str[0..0]
+    for veh_type in Cars_and_trucks_str
       rd = RoutingDecision.new!(:input_link => decision_link, :veh_type => veh_type, :time_intervals => dp.time_intervals)
   
       # add routes to the decision point
       for dec in dp.decisions
-#        puts "  #{dec} drop at #{dec.drop_link}"
+#        puts "  #{dec} drop at #{dec.drop_link}, decide at #{decision_link}"
         dest = dec.drop_link
     
         # find the route through the intersection (ie. the turning motion)
@@ -139,8 +139,8 @@ if __FILE__ == $0
   vissim = Vissim.new
   
   routingdec = get_vissim_routes vissim
-  #puts routingdec.to_vissim
-  routingdec.write
+  puts routingdec.to_vissim
+  #routingdec.write
     
   puts "END"
 end
