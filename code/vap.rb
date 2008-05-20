@@ -201,11 +201,6 @@ def gen_vap sc, outputdir
     cp.add '   END;', false
     cp.add '   GOTO PROG_ENDE', false
     cp.add 'END;', false
-    #  cp.add "IF TIME >= OFFSET THEN /* Poor man's modulos (VAP version 4) */"
-    #  cp.add '   t_loc := TIME - OFFSET + 1'
-    #  cp.add 'ELSE', false
-    #  cp.add '   t_loc := TIME - OFFSET + C + 1'
-    #  cp.add 'END;', false
   else
     # local time required
     cp.add 'TIME := OLDTIME + 1;'
@@ -213,7 +208,7 @@ def gen_vap sc, outputdir
   end  
   
   cp.add "C := BASE_CYCLE_TIME + #{DOGS_TIME} * DOGS_LEVEL;" if USEDOGS
-  cp.add "t_loc := (TIME - OFFSET) % #{USEDOGS ? 'C' : 'BASE_CYCLE_TIME'} + 1;"
+  cp.add "t_loc := (TIME + OFFSET) % #{USEDOGS ? 'C' : 'BASE_CYCLE_TIME'} + 1;"
   cp.add 'SetT(t_loc);'
   
   if sc.has_bus_priority?
@@ -381,20 +376,21 @@ def generate_controllers vissim, attributes = {}, outputdir = Vissim_dir
 
   busprior = if attributes[:buspriority]
     # fetch the bus detectors attached to this intersection, if any
-    exec_query("SELECT INSECTS.Number,
-                        [Detector North Suffix], [Detector South Suffix],
-                        [Donor Stage], [Recipient Stage]
-                       FROM [buspriority$]
-                       INNER JOIN [intersections$] As INSECTS ON INSECTS.Name = Intersection")
+    DB["SELECT  CLNG(INSECTS.number) AS [number],
+                CSTR([Detector North Suffix]) AS bus_detector_n, 
+                CSTR([Detector South Suffix]) AS bus_detector_s,
+                CLNG([Donor Stage]) as donor_stage, 
+                CLNG([Recipient Stage]) as recipient_stage
+         FROM [buspriority$] AS BUSP
+         INNER JOIN [intersections$] As INSECTS ON INSECTS.Name = BUSP.Intersection"].all
   else; []; end
   
-  for sc in vissim.controllers.find_all{|x| x.has_plans?}#.find_all{|x| x.number == 3}
-    buspriorow = busprior.find{|r| r['Number'] == sc.number}
+  for sc in vissim.controllers.find_all{|x| x.has_plans?}
+    buspriorow = busprior.find{|r| r[:number] == sc.number}
     if attributes[:buspriority] and buspriorow
-      sc.update :buspriority => 
-        {'DETN' => busprior[0], 'DETS' => busprior[1], 'DONOR' => busprior[2].to_i, 'RCPT' => busprior[3].to_i}
+      sc.update buspriorow.retain_keys!(:bus_detector_n,:bus_detector_s,:donor_stage,:recipient_stage)
     else
-      sc.update :buspriority => {}        
+      sc.update :bus_detector_n => nil,:bus_detector_s => nil,:donor_stage => nil,:recipient_stage => nil
     end
     puts "Generating VAP and PUA for #{sc}"
     gen_vap sc, outputdir

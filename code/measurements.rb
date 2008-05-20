@@ -2,12 +2,10 @@
 # note! obsoleted, use node evaluations per intersection instead!
 # buses are an exception for travel time evaluations
 
-require 'const'
-require 'vissim'
-require 'vissim_routes'
+require 'vissim_output'
 
 def insert_measurements vissim = Vissim.new(Default_network)
-  routes = get_full_routes vissim
+  routes = vissim.get_full_routes
   
   #insert_queuecounters vissim, routes
   insert_traveltimes routes, :buses => true
@@ -73,7 +71,7 @@ def insert_traveltimes routes, opts
 
   if opts[:buses]
     # Insert travel time measurings for each bus line
-    for row in exec_query "SELECT BUS, [In Link], [Out Link] FROM [buses$]"
+    for row in exec_query "SELECT BUS, [Input_Link], [Exit_Link] FROM [buses$]"
       tts.add "Bus #{row[0].to_i}", row[1].to_i, row[2].to_i, [Type_map['Buses']]
     end
   end

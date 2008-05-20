@@ -7,26 +7,22 @@ require 'vissim_elem'
 require 'vissim_routes'
 
 class SignalController < VissimElem
-  attr_reader :controller_type,:cycle_time,:offset,:groups,:program
+  attr_reader :controller_type,:cycle_time,:offset,:groups,:program,
+    :bus_detector_n,:bus_detector_s, # north and southern detector suffixes
+    :donor_stage,:recipient_stage# donor and recipient stages
   def initialize number
     super(number)
     @groups = []
   end
   
   # Methods used in bus priority
-  def has_bus_priority?; @buspriority and not @buspriority.empty?; end
-  def bus_detector_n; @buspriority['DETN']; end
-  def bus_detector_s; @buspriority['DETS']; end
-  def donor_stage; @buspriority['DONOR'].to_i; end
-  def recipient_stage; @buspriority['RCPT'].to_i; end
+  def has_bus_priority?; not [@bus_detector_n,@bus_detector_s,@donor_stage,@recipient_stage].any?{|e|e.nil?}; end
   def is_donor? stage; stage.number == donor_stage; end
   def is_recipient? stage; stage.number == recipient_stage; end
     
   # check if all groups have a signal plan plus
   # generel checks
-  def has_plans?
-    @cycle_time and @offset and @groups.all?{|grp| grp.has_plan?}
-  end  
+  def has_plans?; not [@cycle_time,@offset].any?{|e|e.nil?} and @groups.all?{|grp| grp.has_plan?}; end  
   def add_group(number, opts)
     @groups << SignalGroup.new!(number,opts)
   end
@@ -53,24 +49,29 @@ class SignalController < VissimElem
     end
   end
   def stages
-    last_stage, last_interstage = nil
-    (1..@cycle_time).map do |t|
+    last_stage = nil
+    last_interstage = nil
+    stagear = []
+    for t in (1..@cycle_time)
       if interstage_active?(t)
-        last_interstage = if last_interstage.nil?
-          last_interstage = 'a'
+        if last_interstage
+          last_interstage = last_interstage.succ unless stagear.last == last_interstage
         else
-          (stagear.last == last_interstage) ? last_interstage : last_interstage.succ
+          last_interstage = 'a'
         end
+        stagear << last_interstage
       else
         # check if any colors have changed
         if @groups.all?{|grp| grp.color(t) == grp.color(t-1)}
-          last_stage
+          stagear << last_stage
         else
           last_stage = Stage.new!((last_stage ? last_stage.number+1 : 1),
             :groups => @groups.find_all{|grp| grp.active_seconds === t})
+          stagear << last_stage
         end
       end
     end
+    stagear
   end
   def served_arterial_links(from_direction)
     arterial_groups.find{|grp| grp.arterial_from.include? from_direction}.served_arterial_links
@@ -82,7 +83,7 @@ class SignalController < VissimElem
       @heads = [] # signal heads in this group
     end
     def add_head number, opts; @heads << SignalHead.new!(number,opts); end
-    def has_plan?; @red_end and @green_end and @tred_amber and @tamber; end
+    def has_plan?; not [@red_end,@green_end,@tred_amber,@tamber].any?{|e|e.nil?}; end
     def color cycle_sec
       case cycle_sec
       when active_seconds

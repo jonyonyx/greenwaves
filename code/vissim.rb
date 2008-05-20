@@ -14,11 +14,12 @@ COORDINATEPATTERN = '(\-?\d+.\d+) (\-?\d+.\d+)' # x, y
 SECTION_PARSERS = {
   'Links' => :parse_links, 
   'Connectors' => :parse_connectors, 
-  'Signal Controllers (SC)' => :parse_controllers  
+  'Signal Controllers (SC)' => :parse_controllers,
+  'Nodes' => :parse_nodes
 }
 
 class Vissim
-  attr_reader :connectors,:decisions,:controllers
+  attr_reader :connectors,:decisions,:controllers,:nodes
   def initialize inpfile = Default_network
     inp = IO.readlines(inpfile).map!{|link| link.strip}.delete_if{|link| link.empty?}
       
@@ -92,17 +93,25 @@ class Vissim
   def links; @links_map.values; end
   def link(number); @links_map[number]; end
   def controllers_with_plans; @controllers.find_all{|sc| sc.has_plans?}; end
+  def parse_nodes(inp)
+    require 'measurements'
+    @nodes = []
+    while line = inp.shift
+      @nodes << Node.new!($1.to_i, :name => $2) if line =~ /NODE\s+(\d+)\s+NAME\s+#{NAMEPATTERN}/
+    end
+    @nodes.sort
+  end
   # parse signal controllers and their groups + heads
   def parse_controllers(inp)
     plans = begin
       DB["SELECT 
-        INSECTS.Number As isnum, 
+        CLNG(INSECTS.Number) As isnum, 
         PLANS.program,
         [Group Name] As grpname,
-        [Group Number] As grpnum, 
+        CLNG([Group Number]) As grpnum, 
         #{USEDOGS ? 'priority,' : ''}
-        [Red End] As red_end, 
-        [Green End] As green_end
+        CLNG([Red End]) As red_end, 
+        CLNG([Green End]) As green_end
        FROM [plans$] As PLANS
        INNER JOIN [intersections$] As INSECTS ON PLANS.Intersection = INSECTS.Name
        WHERE PLANS.PROGRAM = '#{PROGRAM}'"].all      
@@ -110,9 +119,9 @@ class Vissim
     
     scinfo = begin
       DB["SELECT 
-        Number As isnum,
-        PROGRAMS.[Cycle Time] As cycle_time,
-        offset
+        CLNG(Number) As isnum,
+        CLNG(PROGRAMS.[Cycle Time]) As cycle_time,
+        CLNG(offset) as offset
        FROM (([offsets$] As OFFSETS
        INNER JOIN [intersections$] As INSECTS ON INSECTS.Name = OFFSETS.Intersection)
        INNER JOIN [programs$] AS PROGRAMS ON OFFSETS.Program = PROGRAMS.Name)
@@ -150,12 +159,12 @@ class Vissim
           
           raise "Signal head '#{opts[:name]}' is missing its group #{grpnum} at controller '#{sc}'" if grp.nil?
           
-          # optionally match against the TYPE flag (eg. left arrow)
           line =~ /POSITION LINK\s+(\d+)\s+LANE\s+(\d)\s+AT\s+(\d+\.\d+)/
           
           pos_link_num = $1.to_i # heads can be placed on both links and connectors (RoadSegment)
-          opts[:position_link] = link(pos_link_num) || @connectors.find{|c|c.number == pos_link_num}
-          raise "Position link #{pos_link_num} for head #{opts[:name]} at #{sc} could not be found!" if opts[:position_link].nil?
+          opts[:position_link] = link(pos_link_num) || 
+            @connectors.find{|c|c.number == pos_link_num} ||
+            raise("Position link #{pos_link_num} for head #{num} at #{sc} could not be found!\nLine parsed: '#{line}'")
           
           opts[:lane] = $2.to_i
           opts[:at] = $3.to_f
@@ -169,7 +178,7 @@ class Vissim
       sc.update(scrow.retain_keys!(:cycle_time, :offset)) if scrow
       
       for row in plans.find_all{|r| r[:isnum] == sc.number}
-        grp = sc.group(row[:grpnum].to_i)
+        grp = sc.group(row[:grpnum])
         grp.update(row.retain_keys!(:red_end, :green_end, :priority))
       end
       
@@ -286,17 +295,14 @@ class Vissim
       @links_map[number] = Link.new!(number, opts)
     end
     
-    #     
-    link_is_sql = "SELECT LINKS.number, from_direction, link_type, INSECTS.Number AS intersection_number
+    link_is_sql = "SELECT CLNG(LINKS.number) as [number], from_direction, link_type, CLNG(INSECTS.Number) AS intersection_number
                    FROM [links$] AS LINKS
                    INNER JOIN [intersections$] AS INSECTS ON LINKS.Intersection_Name = INSECTS.Name"
     
     # enrich the existing link objects with data from the database
-    for row in DB[link_is_sql].all
-      link_num = row[:number].to_i
-      row[:intersection_number] = row[:intersection_number].to_i
-      link = link(link_num)
-      raise "Link number #{link_num} was marked as an input link, but could not be found!" if link.nil?
+    DB[link_is_sql].each do |row|
+      link = link(row[:number]) || 
+        raise("Link number #{row[:number]} was marked as an input link, but could not be found!")
       link.update(row.retain_keys!(:from_direction, :intersection_number, :link_type))
     end
     
@@ -323,19 +329,26 @@ end
 if __FILE__ == $0
   vissim = Vissim.new 
   
-#  for link in vissim.links
-#    puts "#{link} at #{link.intersection_number}"
-#  end
-#  vissim.decisions.each do |dec|
-#    puts "#{dec}: #{dec.drop_link}"
-#  end
-  scs = vissim.controllers_with_plans
-  (0...scs.size-1).to_a[-2..-2].each do |i|
-    sc1, sc2 = *scs[i..i+1]
-    puts "Distance from #{sc1.name} to #{sc2.name}: #{vissim.distance(sc1, sc2)}"
-    #puts "Distance from #{sc2.name} to #{sc1.name}: #{vissim.distance(sc2, sc1)}"
-    puts
+  hh = vissim.controllers.find{|c| c.number == 4}
+  for grp in hh.groups
+    puts "#{grp} '#{grp.has_plan?}'"
   end
+  puts "#{hh} #{hh.has_plans?}"
+  
+  puts vissim.controllers_with_plans
+  #  for link in vissim.links
+  #    puts "#{link} at #{link.intersection_number}"
+  #  end
+  #  vissim.decisions.each do |dec|
+  #    puts "#{dec}: #{dec.drop_link}"
+  #  end
+  #  scs = vissim.controllers_with_plans
+  #  (0...scs.size-1).to_a[-2..-2].each do |i|
+  #    sc1, sc2 = *scs[i..i+1]
+  #    puts "Distance from #{sc1.name} to #{sc2.name}: #{vissim.distance(sc1, sc2)}"
+  #    #puts "Distance from #{sc2.name} to #{sc1.name}: #{vissim.distance(sc2, sc1)}"
+  #    puts
+  #  end
   #  for sc in vissim.controllers.find_all{|x| x.has_plans?}.sort
   #    #rows << [sc.number, sc.name, sc.arterial_groups.map{|grp|grp.name}.join(', ')]
   #    puts sc

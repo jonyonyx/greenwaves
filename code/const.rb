@@ -141,6 +141,8 @@ def to_xls rows, sheetname, xlsfile = DATAFILE
     datash.Columns.Autofit
     
     wb.Save
+  rescue Error => e
+    raise(e, "Failed to write #{rows.size} rows and #{rows.first.size} columns", rows)
   ensure
     excel.DisplayAlerts = false # avoid excel nag to save book
     excel.Quit
