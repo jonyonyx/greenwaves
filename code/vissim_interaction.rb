@@ -15,7 +15,7 @@ RUNS = 1#0 # number of runs per test
 testqueue = ThreadSafeArray.new
 
 testqueue << {:testname => 'DOGS and bus',     :dogs_enabled => true,  :buspriority => true}
-testqueue << {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false}
+#testqueue << {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false}
 #testqueue << {:testname => 'No DOGS with bus', :dogs_enabled => false, :buspriority => true}
 #testqueue << {:testname => 'No DOGS or bus',   :dogs_enabled => false, :buspriority => false}
 
@@ -45,16 +45,15 @@ while parms = testqueue.pop
   vissim = WIN32OLE.new('VISSIM.Vissim')
     
   # load the instance copy of the network
-  tempnet = Dir[File.join(workdir, '*.inp')].first.gsub('/',"\\")
-  #puts "Vissim #{instancename} loading '#{tempnet}'"
+  tempnet = Dir[File.join(workdir, '*.inp')].first.gsub('/',"\\") # Vissim => picky
   vissim.LoadNet tempnet
-  #vissim.LoadLayout "#{Vissim_dir}speed.ini"
+  vissim.LoadLayout "#{Vissim_dir}speed.ini"
 
   sim = vissim.Simulation
 
   sim.Period = 2 * MINUTES_PER_HOUR * Seconds_per_minute # simulation seconds
   #sim.Period = 1200 # simulation seconds
-  sim.Resolution = 1 # steps per simulation second
+  sim.Resolution = 2 # steps per simulation second
   
   # creates vap and pua files respecting the simulation parameters
   generate_controllers vissimnet, parms, workdir 

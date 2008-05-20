@@ -271,6 +271,8 @@ def gen_vap sc, outputdir
     cp.add 'END;', false
   end
   # checks for missed interstage runs due to dogs level downshifts
+  # note this will cause unexpected signal changes (red/amber -> red)
+  # if the simulation resolution is 1 step per sim second or worse (less)
   for i in (1...uniq_stages.length)
     prev, cur =  uniq_stages[i-1], uniq_stages[i]
     cp.add "IF (T > stage#{prev}_end) AND Stage_active(#{prev}) AND (T < stage#{cur}_end) THEN"
