@@ -26,7 +26,8 @@ class NodeEvals < Array
   end
   
   # columns of the vissim results database to the
-  # names *we* want to use!
+  # names *we* want to use! Note this is a 
+  # array of tuples since we want to preserve the order
   COLS_TO_HEADERS = [
     ['avequeue', 'Average Queue'], 
     ['delay_2_', 'Car & Truck Delay'], 
@@ -49,13 +50,10 @@ class NodeEvals < Array
     for row in exec_query(NODEEVALSQL, "#{CSPREFIX}#{File.join(resdir,'results.mdb')};")
     
       # find the traveltime entry in order to gain additional insight
-      node = @vissim.node_map[row['NODE']]
+      node = @vissim.nodes.find{|n| n.number == row['NODE']}
       fromnum, tonum = row['FROMLINK'], row['TOLINK']
-      fromlink = @vissim.links_map[fromnum]
-      tolink = @vissim.links_map[tonum]
-      
-      raise "From link #{fromnum} not found!" if fromlink.nil?
-      raise "To link #{tonum} not found!" if fromlink.nil?
+      fromlink = @vissim.link(fromnum) || raise("From link #{fromnum} not found!")
+      tolink = @vissim.link(tonum) || raise("To link #{tonum} not found!")
       
       results = {}
       COLS_TO_HEADERS.each{|k,h| results[k] = row[k]}
@@ -63,7 +61,7 @@ class NodeEvals < Array
       self << NodeEvaluation.new(name, node, fromlink, tolink, row['TSTART'], row['TEND'], results)
     end
   end
-  def to_xls xlsfile = "#{Base_dir}results\\results.xls"
+  def to_a
         
     insect_info = exec_query "SELECT Name, Number FROM [intersections$]"          
     
@@ -79,7 +77,7 @@ class NodeEvals < Array
     
     for nodeeval in sort{|ne1, ne2| ne1.node <=> ne2.node}
       from, to = nodeeval.fromlink, nodeeval.tolink
-      routes = find_routes(from, to)
+      routes = @vissim.find_routes(from, to)
       raise "No route found from #{from} to #{to}!" if routes.empty?
       raise "Multiple routes found from #{from} to #{to}!" if routes.length > 1
       
@@ -91,7 +89,7 @@ class NodeEvals < Array
       intersection = insect_info.find{|r| r['Number'] == decision.intersection}['Name']
             
       # 'arterial' traffic exits in either end of the arterial
-      traffic_type = if ['N','S'].include?(decision.from) and decision.turning_motion == 'T'
+      traffic_type = if ['N','S'].include?(decision.from_direction) and decision.turning_motion == 'T'
         'Arterial'
       else
         'Crossing'
@@ -102,7 +100,7 @@ class NodeEvals < Array
       rows << [node.number, 
         nodeeval.testname, 
         intersection, 
-        decision.from, 
+        decision.from_direction, 
         decision.turning_motion, 
         traffic_type, 
         nodeeval.tstart,
@@ -110,7 +108,7 @@ class NodeEvals < Array
         *COLS_TO_HEADERS.map{|k,h| nodeeval.results[k]}]
     end
     
-    to_xls rows, 'data', xlsfile
+    rows
   end
 end
 

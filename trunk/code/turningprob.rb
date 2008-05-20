@@ -94,6 +94,7 @@ def get_vissim_routes vissim
   end
 
   # TODO: add checkup to tell if all flows from the database were assigned to a decision point
+  # will manifest itself in too few decisions in the routing decisions (normally 1 per turning motion)
  
   routing_decisions = RoutingDecisions.new
   
