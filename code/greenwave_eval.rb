@@ -62,13 +62,14 @@ class Coordination
     
     for b1 in @sc1.greenwaves(h, o1, @from_direction)
       b1.shift(tt) # project this emitted band forward in time
-      bands2 = @sc2.greenwaves([b1.tstart, b1.tend], o2, @from_direction)
-      
+      bands2 = @sc2.greenwaves([h.min, b1.tend], o2, @from_direction)
+      puts "trying to chop up #{b1} using #{bands2.join(', ')}"
       # b1 shifted is now all mismatches;
       # use the bands from sc2 to chop off pieces
       begin 
         overlapping_band = bands2.find{|b| b1.overlap?(b)}
-        break unless overlapping_band # nothing found
+        break if overlapping_band.nil? # check if something was found
+        puts "found overlapping band #{overlapping_band}"
         b1 -= overlapping_band
       end while b1
       
@@ -236,7 +237,7 @@ end
 
 @@vissim = Vissim.new
 
-H = [0,150] # horizon
+H = (10..90) # horizon
 
 def parse_coordinations
   

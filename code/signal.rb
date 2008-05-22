@@ -63,17 +63,23 @@ class SignalController < VissimElem
   def greenwaves(horizon,offset,from_direction)
     wavebands = []
     @groups.find_all{|grp|grp.arterial_from.include?(from_direction)}.each do |group|
-      active_seconds = group.active_seconds
-      tstart_base = horizon.min + offset + active_seconds.min
-      tend_base = horizon.min + offset + active_seconds.max
+      active_seconds = group.active_seconds # within a cycle
+      
+      # project active seconds into the horizon
+      tstart_base = active_seconds.min + offset
+      tend_base = active_seconds.max + offset
       #puts "#{group} #{active_seconds}"
       cycle_count = 0
       loop do
         cycle_offset = cycle_count * @cycle_time
         tstart = tstart_base + cycle_offset
-        break unless tstart < horizon.max # only show bands in the horizon
+        tend = tend_base + cycle_offset
+        #puts "tstart: #{tstart}"
+        break if tstart >= horizon.max # only show bands in the horizon
         # create the band. the end time might be cut off by the horizon limits
-        wavebands << Band.new(tstart, [tend_base + cycle_offset, horizon.max].min)
+        if [tstart,tend].any?{|t|horizon.include?(t)} # entered the horizon
+          wavebands << Band.new(tstart, [tend, horizon.max].min)
+        end
         cycle_count += 1
       end
     end
