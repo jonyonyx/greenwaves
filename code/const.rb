@@ -104,7 +104,10 @@ def exec_query sql, conn_str = CS
     return dbh.select_all(sql)
   end
 end
-
+# Indicates from which direction traffic comes from eg. North
+def get_from_direction(fromsc,tosc)
+  ((fromsc.number < tosc.number) ? ARTERY[:sc1] : ARTERY[:sc2])[:from_direction]  
+end
 def to_tex(table, user_opts = {})
   default_opts = {:center => true, :sep_cols => true, :col_align => 'l'}
   opts = default_opts.merge(user_opts)  

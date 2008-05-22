@@ -1,12 +1,14 @@
 class Vissim
+  def velocity(fromsc, tosc)
+    80 / 3.6 # 80km/t
+  end
   # Finds the distance from the arterial signal head(s) in this controller
   # to the downstream stop-line of othersc
   def distance fromsc,tosc
     return 0.0 if fromsc == tosc
     
     # determine which sc is in the downstream
-    from_direction = (fromsc.number < tosc.number) ? 
-      ARTERY[:sc1][:from_direction] : ARTERY[:sc2][:from_direction]
+    from_direction = get_from_direction(fromsc,tosc)
     
     from_links = fromsc.served_arterial_links(from_direction)
     to_links = tosc.served_arterial_links(from_direction)

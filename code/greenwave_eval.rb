@@ -1,3 +1,4 @@
+require 'vissim'
 require 'const'
 
 ARTERIAL = 'a'
@@ -11,13 +12,13 @@ class Band
   def width
     @tend - @tstart + 1
   end
-  def is_overlapping?(otherband)
-    otherband.tstart < @tend and otherband.tend > @tstart
+  def overlap?(other)
+    to_r.include?(other.tstart) or other.to_r.include?(@start)
   end
   # returns a new band signifying the time units
   # where self and otherband is overlapping each other
   def overlap otherband
-    return NILBAND unless is_overlapping?(otherband)
+    return NILBAND unless overlap?(otherband)
     
     tstart = [@tstart, otherband.tstart].max
     tend = [@tend, otherband.tend].min
@@ -37,82 +38,36 @@ class Band
     @tend += offset
   end
   def to_s
-    ar = to_a
-    "#{ar.inspect} (#{ar.size})"
+    "(#{@tstart}..#{@tend})"
   end
-  def to_a
-    (@tstart..@tend).to_a
-  end
-end
-
-class SC
-  attr_reader :member_coordinations, :number, :position, :internal_distance
-  def initialize
-    @offset = 0    
-    @member_coordinations = []
-  end
-  def state t, o
-    # convert the 1-based horizon second to 0-based plan indexing
-    # offsets denote the delay in which the program should be started
-    # and should thus be subtracted
-    @plan[(t - o) % @cycle_time]
-  end
-  # yields all green lights in the arterial direction
-  # in the given time horizon, respecting the given controller offset
-  def bands_in_horizon h, o
-    
-    arterial_states = (h.min..h.max).to_a.find_all{|t| state(t,o) == ARTERIAL}
-    
-    bands = []
-    i = 0
-    while i < arterial_states.size - 1
-      tstart = arterial_states[i]
-      i += 1 while arterial_states[i] + 1 == arterial_states[i+1]
-      bands << Band.new(tstart, arterial_states[i])
-      i += 1
-    end
-    bands
-  end
-  def to_s
-    "Signal Controller #{@number}"
-  end
-  def <=> sc2
-    @number <=> sc2.number
-  end
+  def to_r; (@tstart..@tend); end
+  def to_a; to_r.to_a; end
 end
 class Coordination
-  attr_reader :sc1, :sc2
-  # distance from stop-line to stop-line
-  def distance
-    dist = (@sc1.position - @sc2.position).abs
-    if left_to_right
-      dist
-    else # sc1 is to the right from sc2
-      dist + (@sc1.internal_distance - @sc2.internal_distance)
-    end
+  attr_reader :sc1, :sc2, :distance, :from_direction
+  def initialize sc1, sc2, velocity
+    @sc1, @sc2 = sc1, sc2
+    @default_velocity = velocity
+    @distance = @@vissim.distance(@sc1,@sc2)
+    @from_direction = get_from_direction(@sc1,@sc2)
+    [@sc1,@sc2].each{|sc|sc.member_coordinations << self} # notify controllers
   end
-  def traveltime
-    distance / @velocity
-  end
-  # determine if sc1 is left of sc2
-  def left_to_right
-    @sc1.position < @sc2.position
-  end
+  def traveltime(v = @default_velocity); (@distance / v).round; end
   # returns times where there is a mismatch between sc1 and sc2 ie.
   # when traffic emitted from sc1 is not received by green light at sc2
   # respecting the current offsets of these controllers and the traveltime
   # from stop-light to stop-light
   def mismatches_in_horizon h, o1, o2    
-    tt = traveltime.round
+    tt = traveltime
     
-    for b1 in @sc1.bands_in_horizon(h, o1)
+    for b1 in @sc1.greenwaves(h, o1, @from_direction)
       b1.shift(tt) # project this emitted band forward in time
-      bands2 = @sc2.bands_in_horizon([b1.tstart, b1.tend], o2)
+      bands2 = @sc2.greenwaves([b1.tstart, b1.tend], o2, @from_direction)
       
       # b1 shifted is now all mismatches;
       # use the bands from sc2 to chop off pieces
       begin 
-        overlapping_band = bands2.find{|b| b1.is_overlapping?(b)}
+        overlapping_band = bands2.find{|b| b1.overlap?(b)}
         break unless overlapping_band # nothing found
         b1 -= overlapping_band
       end while b1
@@ -134,9 +89,7 @@ class Coordination
     mismatches_in_horizon(h,o1,o2){|band| z += band.width}
     z
   end
-  def to_s
-    "Coordination between #{@sc1} and #{@sc2}"
-  end
+  def to_s; "Coordination from #{@sc1} to #{@sc2}"; end
 end
 
 class SimulatedAnnealing
@@ -256,9 +209,7 @@ class CoordinationProblem
     end
   end
   # return a hash of signals mapping to the found offsets
-  def solution
-    @encumbent
-  end
+  def solution; @encumbent; end
   # undo all changes made during last call to change
   def undo_changes
     # restore state of previous solution
@@ -271,9 +222,7 @@ class CoordinationProblem
       @value += prev_contrib
     end
   end
-  def evaluate
-    @value
-  end
+  def evaluate; @value; end
   # evaluate the current solution
   def full_evaluation
     @coordinations.each do |coord|
@@ -285,31 +234,20 @@ class CoordinationProblem
   end
 end
 
-H = [0,75] # horizon
+@@vissim = Vissim.new
 
-CONTROLLERS = [
-  {:number => 1, :plan => [ARTERIAL] * 10 + [RED] * 10, :position => 10, :internal_distance => 0},
-  {:number => 2, :plan => [ARTERIAL] * 10 + [RED] * 10, :position => 75, :internal_distance => 0},
-  {:number => 3, :plan => [ARTERIAL] * 10 + [RED] * 10, :position => 180, :internal_distance => 0}
-]
-
-RELATIONS = [
-  {:scno1 => 1, :scno2 => 2, :velocity => 5.0},
-  {:scno1 => 2, :scno2 => 1, :velocity => 5.0},
-  {:scno1 => 2, :scno2 => 3, :velocity => 5.0},
-  {:scno1 => 3, :scno2 => 2, :velocity => 5.0}
-]
+H = [0,150] # horizon
 
 def parse_coordinations
-  scs = CONTROLLERS.map{|opts| SC.new!(opts.merge(:cycle_time => opts[:plan].size))}
   
-  coordinations = RELATIONS.map do |opts| 
-    sc1 = scs.find{|sc| sc.number == opts[:scno1]}
-    sc2 = scs.find{|sc| sc.number == opts[:scno2]}
-    coord = Coordination.new!(opts.merge(:sc1 => sc1, :sc2 => sc2))
-    sc1.member_coordinations << coord
-    sc2.member_coordinations << coord
-    coord
+  scs = @@vissim.controllers_with_plans
+  
+  coordinations = []
+  scs.each_cons(2) do |sc1,sc2|
+    next unless (sc2.number - sc1.number).abs == 1 # assigned numbers indicate proximity
+    # setup a coordination in each direction
+    coordinations << Coordination.new(sc1,sc2,@@vissim.velocity(sc1,sc2))
+    #@coordinations << Coordination.new(sc2,sc1)
   end
   
   yield coordinations, scs
@@ -317,32 +255,32 @@ end
 
 if __FILE__ == $0
   parse_coordinations do |coords, scs|
-    problem = CoordinationProblem.new(coords, scs, H)
-    siman = SimulatedAnnealing.new(problem, 2, :start_temp => 100.0, :alpha => 0.99)      
-    
-    result = siman.run do |newval, prevval, new_offsets|
-      puts "Found new encumbent #{newval} vs. #{prevval}"
-    end
-    puts "Solver finished in #{result[:time]} seconds."
-    puts "Jumps: #{result[:jumps]}"
-    puts "Iterations per second: #{result[:iter_per_sec]}"
-        
-    #    coord = coords[2]
-    #    puts coord
-    #    puts "travel time: #{coord.traveltime}"
-    #    sc1 = coord.sc1
-    #    sc2 = coord.sc2
-    #    o1 = 0
-    #    o2 = 10
+    #    problem = CoordinationProblem.new(coords, scs, H)
+    #    siman = SimulatedAnnealing.new(problem, 2, :start_temp => 100.0, :alpha => 0.99)      
     #    
-    #    puts "sc1 emits:"
-    #    puts sc1.bands_in_horizon(H, o1)
-    #    puts "sc2 receives:"
-    #    puts sc2.bands_in_horizon(H, o2)
-    #    
-    #    puts "found mismatches:"
-    #    coord.mismatches_in_horizon(H, o1, o2) do |band|
-    #      puts "yielded band: #{band}"
+    #    result = siman.run do |newval, prevval, new_offsets|
+    #      puts "Found new encumbent #{newval} vs. #{prevval}"
     #    end
+    #    puts "Solver finished in #{result[:time]} seconds."
+    #    puts "Jumps: #{result[:jumps]}"
+    #    puts "Iterations per second: #{result[:iter_per_sec]}"
+        
+    coord = coords[2]
+    puts coord
+    puts "travel time: #{coord.traveltime}s"
+    sc1 = coord.sc1
+    sc2 = coord.sc2
+    o1 = 0
+    o2 = 10
+    from_direction = coord.from_direction
+    puts "#{sc1} emits:"
+    puts sc1.greenwaves(H, o1, from_direction)
+    puts "#{sc2} receives:"
+    puts sc2.greenwaves(H, o2, from_direction)
+        
+    puts "found mismatches:"
+    coord.mismatches_in_horizon(H, o1, o2) do |band|
+      puts "yielded band: #{band}"
+    end
   end
 end
