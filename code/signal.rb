@@ -10,7 +10,9 @@ class SignalController < VissimElem
   attr_reader :controller_type,:cycle_time,:offset,:groups,:program,
     :bus_detector_n,:bus_detector_s, # north and southern detector suffixes
   :donor_stage,:recipient_stage, # donor and recipient stages
-  :member_coordinations # list of coordinations, in which this controller participates
+  :member_coordinations, # list of coordinations, in which this controller participates
+  :position # Gives an estimate of the controllers position in the artery in meters
+  
   def initialize number
     super(number)
     @groups = []
@@ -21,7 +23,7 @@ class SignalController < VissimElem
   def has_bus_priority?; not [@bus_detector_n,@bus_detector_s,@donor_stage,@recipient_stage].any?{|e|e.nil?}; end
   def is_donor? stage; stage.number == donor_stage; end
   def is_recipient? stage; stage.number == recipient_stage; end
-    
+      
   # check if all groups have a signal plan plus
   # generel checks
   def has_plans?; not [@cycle_time,@offset].any?{|e|e.nil?} and @groups.all?{|grp| grp.has_plan?}; end  
@@ -78,7 +80,7 @@ class SignalController < VissimElem
         break if tstart >= horizon.max # only show bands in the horizon
         # create the band. the end time might be cut off by the horizon limits
         if [tstart,tend].any?{|t|horizon.include?(t)} # entered the horizon
-          wavebands << Band.new(tstart, [tend, horizon.max].min)
+          wavebands << Band.new([tstart,horizon.min].max, [tend, horizon.max].min)
         end
         cycle_count += 1
       end
