@@ -44,13 +44,14 @@ class Band
   def to_a; to_r.to_a; end
 end
 class Coordination
-  attr_reader :sc1, :sc2, :distance, :from_direction
+  attr_reader :sc1, :sc2, :distance, :from_direction, :left_to_right
   def initialize sc1, sc2, velocity
     @sc1, @sc2 = sc1, sc2
     @default_velocity = velocity
     @distance = @@vissim.distance(@sc1,@sc2)
     @from_direction = get_from_direction(@sc1,@sc2)
     [@sc1,@sc2].each{|sc|sc.member_coordinations << self} # notify controllers
+    @left_to_right = true
   end
   def traveltime(v = @default_velocity); (@distance / v).round; end
   # returns times where there is a mismatch between sc1 and sc2 ie.
@@ -63,7 +64,7 @@ class Coordination
     for b1 in @sc1.greenwaves(h, o1, @from_direction)
       b1.shift(tt) # project this emitted band forward in time
       bands2 = @sc2.greenwaves([h.min, b1.tend], o2, @from_direction)
-      puts "trying to chop up #{b1} using #{bands2.join(', ')}"
+      #puts "trying to chop up #{b1} using #{bands2.join(', ')}"
       # b1 shifted is now all mismatches;
       # use the bands from sc2 to chop off pieces
       begin 
@@ -78,7 +79,7 @@ class Coordination
   end
   # the position where a green band *may* become held up by a red light
   def conflict_position
-    if left_to_right
+    if @left_to_right
       @sc2.position
     else
       @sc2.position + @sc2.internal_distance
@@ -156,14 +157,14 @@ class CoordinationProblem
   attr_reader :encumbent,:encumbent_val
   def initialize coords, scs, horizon
     @coordinations = coords
-    @signal_controllers = scs
+    @controllers = scs
     @horizon = horizon
-    @size = @signal_controllers.size
+    @size = @controllers.size
   end
   # return a set of offsets for each signal controllers
   def create_initial_solution
     @current = {}
-    @signal_controllers.each{|sc| @current[sc] = 0}
+    @controllers.each{|sc| @current[sc] = 0}
     @coord_contribution = {}
     @value = full_evaluation # updates current solution value
     store_encumbent
@@ -179,7 +180,7 @@ class CoordinationProblem
   # note the change so that it may be undone, if requested
   def change
     # pick a coordination to alter
-    @changed_sc = @signal_controllers[(rand * @size).round % @size]
+    @changed_sc = @controllers[(rand * @size).round % @size]
     @previous_setting = @current[@changed_sc]
     @current[@changed_sc] = @previous_setting + ((@previous_setting == 0 or rand < 0.5) ? 1 : -1)
             
@@ -251,7 +252,7 @@ def parse_coordinations
     #@coordinations << Coordination.new(sc2,sc1)
   end
   
-  yield coordinations, scs
+  yield coordinations, scs, @@vissim
 end
 
 if __FILE__ == $0

@@ -62,11 +62,17 @@ class Vissim
       from1 = ARTERY[:sc1][:from_direction]
       from2 = ARTERY[:sc2][:from_direction]
       
+      # arterial end-to-end route must traverse these numbered intersections in order
       scs_to_pass = (sc1..sc2)
       
+      # find the decisions, which must be traversed in the artery route
+      # always through-going decisions.
+      # in the end there should be exactly two keys = directions
+      # in the hash and the number of decisions would normally correspond to the
+      # number of controllers in the artery.
       artery_decisions = Hash.new{|h,k| h[k] = []}
       @decisions.each do |d| 
-        if scs_to_pass === d.intersection and d.turning_motion == "T" and [from1,from2].include?(d.from_direction)
+        if scs_to_pass === d.intersection and d.turning_motion == 'T' and [from1,from2].include?(d.from_direction)
           artery_decisions[d.from_direction] << d
         end
       end
@@ -85,6 +91,13 @@ class Vissim
           # direction they give green to.
           route.mark_arterial from_direction
         end
+      end
+      
+      # The arterial signal heads and thus groups have now been
+      # marked and we may calculate the positions of the controllers relative to the first one
+      firstsc = @controllers.find{|sc|sc.number == sc1}
+      controllers_with_plans.each do |sc|
+        sc.update :position => distance(firstsc,sc)
       end
     end
   end
@@ -328,14 +341,10 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new 
-  
-  hh = vissim.controllers.find{|c| c.number == 4}
-  for grp in hh.groups
-    puts "#{grp} '#{grp.has_plan?}'"
+    
+  for sc in vissim.controllers_with_plans
+    puts "#{sc} #{sc.position}"
   end
-  puts "#{hh} #{hh.has_plans?}"
-  
-  puts vissim.controllers_with_plans
   #  for link in vissim.links
   #    puts "#{link} at #{link.intersection_number}"
   #  end

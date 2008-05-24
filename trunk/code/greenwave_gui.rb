@@ -4,16 +4,18 @@ include Wx
 
 class RoadTimeDiagram < Frame
   FATPENWIDTH = 3
-  def initialize coords, scs, h
-    super(nil, :title => "Road-Time Diagram (#{scs.size} intersections)", :size => [800,600])
+  def initialize coordinations, controllers, horizon, vissim
+    super(nil, :title => "Road-Time Diagram (#{controllers.size} intersections)", :size => [800,600])
     
-    @signal_controllers = scs
-    @coordinations = coords
-    @horizon = h
+    @controllers = controllers
+    @coordinations = coordinations
+    @horizon = horizon
     
     @tmax = [@coordinations.map{|c| c.traveltime}.sum, @horizon.max].max.to_f
-    @distmax = @signal_controllers.map{|sc| sc.position + sc.internal_distance}.max.to_f + 5
-          
+    @distmax = vissim.distance(
+      vissim.controllers_with_plans.first, 
+      vissim.controllers_with_plans.last)
+              
     # all time/distance related paint jobs must translate to match this origo (0,0)
     @ox, @oy = 30, 120
       
@@ -32,7 +34,7 @@ class RoadTimeDiagram < Frame
     @red_pen = Pen.new(Colour.new(255,0,0))
     @red_pen.set_width FATPENWIDTH * 2
     
-    problem = CoordinationProblem.new(coords, scs, h)
+    problem = CoordinationProblem.new(coordinations, controllers, horizon)
     siman = SimulatedAnnealing.new(problem, 2, :start_temp => 100.0, :alpha => 0.99)
     
     problem.create_initial_solution
@@ -93,7 +95,7 @@ class RoadTimeDiagram < Frame
       yscale = ybase / @tmax
       
       # scaling factor of distance to pixels on the x-axis
-      xscale = (w - @ox) / @distmax
+      xscale = (w - @ox) / @distmax.to_f
       
       # draw distance helper lines (vertical)
       10.step(@distmax.round,10) do |d|
@@ -110,7 +112,8 @@ class RoadTimeDiagram < Frame
       end
       
       # insert the names of the intersections
-      for sc in @signal_controllers
+      for sc in @controllers
+        puts "drawing #{sc.name} at #{sc.position}"
         dc.draw_rotated_text(sc.to_s, (sc.position * xscale).round + @ox, h - 5, 90)
       end    
 
@@ -130,7 +133,7 @@ class RoadTimeDiagram < Frame
           lstart = sc1.position + sc1.internal_distance
           lend = lstart - coord.distance
         end
-        sc1.bands_in_horizon(@horizon, @offset[sc1]).each do |band|
+        sc1.greenwaves(@horizon, @offset[sc1],coord.from_direction).each do |band|
           t1 = band.tstart
           t2 = t1 + band.width
           t1, t2 = t2, t1 unless coord.left_to_right
@@ -179,16 +182,12 @@ class RoadTimeDiagram < Frame
   end
 end
 
-def optimize_roadtime_diagram coords, scs, horizon  
-  App.run do
-    RoadTimeDiagram.new(coords, scs, horizon)
-  end
-end
-
 if __FILE__ == $0
   require 'greenwave_eval'
-  parse_coordinations do |coords, scs|    
-    optimize_roadtime_diagram(coords, scs, H)
+  parse_coordinations do |coords, scs, vissim|    
+    App.run do
+      RoadTimeDiagram.new(coords, scs, H, vissim)
+    end
   end
 end
   
