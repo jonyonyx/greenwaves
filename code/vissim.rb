@@ -59,7 +59,7 @@ class Vissim
       # this is used by the signal optimization routines
       sc1 = ARTERY[:sc1][:scno]
       sc2 = ARTERY[:sc2][:scno]
-      from1 = ARTERY[:sc1][:from_direction]
+      from1 = ARTERY[:sc1][:from_direction] # primary from direction
       from2 = ARTERY[:sc2][:from_direction]
       
       # arterial end-to-end route must traverse these numbered intersections in order
@@ -93,8 +93,7 @@ class Vissim
         end
       end
       
-      # The arterial signal heads and thus groups have now been
-      # marked and we may calculate the positions of the controllers relative to the first one
+      # controller positions relative to first sc in primary direction
       firstsc = @controllers.find{|sc|sc.number == sc1}
       controllers_with_plans.each do |sc|
         sc.update :position => distance(firstsc,sc)
@@ -343,7 +342,7 @@ if __FILE__ == $0
   vissim = Vissim.new 
     
   for sc in vissim.controllers_with_plans
-    puts "#{sc} #{sc.position}"
+    puts "#{sc} #{sc.position} #{sc.internal_distance}"
   end
   #  for link in vissim.links
   #    puts "#{link} at #{link.intersection_number}"

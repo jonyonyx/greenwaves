@@ -17,6 +17,8 @@ class SignalController < VissimElem
     super(number)
     @groups = []
     @member_coordinations = []
+    @arterial_groups_from = {}
+    @served_arterial_links = {}
   end
   
   # Methods used in bus priority
@@ -29,7 +31,13 @@ class SignalController < VissimElem
   def has_plans?; not [@cycle_time,@offset].any?{|e|e.nil?} and @groups.all?{|grp| grp.has_plan?}; end  
   def add_group(number, opts); @groups << SignalGroup.new!(number,opts); end
   def group(number); @groups.find{|grp|grp.number == number}; end
-  def arterial_groups; @groups.find_all{|grp| grp.serves_artery?}; end
+  def arterial_groups
+    @arterial_groups ||= @groups.find_all{|grp| grp.serves_artery?}
+  end
+  def arterial_groups_from(from_direction)
+    @arterial_groups_from[from_direction] ||= 
+      arterial_groups.find_all{|grp|grp.arterial_from.include?(from_direction)}
+  end
   def interstage_active?(cycle_sec)
     # all-red phases are considered interstage
     return true if @groups.all?{|grp| grp.color(cycle_sec) == RED}
@@ -42,29 +50,18 @@ class SignalController < VissimElem
     
     # a stage has major priority if it contains all groups (for this SC)
     # which should receive major priority rather than just some of them
-    if (@groups.find_all{|grp| grp.priority == MAJOR}- stage.groups).empty?
+    if (@groups.find_all{|grp| grp.priority == MAJOR} - stage.groups).empty?
       MAJOR
     else
       stage.groups.any?{|grp| grp.priority == MINOR} ? MINOR : NONE
     end
   end
-  # Finds all arterial groups, which are active in the given time - respecting offset -
-  # that serves the arterial traffic coming from the given direction.
-  def state(t,o,from_direction)
-    # convert the 1-based horizon second to 0-based plan indexing
-    # offsets denote the delay in which the program should be started
-    # and should thus be subtracted
-    arterial_groups.find_all do |grp|
-      grp.active_seconds === ((t - o) % @cycle_time) and
-        grp.arterial_from.include?(from_direction)
-    end
-  end
   # Finds the green wave bands emitted from the given arterial direction
   # in the given time horizon. The offset of the signal controller is taken
   # as a parameter and will affect the start-and end times of the bands.
-  def greenwaves(horizon,offset,from_direction)
+  def greenwaves(horizon,offset,from_direction)    
     wavebands = []
-    @groups.find_all{|grp|grp.arterial_from.include?(from_direction)}.each do |group|
+    arterial_groups_from(from_direction).each do |group|
       active_seconds = group.active_seconds # within a cycle
       
       # project active seconds into the horizon
@@ -80,7 +77,9 @@ class SignalController < VissimElem
         break if tstart >= horizon.max # only show bands in the horizon
         # create the band. the end time might be cut off by the horizon limits
         if [tstart,tend].any?{|t|horizon.include?(t)} # entered the horizon
-          wavebands << Band.new([tstart,horizon.min].max, [tend, horizon.max].min)
+          # end must not be bounded by horizon max, otherwise
+          # heuristic will push bands out of horizon
+          wavebands << Band.new([tstart,horizon.min].max, tend)
         end
         cycle_count += 1
       end
@@ -114,18 +113,33 @@ class SignalController < VissimElem
     @stagear
   end
   def served_arterial_links(from_direction)
-    arterial_groups.find{|grp| grp.arterial_from.include? from_direction}.served_arterial_links
+    @served_arterial_links[from_direction] ||= 
+      arterial_groups_from(from_direction).map{|grp|grp.served_arterial_links}.flatten
+  end
+  # calculates the approximate distance across the intersection from stop-line to stop-line
+  def internal_distance
+    #    arterial_heads_from = Hash.new{|h,k| h[k] = []} # from_directions => links
+    #    @groups.map{|grp|grp.arterial_heads}.flatten.each do |head|
+    #      puts head
+    #      arterial_heads_from[head.position_link.from_direction] << head
+    #    end
+    #    for from_direction in arterial_heads_from.keys.uniq - [nil]
+    #      puts from_direction
+    #    end
+    
+    25
   end
   class SignalGroup < VissimElem
     attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads,:priority
     def initialize(number)
       super(number)
       @heads = [] # signal heads in this group
+      @color = {}
     end
     def add_head number, opts; @heads << SignalHead.new!(number,opts); end
     def has_plan?; not [@red_end,@green_end,@tred_amber,@tamber].any?{|e|e.nil?}; end
     def color cycle_sec
-      case cycle_sec
+      @color[cycle_sec] ||= case cycle_sec
       when active_seconds
         GREEN 
       when (@red_end+1..@red_end+@tred_amber)
@@ -139,33 +153,25 @@ class SignalController < VissimElem
     # returns a range of seconds in a cycle in vehicles are permitted
     # to cross the stop lines of the group
     def active_seconds
+      return @active_seconds if @active_seconds
       green_start = @red_end + @tred_amber + 1
-      if green_start < @green_end
+      @active_seconds = if green_start < @green_end
         (green_start..@green_end)
       else
         # (green_end+1..green_start) defines the red time
         (1..@green_end) # todo: handle the case of green time which wraps around
       end
     end
-    def serves_artery?; @heads.any?{|h| h.serves_artery?}; end
-    def served_arterial_links; arterial_heads.map{|h| h.position_link}.uniq; end
+    def serves_artery?; @serves_artery ||= @heads.any?{|h| h.serves_artery?}; end
+    def served_arterial_links; @served_arterial_links ||= arterial_heads.map{|h| h.position_link}.uniq; end
     # Scan over the signal heads in this group extracting all
     # road segments, which are arterial and the from direction.
     # If none such markings are found among the heads, this group serves
     # only minor-road traffic. Otherwise at least some heads
     # serve the arterial (major road) and the direction from which is served
     # becomes the answer
-    def arterial_from; @heads.map{|h| h.arterial_from}.uniq - [nil]; end
-    def arterial_heads; @heads.find_all{|h| h.serves_artery?}; end
-    # (see description for Stage-method of same name)
-    # This check depends on each signal head and the link on which it is placed.
-    # When the vissim network was loaded the arterial links and connectors were marked
-    # with the from direction by which they serve traffic.
-    # To be direction compatible this group must serve arterial traffic
-    # as well as the other group and they must serve the same from direction
-    def direction_compatible(downstream_group)      
-      serves_artery? and arterial_from == downstream_group.arterial_from    
-    end
+    def arterial_from; @arterial_from ||= @heads.map{|h| h.arterial_from}.uniq - [nil]; end
+    def arterial_heads; @arterial_heads ||= @heads.find_all{|h| h.serves_artery?}; end
     class SignalHead < VissimElem
       attr_reader :position_link,:lane,:at
       def serves_artery?; not arterial_from.nil?; end
@@ -179,15 +185,5 @@ end
 class Stage < VissimElem
   attr_reader :groups
   def to_s; @number.to_s; end
-  # determine if this stage and otherstage are
-  # compatible wrt direction ie their groups give way
-  # for the same traffic stream through the artery
-  #
-  # return true if there exist a connection from
-  def direction_compatible?(downstream_stage)
-    @groups.any? do |grp|
-      downstream_stage.groups.any?{|togrp| grp.direction_compatible(togrp)}
-    end
-  end
   def arterial?; @groups.any?{|grp|grp.serves_artery?};end
 end
