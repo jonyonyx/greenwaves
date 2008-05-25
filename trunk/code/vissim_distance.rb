@@ -5,7 +5,7 @@ class Vissim
   # Finds the distance from the arterial signal head(s) in this controller
   # to the downstream stop-line of othersc
   def distance fromsc,tosc
-    return 0.0 if fromsc == tosc
+    return 0 if fromsc == tosc
     
     # determine which sc is in the downstream
     from_direction = get_from_direction(fromsc,tosc)

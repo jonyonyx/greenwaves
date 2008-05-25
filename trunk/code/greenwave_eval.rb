@@ -13,7 +13,7 @@ class Band
     @tend - @tstart + 1
   end
   def overlap?(other)
-    to_r.include?(other.tstart) or other.to_r.include?(@start)
+    to_r.include?(other.tstart) or other.to_r.include?(@tstart)
   end
   # returns a new band signifying the time units
   # where self and otherband is overlapping each other
@@ -48,10 +48,13 @@ class Coordination
   def initialize sc1, sc2, velocity
     @sc1, @sc2 = sc1, sc2
     @default_velocity = velocity
-    @distance = @@vissim.distance(@sc1,@sc2)
     @from_direction = get_from_direction(@sc1,@sc2)
+    @left_to_right = @from_direction == ARTERY[:sc1][:from_direction]
+    
+    # simplify things and visualization by always taking the distance
+    # in the primary direction
+    @distance = @left_to_right ? @@vissim.distance(@sc1,@sc2) : @@vissim.distance(@sc2,@sc1)
     [@sc1,@sc2].each{|sc|sc.member_coordinations << self} # notify controllers
-    @left_to_right = true
   end
   def traveltime(v = @default_velocity); (@distance / v).round; end
   # returns times where there is a mismatch between sc1 and sc2 ie.
@@ -63,16 +66,15 @@ class Coordination
     
     for b1 in @sc1.greenwaves(h, o1, @from_direction)
       b1.shift(tt) # project this emitted band forward in time
-      bands2 = @sc2.greenwaves([h.min, b1.tend], o2, @from_direction)
+      bands2 = @sc2.greenwaves(b1.to_r, o2, @from_direction)
       #puts "trying to chop up #{b1} using #{bands2.join(', ')}"
-      # b1 shifted is now all mismatches;
+      # b1 shifted is now all potential mismatches;
       # use the bands from sc2 to chop off pieces
-      begin 
-        overlapping_band = bands2.find{|b| b1.overlap?(b)}
-        break if overlapping_band.nil? # check if something was found
-        puts "found overlapping band #{overlapping_band}"
-        b1 -= overlapping_band
-      end while b1
+      bands2.each do |b2|
+        next unless b1.overlap?(b2)
+        b1 -= b2
+        break if b1.nil? # perfect coordination, nothing more to do :)
+      end
       
       yield b1 if b1
     end
@@ -82,7 +84,7 @@ class Coordination
     if @left_to_right
       @sc2.position
     else
-      @sc2.position + @sc2.internal_distance
+      @sc1.position - @distance + @sc1.internal_distance
     end
   end
   # finds the utility ie. number of mismatches in the given horizon
@@ -144,7 +146,7 @@ class SimulatedAnnealing
     {
       :solution => @problem.solution, 
       :iterations => iterations, 
-      :iter_per_sec => iterations / finish_time.to_f,
+      :iter_per_sec => (iterations / finish_time.to_f).round,
       :time => finish_time,
       :jumps => jumps,
       :encumbent_time => encumbent_found_time
@@ -238,51 +240,53 @@ end
 
 @@vissim = Vissim.new
 
-H = (10..90) # horizon
+H = (0..300) # horizon
 
 def parse_coordinations
   
-  scs = @@vissim.controllers_with_plans
+  scs = @@vissim.controllers_with_plans.find_all{|sc|sc.number <= 5}
   
   coordinations = []
   scs.each_cons(2) do |sc1,sc2|
     next unless (sc2.number - sc1.number).abs == 1 # assigned numbers indicate proximity
     # setup a coordination in each direction
     coordinations << Coordination.new(sc1,sc2,@@vissim.velocity(sc1,sc2))
-    #@coordinations << Coordination.new(sc2,sc1)
+    coordinations << Coordination.new(sc2,sc1,@@vissim.velocity(sc2,sc1))
   end
   
-  yield coordinations, scs, @@vissim
+  yield coordinations, scs
 end
 
 if __FILE__ == $0
   parse_coordinations do |coords, scs|
-    #    problem = CoordinationProblem.new(coords, scs, H)
-    #    siman = SimulatedAnnealing.new(problem, 2, :start_temp => 100.0, :alpha => 0.99)      
-    #    
-    #    result = siman.run do |newval, prevval, new_offsets|
-    #      puts "Found new encumbent #{newval} vs. #{prevval}"
-    #    end
-    #    puts "Solver finished in #{result[:time]} seconds."
-    #    puts "Jumps: #{result[:jumps]}"
-    #    puts "Iterations per second: #{result[:iter_per_sec]}"
+    #require 'unprof'
+
+    problem = CoordinationProblem.new(coords, scs, H)
+    siman = SimulatedAnnealing.new(problem, 2, :start_temp => 500.0, :alpha => 0.99)      
         
-    coord = coords[2]
-    puts coord
-    puts "travel time: #{coord.traveltime}s"
-    sc1 = coord.sc1
-    sc2 = coord.sc2
-    o1 = 0
-    o2 = 10
-    from_direction = coord.from_direction
-    puts "#{sc1} emits:"
-    puts sc1.greenwaves(H, o1, from_direction)
-    puts "#{sc2} receives:"
-    puts sc2.greenwaves(H, o2, from_direction)
-        
-    puts "found mismatches:"
-    coord.mismatches_in_horizon(H, o1, o2) do |band|
-      puts "yielded band: #{band}"
+    result = siman.run do |newval, prevval, new_offsets|
+      puts "Found new encumbent #{newval} vs. #{prevval}"
     end
+    puts "Solver finished in #{result[:time]} seconds."
+    puts "Jumps: #{result[:jumps]}"
+    puts "Iterations per second: #{result[:iter_per_sec]}"
+        
+    #    coord = coords[2]
+    #    puts coord
+    #    puts "travel time: #{coord.traveltime}s"
+    #    sc1 = coord.sc1
+    #    sc2 = coord.sc2
+    #    o1 = 0
+    #    o2 = 10
+    #    from_direction = coord.from_direction
+    #    puts "#{sc1} emits:"
+    #    puts sc1.greenwaves(H, o1, from_direction)
+    #    puts "#{sc2} receives:"
+    #    puts sc2.greenwaves(H, o2, from_direction)
+    #        
+    #    puts "found mismatches:"
+    #    coord.mismatches_in_horizon(H, o1, o2) do |band|
+    #      puts "yielded band: #{band}"
+    #    end
   end
 end

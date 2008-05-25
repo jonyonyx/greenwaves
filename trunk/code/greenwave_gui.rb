@@ -12,9 +12,7 @@ class RoadTimeDiagram < Frame
     @horizon = horizon
     
     @tmax = [@coordinations.map{|c| c.traveltime}.sum, @horizon.max].max.to_f
-    @distmax = vissim.distance(
-      vissim.controllers_with_plans.first, 
-      vissim.controllers_with_plans.last)
+    @distmax = @controllers.map{|sc|sc.position}.max + 100
               
     # all time/distance related paint jobs must translate to match this origo (0,0)
     @ox, @oy = 30, 120
@@ -35,7 +33,7 @@ class RoadTimeDiagram < Frame
     @red_pen.set_width FATPENWIDTH * 2
     
     problem = CoordinationProblem.new(coordinations, controllers, horizon)
-    siman = SimulatedAnnealing.new(problem, 2, :start_temp => 100.0, :alpha => 0.99)
+    siman = SimulatedAnnealing.new(problem, 5, :start_temp => 500.0, :alpha => 0.99)
     
     problem.create_initial_solution
     @offset = problem.solution
@@ -45,12 +43,12 @@ class RoadTimeDiagram < Frame
     solthread = Thread.new do    
       result = siman.run do |newval, prevval, new_offsets|
         puts "Found new encumbent #{newval} vs. #{prevval}"
-        queue << new_offsets
+        queue.push new_offsets
       end
       puts "Solver finished at #{result[:iter_per_sec]} iterations per second"
     end
     
-    Timer.every(1000) do       
+    Timer.every(500) do       
       unless queue.empty?
         @offset = queue.pop     
         on_paint        
@@ -98,9 +96,8 @@ class RoadTimeDiagram < Frame
       xscale = (w - @ox) / @distmax.to_f
       
       # draw distance helper lines (vertical)
-      10.step(@distmax.round,10) do |d|
+      500.step(@distmax.round,500) do |d|
         x = (d * xscale).round + @ox
-        dc.draw_text("#{d}", x + 1, ybase)
         dc.draw_line(x,h,x,0)
       end
       
@@ -113,8 +110,9 @@ class RoadTimeDiagram < Frame
       
       # insert the names of the intersections
       for sc in @controllers
-        puts "drawing #{sc.name} at #{sc.position}"
-        dc.draw_rotated_text(sc.to_s, (sc.position * xscale).round + @ox, h - 5, 90)
+        x = (sc.position * xscale).round + @ox
+        dc.draw_text("#{sc.position}", x + 1, ybase)
+        dc.draw_rotated_text(sc.name, x, h - 5, 90)
       end    
 
       green_lights = []
@@ -130,9 +128,10 @@ class RoadTimeDiagram < Frame
           lstart = sc1.position
           lend = lstart + coord.distance
         else
-          lstart = sc1.position + sc1.internal_distance
+          lstart = sc2.position + sc2.internal_distance + coord.distance
           lend = lstart - coord.distance
         end
+
         sc1.greenwaves(@horizon, @offset[sc1],coord.from_direction).each do |band|
           t1 = band.tstart
           t2 = t1 + band.width
