@@ -3,8 +3,8 @@
 # and open the template in the editor.
 
 require 'sequel'
-Project = 'dtu'
-#Project = 'cowi'
+#Project = 'dtu'
+Project = 'cowi'
 
 CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source="
 if Project == 'dtu'
