@@ -94,19 +94,19 @@ class SignalController < VissimElem
     for t in (1..@cycle_time)
       if interstage_active?(t)
         if last_interstage
-          last_interstage = last_interstage.succ unless stagear.last == last_interstage
+          last_interstage = last_interstage.succ unless @stagear.last == last_interstage
         else
           last_interstage = 'a'
         end
-        stagear << last_interstage
+        @stagear << last_interstage
       else
         # check if any colors have changed
         if @groups.all?{|grp| grp.color(t) == grp.color(t-1)}
-          stagear << last_stage
+          @stagear << last_stage
         else
           last_stage = Stage.new!((last_stage ? last_stage.number+1 : 1),
             :groups => @groups.find_all{|grp| grp.active_seconds === t})
-          stagear << last_stage
+          @stagear << last_stage
         end
       end
     end
