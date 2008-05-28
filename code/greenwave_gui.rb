@@ -4,14 +4,14 @@ include Wx
 
 class RoadTimeDiagram < Frame
   FATPENWIDTH = 3
-  def initialize coordinations, controllers, horizon, vissim
-    super(nil, :title => "Road-Time Diagram (#{controllers.size} intersections)", :size => [800,600])
+  def initialize
+    super(nil, :size => [800,600])
     
-    @controllers = controllers
-    @coordinations = coordinations
-    @horizon = horizon
+    @coordinations,@controllers, @solutions, @horizon = run_simulation_annealing
     
-    @tmax = [@coordinations.map{|c| c.traveltime}.sum, @horizon.max].max.to_f
+    set_title "Road-Time Diagram (#{@controllers.size} intersections)"
+    
+    @tmax = (@coordinations.map{|c| c.traveltime(c.default_speed)}.max + @horizon.max).to_f
     @distmax = @controllers.map{|sc|sc.position}.max + 100
               
     # all time/distance related paint jobs must translate to match this origo (0,0)
@@ -30,39 +30,26 @@ class RoadTimeDiagram < Frame
     @green_pen.set_width FATPENWIDTH * 2
     
     @red_pen = Pen.new(Colour.new(255,0,0))
-    @red_pen.set_width FATPENWIDTH * 2
-    
-    problem = CoordinationProblem.new(coordinations, controllers, horizon)
-    siman = SimulatedAnnealing.new(problem, 5, :start_temp => 500.0, :alpha => 0.99)
-    
-    problem.create_initial_solution
-    @offset = problem.solution
-    
-    queue = Queue.new
-    
-    solthread = Thread.new do    
-      result = siman.run do |newval, prevval, new_offsets|
-        puts "Found new encumbent #{newval} vs. #{prevval}"
-        queue.push new_offsets
+    @red_pen.set_width FATPENWIDTH * 2    
+        
+    Timer.every(500) do      
+      unless @solutions.empty?
+        solution = @solutions.shift
+        @offset = solution[:offset]
+        @speed = solution[:speed]
+        on_paint    
       end
-      puts "Solver finished at #{result[:iter_per_sec]} iterations per second"
-    end
-    
-    Timer.every(500) do       
-      unless queue.empty?
-        @offset = queue.pop     
-        on_paint        
-      end
-    end
+    end    
     
     evt_paint { on_paint }
     evt_size { on_paint }
     
-    show     
-    
-    solthread.join
+    show
+  end
+  def show_next_solution    
   end
   def on_paint
+    #return unless @offset and @speed
     paint_buffered do | dc |
       dc.clear
 
@@ -109,14 +96,27 @@ class RoadTimeDiagram < Frame
       end
       
       # insert the names of the intersections
+      # and current offsets
       for sc in @controllers
         x = (sc.position * xscale).round + @ox
         dc.draw_text("#{sc.position}", x + 1, ybase)
+        dc.draw_text("O=#{@offset[sc]}", x - 1, ybase + 12)
         dc.draw_rotated_text(sc.name, x, h - 5, 90)
       end    
 
+      # insert current speeds of coordinations
+      for coord in @coordinations
+        x = (xscale * [coord.sc1.position,coord.sc2.position].mean).round + @ox
+        speed = "#{(@speed[coord] * 3.6).round}km"
+        speedsign = coord.left_to_right ? "#{speed} ->" : "<- #{speed}"
+        tw,th = dc.get_text_extent(speedsign)
+        
+        y = h - 1 - (coord.left_to_right ? 2 : 1) * th
+        dc.draw_text(speedsign , (x - tw/2.0).round, y)
+      end
+
       green_lights = []
-      
+
       # draw a band where the width corresponds to the green time
       # in the arterial direction       
       @coordinations.each do |coord|
@@ -140,7 +140,7 @@ class RoadTimeDiagram < Frame
           x1 = (lstart * xscale).round + @ox
           x2 = (lend * xscale).round + @ox
           y1 = ybase - (t1 * yscale).round
-          y2 = ybase - ((t1 + coord.traveltime) * yscale).round
+          y2 = ybase - ((t1 + coord.traveltime(@speed[coord])) * yscale).round
           ydelta = ((t2 - t1)*yscale).round # width of the band in pixel
           
           # mark the path of the green band
@@ -164,7 +164,7 @@ class RoadTimeDiagram < Frame
         gdc.set_pen @red_pen
         
         x = (coord.conflict_position * xscale).round + @ox
-        coord.mismatches_in_horizon(@horizon, @offset[sc1], @offset[sc2]) do |band|
+        coord.mismatches_in_horizon(@horizon,@offset[sc1],@offset[sc2],@speed[coord]) do |band|
           t1 = band.tstart
           t2 = t1 + band.width # paint tend inclusive
           gdc.stroke_line(x, ybase - (t2 * yscale).round, x, ybase - (t1 * yscale).round)
@@ -183,10 +183,16 @@ end
 
 if __FILE__ == $0
   require 'greenwave_eval'
-  parse_coordinations do |coords, scs, vissim|    
-    App.run do
-      RoadTimeDiagram.new(coords, scs, H, vissim)
-    end
+  App.run do
+    #      for setting_type, settings in solution
+    #        puts setting_type
+    #        settings.each do |el,setting|
+    #          puts "   #{el}: #{setting}"
+    #        end
+    #      end
+    
+    RoadTimeDiagram.new
   end
 end
+
   

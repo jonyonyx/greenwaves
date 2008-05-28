@@ -1,5 +1,5 @@
 class Vissim
-  def velocity(fromsc, tosc)
+  def speed(fromsc, tosc)
     80 / 3.6 # 80km/t
   end
   # Finds the distance from the arterial signal head(s) in this controller

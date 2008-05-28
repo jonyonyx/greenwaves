@@ -163,7 +163,8 @@ class Array
   def squares ; inject{|a,x|x**2+a} ; end
   def variance ; squares.to_f/size - mean**2; end
   def deviation ; variance**(1/2) ; end
-  def sample n=1 ; (0...n).collect{ self[rand(size)] } ; end
+  def sample n=1 ; (0...n).collect{ self[Kernel::rand(size)] } ; end
+  def rand ; self[Kernel::rand(size)] ; end
   def chunk(pieces)
     return [] if pieces.zero?
     piece_size = (length.to_f / pieces).ceil
@@ -223,6 +224,14 @@ class Class
 end
 
 class Hash
+  def copy
+    h = Hash.new(default_proc) 
+    each{|k,v|h[k]=v}
+    h
+  end
+  def +(h)
+    copy.merge(h.copy)
+  end
   def retain_keys!(*keys)
     delete_if{|k,| not keys.include? k}
   end
