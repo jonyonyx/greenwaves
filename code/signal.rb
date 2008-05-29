@@ -15,10 +15,8 @@ class SignalController < VissimElem
   
   def initialize number
     super(number)
-    @groups = []
-    @member_coordinations = []
-    @arterial_groups_from = {}
-    @served_arterial_links = {}
+    @groups = [] ; @member_coordinations = []
+    @arterial_groups_from = {} ; @served_arterial_links = {} # cache stores
   end
   
   # Methods used in bus priority
@@ -59,33 +57,45 @@ class SignalController < VissimElem
   # Finds the green wave bands emitted from the given arterial direction
   # in the given time horizon. The offset of the signal controller is taken
   # as a parameter and will affect the start-and end times of the bands.
-  def greenwaves(horizon,offset,from_direction)    
-    wavebands = []
+  def greenwaves(horizon,offset,from_direction)
+    waves = []
     arterial_groups_from(from_direction).each do |group|
       active_seconds = group.active_seconds # within a cycle
       
       # project active seconds into the horizon
       tstart_base = active_seconds.min + offset
       tend_base = active_seconds.max + offset
-      #puts "#{group} #{active_seconds}"
-      cycle_count = 0
-      loop do
-        cycle_offset = cycle_count * @cycle_time
+      
+      # only show bands in the horizon;
+      n = (horizon.min / @cycle_time.to_f).floor # first band is found after n cycles
+      m = (horizon.max / @cycle_time.to_f).floor # last band is found after m cycles
+      
+      (n..m).each do |cycle_number|
+        cycle_offset = @cycle_time * cycle_number
         tstart = tstart_base + cycle_offset
         tend = tend_base + cycle_offset
-        #puts "tstart: #{tstart}"
-        break if tstart >= horizon.max # only show bands in the horizon
-        # create the band. the end time might be cut off by the horizon limits
-        if [tstart,tend].any?{|t|horizon.include?(t)} # entered the horizon
-          # end must not be bounded by horizon max, otherwise
-          # heuristic will push bands out of horizon
-          wavebands << Band.new([tstart,horizon.min].max, tend)
+        if [tstart,tend].any?{|t|horizon === t}
+          waves << Band.new(tstart, tend)
         end
-        cycle_count += 1
       end
     end
-    wavebands
+    waves
   end
+      
+  #      cycle_count = 0
+  #      loop do
+  #        cycle_offset = cycle_count * @cycle_time
+  #        tstart = tstart_base + cycle_offset
+  #        tend = tend_base + cycle_offset
+  #        
+  #        break if tstart >= horizon.max # only show bands in the horizon
+  #        # create the band. the end time might be cut off by the horizon limits
+  #        if [tstart,tend].any?{|t|horizon.include?(t)} # entered the horizon
+  #          # end must not be bounded by horizon max, otherwise
+  #          # heuristic will push bands out of horizon
+  #          wavebands << Band.new([tstart,horizon.min].max, tend)
+  #        end
+  #        cycle_count += 1
   def stages
     return @stagear if @stagear # cache hit
     last_stage = nil

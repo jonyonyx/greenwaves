@@ -4,44 +4,40 @@ require 'const'
 ARTERIAL = 'a'
 
 class Band
-  NILBAND = nil
-  attr_reader :tstart, :tend
+  attr_reader :tstart, :tend, :width
   def initialize tstart, tend 
+    raise "A waveband must start before it ends" if tstart > tend
     @tstart, @tend = tstart, tend
   end
-  def width
-    @tend - @tstart + 1
-  end
   def overlap?(other)
-    to_r.include?(other.tstart) or other.to_r.include?(@tstart)
+    return false if @tend < other.tstart or other.tend < @tstart
+    true
   end
-  # returns a new band signifying the time units
-  # where self and otherband is overlapping each other
-  def overlap otherband
-    return NILBAND unless overlap?(otherband)
-    
-    tstart = [@tstart, otherband.tstart].max
-    tend = [@tend, otherband.tend].min
-      
-    Band.new(tstart, tend)  
-  end
-  def -(otherband)
+  def width; @tend - @tstart + 1; end
+  # returns a list of bands, which are the result of subtracting other from self
+  def subtract(other)
+    return [copy] unless overlap?(other)
     # find the common time indices
-    common = to_a - otherband.to_a
-    return NILBAND if common.empty? # perfect / complete overlap
-    
-    # TODO: check if common contains a non-consecutive string of integers
-    Band.new(common.min, common.max)
+    # 
+    # perfect or complete overlap; self is completely contained in other
+    return [] if @tstart >= other.tstart and @tend <= other.tend 
+    if @tstart < other.tstart and @tend > other.tend
+      # subtraction will results in multiple bands since
+      # self covers other and more
+      [Band.new(@tstart,other.tstart - 1),Band.new(other.tend + 1,@tend)]
+    elsif @tstart < other.tstart
+      [Band.new(@tstart,other.tstart - 1)]
+    elsif @tend > other.tend
+      [Band.new(other.tend+1,@tend)]
+    else
+      raise "Should not get here. Attempted #{self} - #{other}"
+    end
   end
-  def shift(offset)
-    @tstart += offset
-    @tend += offset
-  end
-  def to_s
-    "(#{@tstart}..#{@tend})"
-  end
+  def shift!(offset); @tstart += offset ; @tend += offset; end
+  def to_s; "(#{to_r})"; end
   def to_r; (@tstart..@tend); end
   def to_a; to_r.to_a; end
+  def copy; Band.new(@tstart,@tend); end
 end
 class Coordination
   attr_reader :sc1, :sc2, :distance, :from_direction, :left_to_right, :default_speed
@@ -65,27 +61,23 @@ class Coordination
     tt = traveltime(s)
     
     for b1 in @sc1.greenwaves(h, o1, @from_direction)
-      b1.shift(tt) # project this emitted band forward in time
+      b1.shift!(tt) # project this emitted band forward in time
+      uncovered_bands = [b1]
       bands2 = @sc2.greenwaves(b1.to_r, o2, @from_direction)
-      #puts "trying to chop up #{b1} using #{bands2.join(', ')}"
       # b1 shifted is now all potential mismatches;
       # use the bands from sc2 to chop off pieces
-      bands2.each do |b2|
-        next unless b1.overlap?(b2)
-        b1 -= b2
-        break if b1.nil? # perfect coordination, nothing more to do :)
+      while b2 = bands2.shift and not uncovered_bands.empty?
+        b1 = uncovered_bands.pop
+        remaining = b1.subtract(b2)
+        uncovered_bands.concat remaining
       end
       
-      yield b1 if b1
+      uncovered_bands.each{|b|yield b}
     end
   end
   # the position where a green band *may* become held up by a red light
   def conflict_position
-    if @left_to_right
-      @sc2.position
-    else
-      @sc1.position - @distance + @sc1.internal_distance
-    end
+    @left_to_right ? @sc2.position : (@sc1.position - @distance + @sc1.internal_distance)
   end
   # Finds the utility ie. number of mismatches in the given horizon.
   # Mixing apples and bananas.
@@ -170,7 +162,8 @@ class SimulatedAnnealing
     end
     time = Time.now - start_time
     result + 
-      {:time => time,    
+      {:encumbent_value => @problem.encumbent_value,
+      :time => time,
       :solution => @problem.solution,
       :iter_per_sec => (result[:iterations] / time.to_f).round} + 
       @problem.statistics
@@ -193,28 +186,34 @@ class CoordinationProblem
     @statistics = Hash.new(0)
   end
   def create_initial_solution
-    @controllers.each{|sc| @current_offset[sc] = sc.offset || 0}    
+    @controllers.each{|sc| @current_offset[sc] = 0}    
     @coordinations.each{|coord| @current_speed[coord] = coord.default_speed}    
     @current_value = full_evaluation # updates current solution value
     store_encumbent
   end
+  SPEED_INCREMENT = 5 / 3.6 # 5KM/H
+  SPEED_CHANGE_OPTIONS = [-SPEED_INCREMENT, SPEED_INCREMENT]
+  SPEED_CHANGE_OPTIONS_WITH_ZERO = SPEED_CHANGE_OPTIONS + [0]
   def random_restart
     @statistics[:restarts] += 1
     @controllers.each{|sc| @current_offset[sc] = rand(sc.cycle_time)}
-    @coordinations.each{|coord| @current_speed[coord] = coord.default_speed}
+    @coordinations.each do |coord|
+      @current_speed[coord] = coord.default_speed + SPEED_CHANGE_OPTIONS_WITH_ZERO.rand
+    end
     @current_value = full_evaluation
   end
   # make a clean copy of the current solution free from backreferences
   def store_encumbent    
-    @statistics[:encumbents] += 1 if @encumbent_value # do not count the first "encumbent"
+    @statistics[:encumbents] += 1 if @encumbent_value # do not count the first "encumbent" (initial solution)
     # Synchronize encumbent and current solution
     # 
     # For offsets, lower all offsets by a constant factor so until the first offset becomes
     # zero. This has no effect on the solution but trims the offset so that
     # a "master" controller (offset = zero) appears.
+    @encumbent_offset = {}
     min_offset = @current_offset.map{|sc,offset|offset}.min
     @current_offset.each{|sc,offset|@encumbent_offset[sc] = offset - min_offset}
-    @current_speed.each{|coord,speed|@encumbent_speed[coord] = speed}
+    @encumbent_speed = @current_speed.copy
     @encumbent_value = @current_value
   end
   # make a change in the current solution
@@ -226,21 +225,20 @@ class CoordinationProblem
       change_offset; :offset
     end
   end
-  SPEED_INCREMENT = 5 / 3.6 # 5KM/H
   # Change the speed of one coordination between two controllers.
   def change_speed        
     @statistics[:speed_changes] += 1
     # pick a coordination to change speed for
     @changed_coord = @coordinations.rand
     @previous_speed = @current_speed[@changed_coord]
-    @current_speed[@changed_coord] = @previous_speed + ((rand < 0.5) ? SPEED_INCREMENT : -SPEED_INCREMENT)
+    @current_speed[@changed_coord] = @previous_speed + SPEED_CHANGE_OPTIONS.rand
     delta_eval(@changed_coord)
   end; private :change_speed
   def change_offset
     @statistics[:offset_changes] += 1
     @changed_sc = @controllers.rand
     @previous_offset = @current_offset[@changed_sc]
-    @current_offset[@changed_sc] = @previous_offset + ((@previous_offset == 0 or rand < 0.5) ? 1 : -1)
+    @current_offset[@changed_sc] = @previous_offset + (rand < 0.5 ? -1 : 1)
             
     # perform delta-evaluation
     delta_eval(*@changed_sc.member_coordinations)
@@ -327,7 +325,7 @@ end
 
 def run_simulation_annealing
   parse_coordinations do |coords, scs|
-    #require 'unprof'
+    #require 'profile'
     
     solutions = []
 
@@ -349,6 +347,7 @@ def run_simulation_annealing
     result[:succesful_changes].each do |change_type,succes_count|
       puts "   due to #{change_type}: #{succes_count}"
     end
+    puts "Final solution value: #{result[:encumbent_value]}"
     
     return coords, scs, solutions, H
         
