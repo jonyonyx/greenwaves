@@ -11,7 +11,7 @@ class RoadTimeDiagram < Frame
     
     set_title "Road-Time Diagram (#{@controllers.size} intersections)"
     
-    @tmax = (@coordinations.map{|c| c.traveltime(c.default_speed)}.max + @horizon.max).to_f
+    @tmax = (@coordinations.map{|c| c.traveltime(c.default_speed)}.max * 2 + @horizon.max).to_f
     @distmax = @controllers.map{|sc|sc.position}.max + 100
               
     # all time/distance related paint jobs must translate to match this origo (0,0)
@@ -32,24 +32,24 @@ class RoadTimeDiagram < Frame
     @red_pen = Pen.new(Colour.new(255,0,0))
     @red_pen.set_width FATPENWIDTH * 2    
         
-    Timer.every(500) do      
-      unless @solutions.empty?
-        solution = @solutions.shift
-        @offset = solution[:offset]
-        @speed = solution[:speed]
-        on_paint    
-      end
-    end    
+    fetch_next_solution
+    
+    Timer.every(500){fetch_next_solution; on_paint}   
     
     evt_paint { on_paint }
     evt_size { on_paint }
     
     show
   end
-  def show_next_solution    
+  def fetch_next_solution    
+    return if @solutions.empty?
+    solution = @solutions.shift
+    #        puts "Fetched new solution, remaining #{@solutions.size}"
+    #        print_solution(solution)
+    @offset = solution[:offset]
+    @speed = solution[:speed]    
   end
   def on_paint
-    #return unless @offset and @speed
     paint_buffered do | dc |
       dc.clear
 
@@ -89,7 +89,7 @@ class RoadTimeDiagram < Frame
       end
       
       # draw time helper lines (horizontal)
-      10.step(@tmax.round,10) do |t|
+      80.step(@tmax.round,80) do |t|
         y = ybase - (t * yscale).round
         dc.draw_text("#{t}", 1, y)
         dc.draw_line(0,y,w,y)
@@ -131,7 +131,9 @@ class RoadTimeDiagram < Frame
           lstart = sc2.position + sc2.internal_distance + coord.distance
           lend = lstart - coord.distance
         end
-
+        
+        # TODO: draw wave bands for controllers in the ends of the arterial
+        # (the internal controllers will be drawn because they are sc1 in some coordination)
         sc1.greenwaves(@horizon, @offset[sc1],coord.from_direction).each do |band|
           t1 = band.tstart
           t2 = t1 + band.width
@@ -181,18 +183,18 @@ class RoadTimeDiagram < Frame
   end
 end
 
+def print_solution(solution)
+  for setting_type, settings in solution
+    puts setting_type
+    settings.each do |el,setting|
+      puts "   #{el}: #{setting}"
+    end
+  end
+end
+
 if __FILE__ == $0
   require 'greenwave_eval'
-  App.run do
-    #      for setting_type, settings in solution
-    #        puts setting_type
-    #        settings.each do |el,setting|
-    #          puts "   #{el}: #{setting}"
-    #        end
-    #      end
-    
-    RoadTimeDiagram.new
-  end
+  App.run{RoadTimeDiagram.new}
 end
 
   

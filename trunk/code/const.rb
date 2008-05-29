@@ -3,8 +3,8 @@
 # and open the template in the editor.
 
 require 'sequel'
-#Project = 'dtu'
-Project = 'cowi'
+Project = 'dtu'
+#Project = 'cowi'
 
 CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source="
 if Project == 'dtu'
@@ -104,6 +104,12 @@ def exec_query sql, conn_str = CS
     return dbh.select_all(sql)
   end
 end
+# create an array of linearly spaced numbers
+def linspace(from,step,limit)
+  a = []
+  from.step(limit,step){|x| a << x}
+  a
+end
 # Indicates from which direction traffic comes from eg. North
 def get_from_direction(fromsc,tosc)
   ((fromsc.number < tosc.number) ? ARTERY[:sc1] : ARTERY[:sc2])[:from_direction]  
@@ -170,6 +176,9 @@ class Array
     piece_size = (length.to_f / pieces).ceil
     [first(piece_size), *last(length - piece_size).chunk(pieces - 1)]
   end
+  def copy
+    inject([]){|a,el|a << (el.respond_to?(:copy) ? el.copy : el)}
+  end
 end
 
 class Point
@@ -224,6 +233,9 @@ class Class
 end
 
 class Hash
+  def self.new_nested_hash
+    new{|h,k| h[k] = new(&h.default_proc) }
+  end
   def copy
     h = Hash.new(default_proc) 
     each{|k,v|h[k]=v}
