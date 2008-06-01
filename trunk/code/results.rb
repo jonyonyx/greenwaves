@@ -63,7 +63,7 @@ class NodeEvals < Array
   end
   def to_a
         
-    insect_info = exec_query "SELECT Name, Number FROM [intersections$]"          
+    insect_info = DB["SELECT name, number FROM [intersections$]"].all
     
     rows = [['Node',
       'Test Name', 
@@ -77,19 +77,16 @@ class NodeEvals < Array
     
     for nodeeval in sort{|ne1, ne2| ne1.node <=> ne2.node}
       from, to = nodeeval.fromlink, nodeeval.tolink
-      routes = @vissim.find_routes(from, to)
-      raise "No route found from #{from} to #{to}!" if routes.empty?
-      raise "Multiple routes found from #{from} to #{to}!" if routes.length > 1
-      
-      route = routes.first
+      route = @vissim.find_route(from, to)
       
       # extract the decisions which are traversed first and last on this route
-      decision = route.decisions.first
+      decision = route.decisions.first || 
+        raise("Expected a route from #{from} to #{to} traversing a decision, found: #{route.to_vissim}")
       
-      intersection = insect_info.find{|r| r['Number'] == decision.intersection}['Name']
+      intersection = insect_info.find{|r| r[:number] == decision.intersection}[:name]
             
       # 'arterial' traffic exits in either end of the arterial
-      traffic_type = if ['N','S'].include?(decision.from_direction) and decision.turning_motion == 'T'
+      traffic_type = if ARTERY_DIRECTIONS.include?(decision.from_direction) and decision.turning_motion == 'T'
         'Arterial'
       else
         'Crossing'

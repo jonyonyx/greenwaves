@@ -44,8 +44,6 @@ class RoadTimeDiagram < Frame
   def fetch_next_solution    
     return if @solutions.empty?
     solution = @solutions.shift
-    #        puts "Fetched new solution, remaining #{@solutions.size}"
-    #        print_solution(solution)
     @offset = solution[:offset]
     @speed = solution[:speed]    
   end
