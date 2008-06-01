@@ -167,9 +167,8 @@ class Vissim
           num = $1.to_i
           opts = {:name => $2}
           grpnum = $3.to_i
-          grp = sc.group(grpnum)
-          
-          raise "Signal head '#{opts[:name]}' is missing its group #{grpnum} at controller '#{sc}'" if grp.nil?
+          grp = sc.group(grpnum) ||
+            raise("Signal head '#{opts[:name]}' is missing its group #{grpnum} at controller '#{sc}'")
           
           line =~ /POSITION LINK\s+(\d+)\s+LANE\s+(\d)\s+AT\s+(\d+\.\d+)/
           
@@ -340,10 +339,17 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new 
+  
+  kindebjergvej = vissim.controllers.find{|sc|sc.number == 11}
+  puts kindebjergvej.donor_stage
+  puts kindebjergvej.recipient_stage
+  puts kindebjergvej.has_bus_priority?
+  
+  puts vissim.controllers.find_all{|sc|sc.has_bus_priority?}
     
-  for sc in vissim.controllers_with_plans
-    puts "#{sc} #{sc.position} #{sc.internal_distance}"
-  end
+#  for sc in vissim.controllers_with_plans
+#    puts "#{sc} #{sc.position} #{sc.internal_distance}"
+#  end
   #  for link in vissim.links
   #    puts "#{link} at #{link.intersection_number}"
   #  end

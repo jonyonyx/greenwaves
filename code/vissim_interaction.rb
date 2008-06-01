@@ -10,14 +10,14 @@ require 'measurements'
 
 puts "BEGIN"
 
-RUNS = 1#0 # number of runs per test
+RUNS = 10 # number of runs per test
 
-testqueue = ThreadSafeArray.new
-
-testqueue << {:testname => 'DOGS and bus',     :dogs_enabled => true,  :buspriority => true}
-#testqueue << {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false}
-#testqueue << {:testname => 'No DOGS with bus', :dogs_enabled => false, :buspriority => true}
-#testqueue << {:testname => 'No DOGS or bus',   :dogs_enabled => false, :buspriority => false}
+testqueue = [
+  {:testname => 'DOGS and bus',     :dogs_enabled => true,  :buspriority => true},
+  {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false},
+  {:testname => 'No DOGS with bus', :dogs_enabled => false, :buspriority => true},
+  {:testname => 'No DOGS or bus',   :dogs_enabled => false, :buspriority => false},
+]
 
 insert_measurements
 
@@ -29,7 +29,7 @@ results = NodeEvals.new(vissimnet)
 processed = 0
 while parms = testqueue.pop
   simname = parms[:testname]
-  workdir = File.join(Tempdir, "vissim#{processed}")
+  workdir = File.join(Tempdir, "vissim#{simname.downcase.gsub(/\s+/, '_')}")
   begin
     Dir.mkdir workdir
   rescue
@@ -52,18 +52,19 @@ while parms = testqueue.pop
   sim = vissim.Simulation
 
   sim.Period = 2 * MINUTES_PER_HOUR * Seconds_per_minute # simulation seconds
-  #sim.Period = 1200 # simulation seconds
-  sim.Resolution = 2 # steps per simulation second
+  #sim.Period = 600 # simulation seconds
+  sim.Resolution = 5 # steps per simulation second
+  sim.Speed = 0 # maximum speed
   
   # creates vap and pua files respecting the simulation parameters
-  generate_controllers vissimnet, parms, workdir 
+  generate_controllers vissimnet, parms + {:verbose => false}, workdir 
   
   print "Vissim running #{RUNS} simulation#{RUNS != 1 ? 's' : ''} of '#{simname}'... "
   
   RUNS.times do |i|
     print "#{i+1} "
     sim.RunIndex = i
-    sim.RandomSeed = rand
+    sim.RandomSeed = rand(1000000)
     sim.RunContinuous
   end
   

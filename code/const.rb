@@ -2,6 +2,7 @@
 # To change this template, choose Tools | Templates
 # and open the template in the editor.
 
+require 'rubygems'
 require 'sequel'
 Project = 'dtu'
 #Project = 'cowi'
@@ -24,6 +25,8 @@ if Project == 'dtu'
     :sc1 => {:from_direction => 'N', :scno => 1}, 
     :sc2 => {:from_direction => 'S', :scno => 12}
   }
+  
+  ARTERY_DIRECTIONS = ARTERY.map{|sc,info|info[:from_direction]}
    
   # DOGS priority levels
   MINOR = 'Minor'
@@ -34,6 +37,9 @@ if Project == 'dtu'
   DOGS_LEVELDOWN_BUFFER = 0.1 # percentage of threshold value for current level
   DOGS_TIME = 10 # number of seconds by which cycle time is increased for each dogs level
   BUS_TIME = 10 # number of seconds to extend green time for bus stages
+  MIN_STAGE_LENGTH = 6 # used when DOGS changes level and a stage jump maybe be considered
+  DOGS_CNT_BOUNDS_FACTOR = 0.8 # adjust the aggresiveness of DOGS. Lower => more aggressive to increase cycle times.
+  DOGS_OCC_BOUNDS_FACTOR = 0.8
   # associated numbers with these vehicle types
   Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
 elsif Project == 'cowi'
@@ -75,7 +81,7 @@ Cars_and_trucks = Type_map.map{|k,v| Cars_and_trucks_str.include?(k) ? v : nil} 
 
 EPS = 0.01
 INPUT_FACTOR = 1.0 # factor used to adjust link inputs
-ANNUAL_INCREASE = 1.015 # used in input generation for scaling
+ANNUAL_INCREASE = 1.005 # used in input generation for scaling
 BASE_CYCLE_TIME = 80 # seconds
 DATAFILE = "#{Data_dir}data.xls" # main data file containing counts, sgp's, you name it
 CS = "#{CSPREFIX}#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\""
@@ -104,12 +110,6 @@ def exec_query sql, conn_str = CS
     return dbh.select_all(sql)
   end
 end
-# create an array of linearly spaced numbers
-def linspace(from,step,limit)
-  a = []
-  from.step(limit,step){|x| a << x}
-  a
-end
 # Indicates from which direction traffic comes from eg. North
 def get_from_direction(fromsc,tosc)
   ((fromsc.number < tosc.number) ? ARTERY[:sc1] : ARTERY[:sc2])[:from_direction]  
@@ -131,7 +131,15 @@ def to_tex(table, user_opts = {})
   lines << '\end{table}'
   lines.join("\n")
 end
-
+# create an array of linearly spaced numbers
+def linspace(from,step,limit)
+  a = []
+  from.step(limit,step){|x| a << x}
+  a
+end
+def numbers(from,step,count)
+  linspace(from,step,count * step + from)
+end
 def to_xls rows, sheetname, xlsfile = DATAFILE
    
   begin
@@ -164,18 +172,13 @@ class Array
     case size % 2
     when 0 then sort[size/2-1,2].mean
     when 1 then sort[size/2].to_f
-    end if size > 0
+    end if size.nonzero?
   end
   def squares ; inject{|a,x|x**2+a} ; end
   def variance ; squares.to_f/size - mean**2; end
   def deviation ; variance**(1/2) ; end
   def sample n=1 ; (0...n).collect{ self[Kernel::rand(size)] } ; end
   def rand ; self[Kernel::rand(size)] ; end
-  def chunk(pieces)
-    return [] if pieces.zero?
-    piece_size = (length.to_f / pieces).ceil
-    [first(piece_size), *last(length - piece_size).chunk(pieces - 1)]
-  end
   def copy
     inject([]){|a,el|a << (el.respond_to?(:copy) ? el.copy : el)}
   end

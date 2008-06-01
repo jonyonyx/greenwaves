@@ -21,8 +21,8 @@ class SignalController < VissimElem
   
   # Methods used in bus priority
   def has_bus_priority?; not [@bus_detector_n,@bus_detector_s,@donor_stage,@recipient_stage].any?{|e|e.nil?}; end
-  def is_donor? stage; stage.number == donor_stage; end
-  def is_recipient? stage; stage.number == recipient_stage; end
+  def is_donor? stage; stage.number == @donor_stage; end
+  def is_recipient? stage; stage.number == @recipient_stage; end
       
   # check if all groups have a signal plan plus
   # generel checks
