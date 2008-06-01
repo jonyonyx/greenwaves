@@ -1,7 +1,8 @@
 \section{Test Scenarios}
 The purpose of this section is to highlight the findings in the various simulation runs which were performed.
 
-The primary purpose of the simulation was to test the DOGS system against a theoretically better founded system for dynamic signal control. In addition tests were performed to discover the effect of bus priority and to determine whether DOGS with its varying cycle time can outperform a fixed cycle time but properly coordinated offsets.
+The primary purpose of the simulation was to test the effect of the DOGS system. 
+As part of this tests were performed to discover the effect of bus priority and to determine whether DOGS with its varying cycle time can outperform a fixed cycle time but properly coordinated offsets.
 
 All simulations were fitted to the traffic observed in the morning period fra 7-9 am.
 To account for fluctuations each test was run 10 times with different seeds.
@@ -21,6 +22,8 @@ This test covers four scenarios:
 In scenario 1 and 2 DOGS is enabled and the capacity in the main direction is adjusted according to detector values. In scenarios 3 and 4 DOGS is disabled effectively ignoring all detections (except for buses in scenario 3) and thus the signals will remain in the base program.
 
 As DOGS will naturally cause decreased performance for the minor roads it was decided to split the dataset so that \textit{arterial} and \textit{crossing} traffic can be distinguished. For delays arterial traffic is defined as traffic which enters an intersection from north or south and makes a throughgoing motion rather than turning off the arterial. All other traffic is marked as crossing.
+
+The overall conclusion is that the combined performance of the network is reduced when DOGS is running. Although bus priority is only enabled for a few of the involved intersections, it appears to have a slight 
 
 \subsection*{Bus Priority}
 
