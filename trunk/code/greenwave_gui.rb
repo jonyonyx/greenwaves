@@ -7,7 +7,9 @@ class RoadTimeDiagram < Frame
   def initialize
     super(nil, :size => [800,600])
     
-    @coordinations,@controllers, @solutions, @horizon = run_simulation_annealing
+    @coordinations,@controllers, @solutions, @horizon = 
+      #get_dogs_scenarios
+    run_simulation_annealing
     
     set_title "Road-Time Diagram (#{@controllers.size} intersections)"
     
@@ -22,16 +24,22 @@ class RoadTimeDiagram < Frame
     
     @normal_pen = Pen.new(BLACK)
     
-    @left2right_brush = Brush.new(Colour.new(0,255,255,160))
-    @right2left_brush = Brush.new(Colour.new(0,0,255,160))
+    @brush = {
+      true => Brush.new(Colour.new(0,255,255,160)),
+      false => Brush.new(Colour.new(0,0,255,160))
+    }
+    
     set_background_colour WHITE    
     
-    @green_pen = Pen.new(Colour.new(0,255,0))
-    @green_pen.set_width FATPENWIDTH * 2
+    # pick a green pen for each direction
+    @green_pen = {
+      true => Pen.new(Colour.new(0,255,0)),
+      false => Pen.new(Colour.new(0,192,0))      
+    }.each_value{|pen|pen.set_width(FATPENWIDTH * 2)}
     
     @red_pen = Pen.new(Colour.new(255,0,0))
-    @red_pen.set_width FATPENWIDTH * 2    
-        
+    @red_pen.set_width FATPENWIDTH * 2
+    
     fetch_next_solution
     
     Timer.every(500){fetch_next_solution; on_paint}   
@@ -44,8 +52,24 @@ class RoadTimeDiagram < Frame
   def fetch_next_solution    
     return if @solutions.empty?
     solution = @solutions.shift
-    @offset = solution[:offset]
-    @speed = solution[:speed]    
+    if solution.has_key?(:offset)
+      @offset = solution[:offset]
+    else
+      @offset = {}
+      @controllers.each{|sc|@offset[sc] = sc.offset}      
+    end    
+    if solution.has_key?(:speed)
+      @speed = solution[:speed]
+    else
+      @speed = {}
+      @coordinations.each{|coord| @speed[coord] = coord.default_speed}
+    end        
+    if solution.has_key?(:cycle_time)
+      @cycle_time = solution[:cycle_time]
+    else
+      @cycle_time = {}
+      @controllers.each{|sc| @cycle_time[sc] = sc.cycle_time}
+    end
   end
   def on_paint
     paint_buffered do | dc |
@@ -86,8 +110,9 @@ class RoadTimeDiagram < Frame
         dc.draw_line(x,h,x,0)
       end
       
+      common_cycle = @cycle_time.values.first
       # draw time helper lines (horizontal)
-      80.step(@tmax.round,80) do |t|
+      common_cycle.step(@tmax.round,common_cycle) do |t|
         y = ybase - (t * yscale).round
         dc.draw_text("#{t}", 1, y)
         dc.draw_line(0,y,w,y)
@@ -113,13 +138,13 @@ class RoadTimeDiagram < Frame
         dc.draw_text(speedsign , (x - tw/2.0).round, y)
       end
 
-      green_lights = []
+      # true => left_to_right, false => right_to_left
+      green_lights = {true => [], false => []}
 
       # draw a band where the width corresponds to the green time
       # in the arterial direction       
-      @coordinations.each do |coord|
-        
-        gdc.set_brush(coord.left_to_right ? @left2right_brush : @right2left_brush) # for filling wave bands
+      @coordinations.each do |coord|        
+        gdc.set_brush @brush[coord.left_to_right] # for filling wave bands
       
         sc1, sc2 = coord.sc1, coord.sc2
         if coord.left_to_right
@@ -132,7 +157,7 @@ class RoadTimeDiagram < Frame
         
         # TODO: draw wave bands for controllers in the ends of the arterial
         # (the internal controllers will be drawn because they are sc1 in some coordination)
-        sc1.greenwaves(@horizon, @offset[sc1],coord.from_direction).each do |band|
+        sc1.greenwaves(@horizon, @offset[sc1],coord.from_direction,@cycle_time[sc1]).each do |band|
           t1 = band.tstart
           t2 = t1 + band.width
           t1, t2 = t2, t1 unless coord.left_to_right
@@ -157,14 +182,14 @@ class RoadTimeDiagram < Frame
           # outline the marked band using current pen then fill using green brush
           gdc.fill_path(path)       
           
-          green_lights << [x1, y1, x1, y1 - ydelta]
+          green_lights[coord.left_to_right] << [x1, y1, x1, y1 - ydelta]
         end
         
         # paint all mismatches (wave bands meeting a red light)
         gdc.set_pen @red_pen
         
         x = (coord.conflict_position * xscale).round + @ox
-        coord.mismatches_in_horizon(@horizon,@offset[sc1],@offset[sc2],@speed[coord]) do |band|
+        coord.mismatches_in_horizon(@horizon,@offset[sc1],@offset[sc2],@speed[coord],@cycle_time[sc1],@cycle_time[sc2]) do |band|
           t1 = band.tstart
           t2 = t1 + band.width # paint tend inclusive
           gdc.stroke_line(x, ybase - (t2 * yscale).round, x, ybase - (t1 * yscale).round)
@@ -172,11 +197,12 @@ class RoadTimeDiagram < Frame
       end
       
       # draw a line for the green signal duration
-      gdc.set_pen @green_pen
-      for x1, y1, x2, y2 in green_lights
-        gdc.stroke_line(x1, y1, x2, y2)
+      for l2r_indc, green_lights_for_direction in green_lights
+        for x1, y1, x2, y2 in green_lights_for_direction
+          gdc.set_pen @green_pen[l2r_indc]
+          gdc.stroke_line(x1, y1, x2, y2)
+        end
       end
-      
     end
   end
 end

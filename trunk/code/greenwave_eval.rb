@@ -9,33 +9,40 @@ class Band
     raise "A waveband must start before it ends" if tstart > tend
     @tstart, @tend = tstart, tend
   end
-  def overlap?(other)
-    return false if @tend < other.tstart or other.tend < @tstart
-    true
-  end
+  def overlap?(other); to_r.overlap?(other.to_r); end
   def width; @tend - @tstart + 1; end
   # returns a list of bands, which are the result of subtracting other from self
   def subtract(other)
-    return [copy] unless overlap?(other)
-    # find the common time indices
-    # 
-    # perfect or complete overlap; self is completely contained in other
-    return [] if @tstart >= other.tstart and @tend <= other.tend 
-    if @tstart < other.tstart and @tend > other.tend
-      # subtraction will results in multiple bands since
-      # self covers other and more
-      [Band.new(@tstart,other.tstart - 1),Band.new(other.tend + 1,@tend)]
-    elsif @tstart < other.tstart
+    case [@tstart <=> other.tstart, @tend <=> other.tend]
+    when [0,0], [1,-1], [0,-1], [1,0] # self is completely covered by other
+      []
+    when [-1,-1], [1,1] # self lies before or after other and nothing can be subtracted
+      [copy]
+    when [-1,1] # start before other start and end is after other end, multiple bands
+      [Band.new(@tstart,other.tstart - 1),Band.new(@tend + 1,other.tend)]
+    when [-1,0] # starts before other but ends at same time
       [Band.new(@tstart,other.tstart - 1)]
-    elsif @tend > other.tend
-      [Band.new(other.tend+1,@tend)]
+    when [0,1] # starts same time as other but ends after
+      [Band.new(@tend + 1,other.tend)]
     else
       raise "Should not get here. Attempted #{self} - #{other}"
     end
+    
+#    if @tstart < other.tstart and @tend > other.tend
+#      # subtraction will results in multiple bands since
+#      # self covers other and more
+#      [Band.new(@tstart,other.tstart - 1),Band.new(other.tend + 1,@tend)]
+#    elsif @tstart < other.tstart
+#      [Band.new(@tstart,other.tstart - 1)]
+#    elsif @tend > other.tend
+#      [Band.new(other.tend+1,@tend)]
+#    else
+#      raise "Should not get here. Attempted #{self} - #{other}"
+#    end
   end
-  def shift!(offset); @tstart += offset ; @tend += offset; end
+  def shift!(offset); @tstart += offset ; @tend += offset; @as_range = nil end
   def to_s; "(#{to_r})"; end
-  def to_r; (@tstart..@tend); end
+  def to_r; @as_range ||= (@tstart..@tend); end
   def to_a; to_r.to_a; end
   def copy; Band.new(@tstart,@tend); end
 end
@@ -57,13 +64,13 @@ class Coordination
   # when traffic emitted from sc1 is not received by green light at sc2
   # respecting the current offsets of these controllers and the traveltime
   # from stop-light to stop-light
-  def mismatches_in_horizon h, o1, o2, s    
+  def mismatches_in_horizon h, o1, o2, s, c1 = @sc1.cycle_time, c2 = @sc2.cycle_time
     tt = traveltime(s)
     
-    for b1 in @sc1.greenwaves(h, o1, @from_direction)
+    for b1 in @sc1.greenwaves(h, o1, @from_direction, c1)
       b1.shift!(tt) # project this emitted band forward in time
       uncovered_bands = [b1]
-      bands2 = @sc2.greenwaves(b1.to_r, o2, @from_direction)
+      bands2 = @sc2.greenwaves(b1.to_r, o2, @from_direction, c2)
       # b1 shifted is now all potential mismatches;
       # use the bands from sc2 to chop off pieces
       while b2 = bands2.shift and not uncovered_bands.empty?
@@ -306,11 +313,18 @@ end
 
 VISSIM = Vissim.new
 
-H = (0..300) # horizon
-
 def parse_coordinations
   
-  scs = VISSIM.controllers_with_plans.find_all{|sc|sc.number <= 5}
+  # filter out relevant signal controllers
+  scs = VISSIM.controllers_with_plans.find_all do |sc|
+    #sc.number <= 5 # Herlev
+    sc.number >= 9 # Glostrup
+  end
+  
+  # adjust the position of controllers such the left-most one
+  # is at position zero  
+  minpos = scs.map{|sc|sc.position}.min
+  scs.each{|sc|sc.update :position => (sc.position - minpos)}
   
   coordinations = []
   scs.each_cons(2) do |sc1,sc2|
@@ -322,14 +336,28 @@ def parse_coordinations
   
   yield coordinations, scs
 end
-
+def get_dogs_scenarios
+  parse_coordinations do |coords, scs|
+    
+    solutions = numbers(80,20,2).map do |dogs_cycle_time|
+      puts dogs_cycle_time
+      cycle_time = {}
+      scs.each{|sc|cycle_time[sc] = dogs_cycle_time}
+      {:cycle_time => cycle_time}
+    end
+    
+    return coords, scs, solutions, (0..300)
+  end
+end
 def run_simulation_annealing
   parse_coordinations do |coords, scs|
     #require 'profile'
     
+    horizon = (0..300)
+    
     solutions = []
 
-    problem = CoordinationProblem.new(coords, scs, H)
+    problem = CoordinationProblem.new(coords, scs, horizon)
     siman = SimulatedAnnealing.new(problem, 2, :start_temp => 100.0, :alpha => 0.95, :no_improvement_action_threshold => 50)
     
     result = siman.run do |newval, prevval, change_desc, solution|
@@ -349,7 +377,7 @@ def run_simulation_annealing
     end
     puts "Final solution value: #{result[:encumbent_value]}"
     
-    return coords, scs, solutions, H
+    return coords, scs, solutions, horizon
         
     #    coord = coords[2]
     #    puts coord

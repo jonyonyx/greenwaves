@@ -138,7 +138,51 @@ It is clear that the bus priority logic makes a difference of a few percent redu
 In Figures \ref{fig:bus_delay_int_dogs} and \ref{fig:bus_delay_int_nodogs} we see how the bus delay is split over the intersections. In the case with no DOGS the three intersections with bus priority logic perform consistenly better when bus priority is enabled. This is not the case when DOGS is enabled, now only Fabriksparken and Kindebjergvej reduce delays for buses whereas bus delay at Gammel Landevej is indifferent to bus priority. This observation corresponds to what was seen for the average queue lengths for Gammel Landevej in Figure \ref{fig:aveq_int_cross}.
 
 \subsection*{Why DOGS fail in its current incarnation}
-These analyses leave an impression of DOGS as a system which work as intended, at be.
+These analyses leave an impression of DOGS as a system which work as intended, at best and is detrimental to both arterial and crossing traffic.
+
+We can explain the reason about the observed effects on crossing traffic by the argument of unevenly distributed extra-green time. The case of arterial traffic requires more study, however.
+
+In the DRD report \ref{dogs} Steen Lauritzen makes a note of the uncontrolled behaviour of offsets when DOGS change level (section 5.8). in Figures (\ref{fig:coord_p1_herlev_c80}, \ref{fig:coord_p1_herlev_c100}) we see road time diagrams for the morning program as DOGS increase the common cycle time from 80s to 100s in a time horizon of 300s. 
+In the diagram green vertical bands indicate green time for the arterial direction. A platoon of vehicles propagates from the green bands to the next intersection and a red band is drawn when the platoon is met by a red light.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.30]{coord_p1_herlev_c80.PNG} 
+\end{center}
+\caption{Coordination in Herlev without DOGS}
+\label{fig:coord_p1_herlev_c80}
+\end{figure}
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.30]{coord_p1_herlev_c100.PNG} 
+\end{center}
+\caption{Coordination in Herlev at DOGS level 2}
+\label{fig:coord_p1_herlev_c100}
+\end{figure}
+
+We can see how simultaneously extending the green time for the arterial stages will cause the probability for the platoon head of hitting a red light to remain unchanged. This is true because the cycle time is changed at the same time in all intersections (common cycle) and DOGS does not change the red-end times of the arterial stages.
+This is also true for the platoon tails, as long as the downstream arterial stage receives the same green time extension as the stage from which the platoon departed.
+
+In the coordination between Herlev Hovedgade and Mileparken we see that DOGS actually \textit{improves} upon the green wave by reducing the probability of meeting a red light going from Herlev Hovedgade to Mileparken at 70km/h.
+
+In Figures (\ref{fig:coord_p1_glostrup_c80} and \ref{fig:coord_p1_glostrup_c100}) we see the same comparison only for the DOGS controller intersections in Glostrup.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.30]{coord_p1_glostrup_c80.PNG} 
+\end{center}
+\caption{Coordination in Glostrup without DOGS}
+\label{fig:coord_p1_glostrup_c80}
+\end{figure}
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.30]{coord_p1_glostrup_c100.PNG} 
+\end{center}
+\caption{Coordination in Glostrup at DOGS level 2}
+\label{fig:coord_p1_glostrup_c100}
+\end{figure}
 
 \subsection{Coordination with Direction Priority Offsets}
 In this test the system for coordination of section \ref{coordination} os compared with DOGS without bus priority. DRD requested this test to discover whether DOGS (dynamic capacity) can outperform a proper coordination. DOGS has support for dynamically adjusting the coordination - including prioritizing directions - though it is not enabled in either the Glostrup or Herlev sites at the moment.
