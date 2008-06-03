@@ -1,6 +1,6 @@
 class Vissim
   def speed(fromsc, tosc)
-    80 / 3.6 # 80km/t
+    70 / 3.6 # km/t -> m/s
   end
   # Finds the distance from the arterial signal head(s) in this controller
   # to the downstream stop-line of othersc

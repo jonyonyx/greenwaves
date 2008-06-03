@@ -20,7 +20,7 @@ class SignalController < VissimElem
   end
   
   # Methods used in bus priority
-  def has_bus_priority?; not [@bus_detector_n,@bus_detector_s,@donor_stage,@recipient_stage].any?{|e|e.nil?}; end
+  def has_bus_priority?; [@bus_detector_n,@bus_detector_s,@donor_stage,@recipient_stage].all?{|e|e}; end
   def is_donor? stage; stage.number == @donor_stage; end
   def is_recipient? stage; stage.number == @recipient_stage; end
       
@@ -57,26 +57,31 @@ class SignalController < VissimElem
   # Finds the green wave bands emitted from the given arterial direction
   # in the given time horizon. The offset of the signal controller is taken
   # as a parameter and will affect the start-and end times of the bands.
-  def greenwaves(horizon,offset,from_direction)
+  def greenwaves(horizon,offset,from_direction,cycle_time = @cycle_time)
     waves = []
     arterial_groups_from(from_direction).each do |group|
       active_seconds = group.active_seconds # within a cycle
       
+      green_time_ext = case group.priority
+      when MAJOR then (cycle_time - @cycle_time) * DOGS_MAJOR_FACTOR
+      when MINOR then (cycle_time - @cycle_time) * DOGS_MINOR_FACTOR
+      else 0
+      end
+      
       # project active seconds into the horizon
       tstart_base = active_seconds.min + offset
-      tend_base = active_seconds.max + offset
+      tend_base = active_seconds.max + offset + green_time_ext
       
       # only show bands in the horizon;
-      n = (horizon.min / @cycle_time.to_f).floor # first band is found after n cycles
-      m = (horizon.max / @cycle_time.to_f).floor # last band is found after m cycles
+      n = (horizon.min / cycle_time.to_f).floor # first band is found after n cycles
+      m = (horizon.max / cycle_time.to_f).floor # last band is found after m cycles
       
       (n..m).each do |cycle_number|
-        cycle_offset = @cycle_time * cycle_number
+        cycle_offset = cycle_time * cycle_number
         tstart = tstart_base + cycle_offset
         tend = tend_base + cycle_offset
-        if [tstart,tend].any?{|t|horizon === t}
-          waves << Band.new(tstart, tend)
-        end
+        # check if (tstart..tend) overlaps with the horizon
+        waves << Band.new(tstart, tend) if (tstart..tend).overlap?(horizon)
       end
     end
     waves

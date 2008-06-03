@@ -36,6 +36,9 @@ if Project == 'dtu'
   DOGS_LEVEL_GREEN = 10 # seconds green time associated with each dogs level change
   DOGS_LEVELDOWN_BUFFER = 0.1 # percentage of threshold value for current level
   DOGS_TIME = 10 # number of seconds by which cycle time is increased for each dogs level
+  DOGS_MAJOR_FACTOR = 0.8
+  DOGS_MINOR_FACTOR = 1.0 - DOGS_MAJOR_FACTOR
+  DOGS_MAX_LEVEL = 5
   BUS_TIME = 10 # number of seconds to extend green time for bus stages
   MIN_STAGE_LENGTH = 6 # used when DOGS changes level and a stage jump maybe be considered
   DOGS_CNT_BOUNDS_FACTOR = 0.8 # adjust the aggresiveness of DOGS. Lower => more aggressive to increase cycle times.
@@ -138,7 +141,7 @@ def linspace(from,step,limit)
   a
 end
 def numbers(from,step,count)
-  linspace(from,step,count * step + from)
+  linspace(from,step,(count - 1) * step + from)
 end
 def to_xls rows, sheetname, xlsfile = DATAFILE
    
@@ -249,5 +252,16 @@ class Hash
   end
   def retain_keys!(*keys)
     delete_if{|k,| not keys.include? k}
+  end
+end
+
+class Range
+  # determine if self and other has overlapping parts by denial
+  # assume first == min and last == max
+  def overlap?(other)
+    case [first <=> other.first, last <=> other.last]
+    when [-1,-1],[1,1] then false
+    else true
+    end
   end
 end
