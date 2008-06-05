@@ -357,30 +357,32 @@ def gen_pua sc, outputdir
   cp.write File.join(outputdir, "#{sc.name.downcase.gsub(' ','_')}.pua")
 end
 
-# criteria for when DOGS can be enabled and disabled. measured against dn and ds
-ENABLE_CRITERIA = {:occ => 30, :cnt => 25}
-DISABLE_CRITERIA = {:occ => 10, :cnt => 8}
+if Project == 'dtu'
+  # criteria for when DOGS can be enabled and disabled. measured against dn and ds
+  ENABLE_CRITERIA = {:occ => 30, :cnt => 25}
+  DISABLE_CRITERIA = {:occ => 10, :cnt => 8}
 
-# information on master controllers
-MasterInfo = [
-  {
-    :name => 'Herlev', 
-    :dn => 3, :ds => 14, 
-    :occ_dets => [3,14], :cnt_dets => [3,4,13,14],
-    :enable => ENABLE_CRITERIA,
-    :disable => DISABLE_CRITERIA,
-    :cnt_bounds => {:upper => numbers(12,9,DOGS_LEVELS), :lower => numbers(10,8,DOGS_LEVELS)},
-    :occ_bounds => {:upper => [11,29,45,58,70,80,92,96], :lower => [8,17,35,51,65,74,86,94]}
-  }, {
-    :name => 'Glostrup', 
-    :dn => 14, :ds => 1, 
-    :occ_dets => [1,2,5,8,9,10,11,12,13,14], :cnt_dets => [1,2,5,8,9,10,11,12,13,14],
-    :enable => ENABLE_CRITERIA,
-    :disable => DISABLE_CRITERIA, 
-    :cnt_bounds => {:upper => numbers(14,9,DOGS_LEVELS), :lower => numbers(13,8,DOGS_LEVELS)},
-    :occ_bounds => {:upper => [11,29,45,58,70,80,92,96], :lower => [8,17,35,51,65,74,86,94]}
-  }
-]
+  # information on master controllers
+  MasterInfo = [
+    {
+      :name => 'Herlev', 
+      :dn => 3, :ds => 14, 
+      :occ_dets => [3,14], :cnt_dets => [3,4,13,14],
+      :enable => ENABLE_CRITERIA,
+      :disable => DISABLE_CRITERIA,
+      :cnt_bounds => {:upper => numbers(12,9,DOGS_LEVELS), :lower => numbers(10,8,DOGS_LEVELS)},
+      :occ_bounds => {:upper => [11,29,45,58,70,80,92,96], :lower => [8,17,35,51,65,74,86,94]}
+    }, {
+      :name => 'Glostrup', 
+      :dn => 14, :ds => 1, 
+      :occ_dets => [1,2,5,8,9,10,11,12,13,14], :cnt_dets => [1,2,5,8,9,10,11,12,13,14],
+      :enable => ENABLE_CRITERIA,
+      :disable => DISABLE_CRITERIA, 
+      :cnt_bounds => {:upper => numbers(14,9,DOGS_LEVELS), :lower => numbers(13,8,DOGS_LEVELS)},
+      :occ_bounds => {:upper => [11,29,45,58,70,80,92,96], :lower => [8,17,35,51,65,74,86,94]}
+    }
+  ]
+end
 
 def generate_controllers vissim, user_opts = {}, outputdir = Vissim_dir
   default_opts = {:verbose => true}
