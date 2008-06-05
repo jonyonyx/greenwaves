@@ -339,7 +339,7 @@ end
 def get_dogs_scenarios
   parse_coordinations do |coords, scs|
     
-    solutions = numbers(80,20,2).map do |dogs_cycle_time|
+    solutions = numbers(80,20,1).map do |dogs_cycle_time|
       puts dogs_cycle_time
       cycle_time = {}
       scs.each{|sc|cycle_time[sc] = dogs_cycle_time}
