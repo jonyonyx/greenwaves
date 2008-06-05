@@ -109,56 +109,39 @@ The first four graphs (Figures \ref{fig:herlev_props_morning}-\ref{fig:glostrup_
 
 We can see that there is an overweight of northgoing traffic. This overweight is more profound in the Glostrup area and increases in the afternoon for both areas.
 
-From these graphs we can also see that, in the weekend, most traffic happens in the afternoon, since most danes go to church in the mornings.
+From these graphs we can also see that, in the weekend, most traffic happens in the afternoon.
 
-The next graph, see Figure \ref{fig:herlev_commuter}, shows the usual commuter- and lunch traffic patterns. The data from all mondays to fridays in the dataset have almost identical temporal distributions and thus the graph shows summarized data from workdays.
-
-\begin{figure}[!ht]
-\begin{center}
-\includegraphics[scale=0.4]{herlev_workday_distribution.png} 
-\end{center}
-\caption{Distribution of traffic throughout workdays in Herlev}
-\label{fig:herlev_commuter}
-\end{figure}
-
-By comparing the workday distribution to the detected traffic in the weekend, see Figure \ref{fig:herlev_weekends} - and at the same time looking and the proportions of demand in Figure \ref{fig:herlev_props} - it is clear that O3 in Herlev is heavily used by commuters. Traffic is almost identically distributed on saturdays and sundays and the graph shows summarized data for the weekend.
+The next graph, see Figure \ref{fig:commuter}, shows the usual commuter- and lunch traffic patterns. The data from all mondays to fridays in the dataset have almost identical temporal distributions and thus the graph shows summarized data from workdays.
 
 \begin{figure}[!ht]
 \begin{center}
-\includegraphics[scale=0.4]{herlev_weekend_distribution.png} 
+\includegraphics[scale=0.25]{distribution_workday.png} 
 \end{center}
-\caption{Distribution of traffic throughout the weekend in Herlev}
-\label{fig:herlev_weekends}
+\caption{Distribution of traffic throughout workdays in Herlev and Glostrup}
+\label{fig:commuter}
 \end{figure}
 
-As the directional proportions remain the same as in Figure \ref{fig:herlev_props}, the last two graphs summarize on direction.
-
-The next graph (Figure \ref{fig:herlev_southgoing}) show how detections are aligned in the southgoing direction. 
+By comparing the workday distribution to the detected traffic in the weekend, see Figure \ref{fig:weekends} - and at the same time looking and the directional proportions - it is clear that ringroad 3 is heavily used by commuters in both Herlev and Glostrup. Traffic is almost identically distributed on saturdays and sundays and the graph shows summarized data for the weekend.
 
 \begin{figure}[!ht]
 \begin{center}
-\includegraphics[scale=0.4]{herlev_southgoing_detectors.png} 
+\includegraphics[scale=0.25]{distribution_weekend.png} 
 \end{center}
-\caption{Relative detections for southgoing links in Herlev}
-\label{fig:herlev_southgoing}
+\caption{Distribution of traffic throughout the weekend in Herlev and Glostrup}
+\label{fig:weekends}
 \end{figure}
 
-With no intermediate links the lack of turn in- and turn out traffic would cause the detections to be evenly distributed. However we see, for example, that from D3 to D4 there is a major increase in traffic. This is caused by traffic turning onto O3 in the southgoing link from Herlev Amtssygehus and as such it would be valuable to have a dedicated detector for this link.
+The next graph (Figure \ref{fig:detector_directions}) show how detections are aligned in the north and southgoing directions in both areas. 
 
 \begin{figure}[!ht]
 \begin{center}
-\includegraphics[scale=0.4]{herlev_northgoing_detectors.png} 
+\includegraphics[scale=0.4]{detector_directions.png} 
 \end{center}
-\caption{Relative detections for northgoing links in Herlev}
-\label{fig:herlev_northgoing}
+\caption{Relative detections for north- and southgoing links in Herlev and Glostrup}
+\label{fig:detector_directions}
 \end{figure}
 
-In Figure \ref{fig:herlev_southgoing} - the northgoing direction - we see a bump in traffic between detectors D13 and D17 from 18\% to 22\%. Between these lie Herlev Bygade and, in particular, Herlev Hovedgade. From D5 to D18 there is a 2\% increase primarily due to traffic from the Hospital.
-
-(For either direction these proportions do not vary in particular between workday and weekend.)
-
-\subsection{Glostrup}
-This area is better covered with respect to detectors and we even have data from detectors on the "minor roads" at roskildevej.
+(For either direction and area these proportions do not vary in particular between workday and weekend.)
 
 \subsection{Traffic Count Analysis}
 \label{traffic_count_analysis}
