@@ -146,19 +146,27 @@ In the DRD report \ref{dogs} Steen Lauritzen makes a note of the uncontrolled be
 In the diagram green vertical bands indicate green time for the arterial direction. A platoon of vehicles propagates from the green bands to the next intersection and a red band is drawn when the platoon is met by a red light.
 
 \begin{figure}[ht]
+
+    \begin{minipage}[b]{0.5\linewidth}
+    
 \begin{center}
-\includegraphics[scale=0.30]{coord_p1_herlev_c80.PNG} 
+\includegraphics[scale=0.22]{coord_p1_herlev_c80.PNG} 
 \end{center}
 \caption{Coordination in Herlev without DOGS}
 \label{fig:coord_p1_herlev_c80}
-\end{figure}
 
-\begin{figure}[ht]
+    \end{minipage}
+    \hspace{0.5cm}
+    \begin{minipage}[b]{0.5\linewidth}
+
 \begin{center}
-\includegraphics[scale=0.30]{coord_p1_herlev_c100.PNG} 
+\includegraphics[scale=0.22]{coord_p1_herlev_c100.PNG} 
 \end{center}
 \caption{Coordination in Herlev at DOGS level 2}
 \label{fig:coord_p1_herlev_c100}
+
+    \end{minipage}
+    
 \end{figure}
 
 We can see how simultaneously extending the green time for the arterial stages will cause the probability for the platoon head of hitting a red light to remain unchanged. This is true because the cycle time is changed at the same time in all intersections (common cycle) and DOGS does not change the red-end times of the arterial stages.
@@ -168,23 +176,35 @@ In the coordination between Herlev Hovedgade and Mileparken we see that DOGS act
 
 In Figures (\ref{fig:coord_p1_glostrup_c80} and \ref{fig:coord_p1_glostrup_c100}) we see the same comparison only for the DOGS controller intersections in Glostrup.
 
-[!!! CHANGE THESE IMAGES BACK TO GLOSTRUP!!!]
-
 \begin{figure}[ht]
+
+    \begin{minipage}[b]{0.5\linewidth}
+    
 \begin{center}
-\includegraphics[scale=0.30]{coord_p1_herlev_c80.PNG} 
+\includegraphics[scale=0.22]{coord_p1_glostrup_c80.PNG} 
 \end{center}
 \caption{Coordination in Glostrup without DOGS}
 \label{fig:coord_p1_glostrup_c80}
-\end{figure}
 
-\begin{figure}[ht]
+    \end{minipage}
+    \hspace{0.5cm}
+    \begin{minipage}[b]{0.5\linewidth}
+
 \begin{center}
-\includegraphics[scale=0.30]{coord_p1_herlev_c100.PNG} 
+\includegraphics[scale=0.22]{coord_p1_glostrup_c100.PNG} 
 \end{center}
 \caption{Coordination in Glostrup at DOGS level 2}
 \label{fig:coord_p1_glostrup_c100}
+
+    \end{minipage}
+    
 \end{figure}
+
+[FIX THESE FIGURES - THERE ARE RED BANDS EVEN IN GREEN STARTS!]
+
+We see that with default offsets and cycle time - as well as under DOGS level 2 with cycle time 100s - Gammel Landevej is poorly coordinated with its neighbours, Fabriksparken and Hjortespringvej. Platooons arriving from each of these intersections risk being cut in half at Gammel Landevej. This observation can explain some of poor performance we saw in Figure \ref{fig:aveq_tot} for Gammel Landevej in particular.
+
+During simulation it has been observed how such imperfect coordinations are affected by DOGS; more vehicles are stopped at the red light due to the increased capacity and queues become longer.
 
 \subsection{Coordination with Direction Priority Offsets}
 In this test the system for coordination of section \ref{coordination} os compared with DOGS without bus priority. DRD requested this test to discover whether DOGS (dynamic capacity) can outperform a proper coordination. DOGS has support for dynamically adjusting the coordination - including prioritizing directions - though it is not enabled in either the Glostrup or Herlev sites at the moment.

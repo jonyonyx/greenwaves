@@ -64,16 +64,43 @@ However, many parameters can - and should - be set automatically by repeated sim
 
 I believe stage based signals and more centralized computer control of arterials could be accepted and achieved if systems were more available and open as proposed above. The introduction of stage based signals would be a major break with tradition in denmark - and probably also in many other countries. 
 
-Breaking tradition is always hard; this combined with the volume of such a system has compelled me to remain in the common cycle time world in this project. But as will be seen in the following sections, there are many ways to improved arterial signal performance in spite of the the restrictions of $C$.
+Breaking tradition is always hard; this combined with the volume of such a system has compelled me to remain in the common cycle time world in this project. But as will be seen in the following sections, there are many ways to improve arterial signal performance in spite of the the restrictions of $C$.
 
 \subsection{Manipulating speed}
-Except on sundays and in parts of western Denmark, most motorists will obey the speed signs. The travel time between intersections, which largely determines the offset, could then be increased or decreased by changing the speed signs.
+The first option, which is implemented in the search procedure (see section \ref{siman}), is to improve coordination by affecting the speeds of road users. This is done by adjusting speed signs since most motorists will obey these. The travel time between intersections, which largely determines the offset, could then be increased or decreased by changing the speed signs. 
+
+In Figure \ref{fig:change_speed} we can see how this works. In the \textit{before} situation, platoons from intersection $i+1$ arrive too late and some experience red light. In the \textit{after} situation, the platoon is allowed to go faster and arrive entirely during the green time of intersection $i$.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.2]{change_speed.png} 
+\end{center}
+\caption{Changing speeds to obtain better coordination}
+\label{fig:change_speed}
+\end{figure}
 
 Some considerations should be made in this respect. For instance we must ensure that the speeds do not divert too much from the norm of the relevant type of road. In addition the number of speed changes, which a motorist travelling throughout the arterial experience, must be minimized. And if speed changes do occur, it is a good idea to keep them small so that the speeds don't go from 50 to 70 from one stretch of road to the next.
 
-From a security perspective it might seem risky to not persist a common speed level through the artery. But considering that a change of speed might improve the quality of a green wave, this problem can be negated. This also applies to the additional acceleration and deceleration since, if a green wave does not exist the vehicles must be stopped altogether at the red light causing even more acceleration.
+From a security perspective it might seem risky to not persist a common speed level through the artery. But considering that a change of speed might improve the quality of the coordination, this problem is negated. This also applies to the additional acceleration and deceleration since, if a green wave does not exist the vehicles must be stopped altogether at the red light causing even more acceleration.
 
 The current infrastructure on O3 does not offer this fine-grained level of adjustment but electronic speed signs are common practice nowadays and is, for instance, used on the almost-parallel motorring 3 to smoothen out queues.
+
+\subsection{Adjusting offsets}
+The individual signal offset is the traditional parameter for adjustment. The formulas presented earlier (section \ref{coordination}) can be used to establish one-way coordination, under the restrictions described, but two-way coordination is not solved so easily.
+
+Basically the purpose of offsets is to properly align adjacent intersections in time such that a platoon emitted during the green time of intersection 1 is met by a green light at the adjacent intersection 2. The best estimate of the propagation time of the platoon is the travel time $tt_{1,2} = d / v$ where $v$ is the average speed and $d$ is the distance between the intersections and the green time displacement, $\Delta o_{i,j}$, should match $tt$ for all adjacent intersections $i$ and $j$.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.2]{change_offset.png} 
+\end{center}
+\caption{Changing speeds to obtain better coordination}
+\label{fig:change_offset}
+\end{figure}
+
+We can change both the travel time, by changing speed signs, and also the green time displacement by adjusting offsets. The consequences of changing an offsets can be difficult to foresee, consider the example in Figure \ref{fig:changing_offset}. From intersection $j$ to $i$ the platoon will arrive too early. We can increase the offset (delay the green start) of $j$ but then we just reverse the situation. During all this, we must expect that there are also signal controllers $i-1$ and $j+1$ to the left and right of $i$ and $j$, which must be coordinated with $i$ and $j$.
+
+Metaheuristic search procedures are designed to cope with situations such as these where the immediate effects of a change cannot be foretold or enumerated.
 
 \subsection{Metaheuristic Search}
 DRD has traditionally used TRANSYT to obtain coordination. TRANSYT employs a genetic algorithm to finds its solutions but often it is necessary to manually adjust the offsets in order to obtain a good two-way coordination or to give preference to some direction. 
@@ -90,6 +117,7 @@ For evaluation of a \textit{coordination} between $sc_1$ and $sc_2$ (directed) i
 Obviously the first option is worst as all vehicles must halt. Second is the cutting of the leading vehicles, since they must brake or come to a halt, effectively halting the entire platoon. Least intrusive is the cutting of the tail, since then, at least, parts of the platoon actually experienced a green wave when travelling between $sc_1$ and $sc_2$.
 
 \subsection{Simulated Annealing}
+\label{siman}
 In this section I describe the metaheuristic search routing, which was chosen: Simulated Annealing (SA). 
 SA is a \textit{hill-climber} with the ability to escape from local optima ie. jump to another hill-top.
 
@@ -101,7 +129,6 @@ The solutions to offsets are evaluated and compared in the context of the networ
 
 Generally metaheuristics give no guarantee that an optimum solution will be found, but with proper tuning and fast data structures, so that at least a couple of hundred solutions can be tested per second, it will generally yield good solutions. The strengths of metaheuristics are that they can easily support any kind of constraint, take advantage of the structure of the problem and run in O([insert seconds here]) ie. the running time is bounded by the time available.
 
-\subsection{Data Structures}
 In this project I have developed data structures, which are fast enough to generate the necessary iterations per second and can be used in various metaheuristic search schemes, not just simulated annealing.
 
 The keys to speed in metaheuristic search are \textit{delta-evaluation} and to avoid \textit{object instantiation}.
