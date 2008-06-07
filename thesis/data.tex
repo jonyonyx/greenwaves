@@ -55,7 +55,7 @@ Section \ref{traffic_count_analysis} brings additional conclusions from the traf
 
 \subsection{Detector Data Analysis}
 
-The first four graphs (Figures \ref{fig:herlev_props_morning}-\ref{fig:glostrup_props_afternoon}) shows the overall fluctuation of traffic (mean-value) on workdays and in weekends split on mornings (7-9) and afternoons (15-17).
+The first four graphs (Figures \ref{fig:herlev_props_morning}-\ref{fig:glostrup_props_afternoon}) shows the overall fluctuation of traffic (mean-value) on workdays and in weekends split on mornings (7-9) and afternoons (15-17) for north- and southgoing traffic (N and S resp.).
 
 \begin{figure}[ht]
 
@@ -131,7 +131,7 @@ By comparing the workday distribution to the detected traffic in the weekend, se
 \label{fig:weekends}
 \end{figure}
 
-The next graph (Figure \ref{fig:detector_directions}) show how detections are aligned in the north and southgoing directions in both areas. 
+The next graph (Figure \ref{fig:detector_directions}) show how detections are aligned in the north and southgoing directions in both areas. (For both directions and areas these proportions do not vary in particular between workday and weekend.)
 
 \begin{figure}[!ht]
 \begin{center}
@@ -141,7 +141,94 @@ The next graph (Figure \ref{fig:detector_directions}) show how detections are al
 \label{fig:detector_directions}
 \end{figure}
 
-(For either direction and area these proportions do not vary in particular between workday and weekend.)
+One notable conclusions that can be drawn from these detector data is that there is a slight overweight of traffic north-going traffic in both areas, in the worst case around 3:2, so the direction biased is not profound.
+
+We can also conclude that ringroad 3 in Glostrup and Herlev face heavy commuter traffic by the classical increases in traffic from 7-9 and 15-17 but also from slightly around 12 due to lunch traffic. The background traffic through the workdays is heavy as well, starting around 6 and leveling off around 18.
 
 \subsection{Traffic Count Analysis}
 \label{traffic_count_analysis}
+
+Traffic counts are widely used in traffic planning to setup simulations. They are performed manually by a suitable number of persons, so that each approach and turning motion of an intersection is counted simultaneously.
+
+DRD provided traffic counts for every intersection except Ejby Torvevej (which is a blinded minor road and of little importance according to DRD) which has made it possible to model in detail the turning motions in the network.
+The counting period was 7.00-9.00 in the mornings and 15.00-17.00 in the afternoons in 15-minutes intervals. The counts involved, for each approach, the turning movements of cars (including vans) and trucks. 
+
+From table \ref{tab:traffic_counts} we see a listing of the traffic counts and couting dates; most counts are from fall 2001 before the expansion of motorring 3 had begun. It is expected that the traffic has changed since then but the averall changes will probably fluctuate until motorring 3 is finished late 2008 (expected) due to differing conditions over time on motorring 3 (lane closures etc).
+
+For some of the most important intersections (Mileparken, Jyllingevej, Roskildevej) we have newer traffic counts. For Herlev Hovedgade I received a detector count (MASTRA) from 2007 in addition to the traffic count in 2001, however the resolution was 1 hour and there was no distinction between cars and trucks and so it was disregarded.
+
+\begin{table}[!ht]
+\begin{center}
+\begin{tabular}{l|l|l}
+\textbf{\#} & \textbf{Intersection} & \textbf{Date Counted}\\ \hline
+1 & Herlev Sygehus & 30-10-2001\\
+2 & Hjortespringvej & 09-10-2001\\
+3 & Herlev Bygade & 04-10-2001\\
+4 & Herlev Hovedgade & 02-10-2001\\
+5 & Mileparken & 03-10-2005\\
+6 & Ejby Industrivej & 27-02-2001\\
+7 & Ejby Torvevej & -\\
+8 & Jyllingevej & 23-10-2007\\
+9 & Fabriksparken & 04-10-2001\\
+10 & Gammel Landevej & 03-10-2001\\
+11 & Kindebjergvej & 18-09-2001\\
+12 & Roskildevej & 28-08-2003\\
+\end{tabular}
+\end{center}
+\caption{Traffic count dates}
+\label{tab:traffic_counts}
+\end{table}
+
+The main advantage of traffic counts is that the ratio of cars to trucks is obtain. In Figure \ref{fig:cars2trucks} we see that there there is about the same amount of traffic in each direction, however there are more trucks from south (ie. northgoing) supporting the results on direction bias from the DOGS detector data. Furthermore we are confirmed again on the clear arterial nature of the involved intersections due to the relative volumes of north-south going traffic to traffic from east-west.
+
+The columns E and W indicate the total load of trucks and vehicles coming from east and west respectively, in which we see that the traffic from west, which is travelling towards the city of copenhagen, is somewhat heavier than the traffic coming from east, travelling away from the city. 
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.5]{cars_vs_truck_vs_direction.png} 
+\end{center}
+\caption{Combined ratio of cars to trucks from each direction in the morning period. There are more trucks coming from south than from north.}
+\label{fig:cars2trucks}
+\end{figure}
+
+In Figure \ref{fig:cars2trucks_time} we see how the proportion of cars and trucks evolve over time and note that the proportion remains the same in the sampling period.
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.5]{cars_vs_trucks_vs_time_morning.png} 
+\end{center}
+\caption{As Figure \ref{fig:cars2trucks} but over time. The proportion of cars to trucks does not vary much.}
+\label{fig:cars2trucks_time}
+\end{figure}
+
+In the next figure (\ref{fig:cars2trucks_insect}) we see the proportions of cars to trucks for each intersection. The bars are the sum of cars and trucks in the morning period and also give an indication of the load each intersection faces. We can see that the most heavily loaded intersections are Herlev Hovedgade, Jyllingevej and Roskildevej (disregarding that two latter two were counted later than the other intersections) and that Herlev Hovedgade is the junction which sees the most trucks per car while Jyllingevej serve considerably less trucks. It is interesting to see that these heavily loaded intersections are the ones which were recounted after 2001, except for Mileparken.
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[scale=0.35]{cars_vs_trucks_all_intersections.png} 
+\end{center}
+\caption{Cars to trucks proportions per intersection}
+\label{fig:cars2trucks_insect}
+\end{figure}
+
+The final two figures (\ref{fig:insect_herlev}-\ref{fig:insect_glostrup}) show, for each DOGS controlled area, the demand faces from each direction split on trucks and cars. 
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.30]{demand_from_direction_per_intersection_herlev.png} 
+\end{center}
+\caption{Demand from direction per vehicle type in Herlev}
+\label{fig:insect_herlev}
+\end{figure}  
+    
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.30]{demand_from_direction_per_intersection_glostrup.png} 
+\end{center}
+\caption{Demand from direction per vehicle type in Glostrup}
+\label{fig:insect_glostrup}
+\end{figure}
+
+In all cases the vehicle demand by far outweighs truck demand; the intersections facing the most truck demand in Herlev are Herlev Hovedgade (from all directions), Herlev Bygade (from north and south) and also Herlev Sygehus from the arterial directions. 
+
+In Glostrup we see that Fabriks has far more northgoing traffic and fair amounts of trucks and both arterial directions. Roskildevej has almost as much traffic from the sideroads as does Herlev Hovedgade, emphasizing the fact that ringroad 3 is not exclusively an artery in the north-south directions.

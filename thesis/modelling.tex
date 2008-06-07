@@ -23,8 +23,6 @@ In the southgoing direction vehicles entering the arterial from highway 3 and th
 
 Northgoing traffic input is defined on the link leading to the Mileparken intersection and is detected by D14. 
 
-The relative size of the major inputs are set according to the relative directional distribution seen in Figure \ref{fig:herlev_props} ie. 45\% northgoing and 55\% southgoing. XXX Insert more specific figure XXX
-
 As the available dataset does not include detectors on the minor sideroads - from either side of the arterial - it is difficult to assess the relative size of the inputs from them. Thus for the remaining roads adjacent to the arterial are defined minor input links of identical size with the exception of the Herlev Sygehus link, which is set to be double the size to match the observations made above.
 It is arguable that much traffic enters at the Herlev Hovedgade intersection, but the detected traffic does not indicate that this is significant.
 
@@ -38,10 +36,7 @@ In the network there exist a large number of routes which road users may take. T
 
 At every intersection it is possible to follow each adjacent link (ie. turn left, right or go straight through) and thus the total number of routes from an input link to an exit link in the network is tremendous.
 
-DRD provided traffic counts for every intersection except Ejby Torvevej (which is a blinded minor road and of little importance according to DRD) which has made it possible to model in detail the turning motions in the network.
-The counting period was 7.00-9.00 in the mornings and 15.00-17.00 in the afternoons in 15-minutes intervals. The counts involved, for each approach, the turning movements of cars (including vans) and trucks. 
-
-To apply this dataset in Vissim it is possible to use \textit{turning decisions} but the Vissim manual is clear that static routes should be used (rather than turning decisions) when modelling turning distributions. The main reason is that congestion may cause a decision to turn to be overruled whereas a vehicle on a fixed route will wait for the congestion to clear. 
+To apply traffic count dataset by DRD in Vissim (section \ref{traffic_count_analysis}) it is possible to use \textit{turning decisions} but the Vissim manual is clear that static routes should be used (rather than turning decisions) when modelling turning distributions. The main reason is that congestion may cause a decision to turn to be overruled whereas a vehicle on a fixed route will wait for the congestion to clear. 
 
 The simplest approach was to introduce a routing decision for each approach, which had traffic count data, and then add routes - respecting the counting data - which represented the turning motion. Such a route is \textit{internal} as it does not necessarily lead from an input to an exit link. Consequently this approach yields a network with the possibility of endless circulation, however since we only regard an arterial in this project - and the fact that there are no U-turns in the network - no vehicles will be able to circulate and will always find an exit link.
 
