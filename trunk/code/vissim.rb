@@ -338,36 +338,13 @@ class Vissim
 end
 
 if __FILE__ == $0
-  vissim = Vissim.new 
+  vissim = Vissim.new
+  rows = [['#','Name','Date Counted']]
+  DB['SELECT name, CLNG(number) as num, count_date FROM [intersections$] ORDER BY number'].each do |row|
+    rows << [row[:num], row[:name], row[:count_date] ?
+      Time.parse(row[:count_date].split(' ').first).strftime("%d-%m-%Y") : '-']
+  end
   
-  kindebjergvej = vissim.controllers.find{|sc|sc.number == 11}
-  puts kindebjergvej.donor_stage
-  puts kindebjergvej.recipient_stage
-  puts kindebjergvej.has_bus_priority?
-  
-  puts vissim.controllers.find_all{|sc|sc.has_bus_priority?}
-    
-#  for sc in vissim.controllers_with_plans
-#    puts "#{sc} #{sc.position} #{sc.internal_distance}"
-#  end
-  #  for link in vissim.links
-  #    puts "#{link} at #{link.intersection_number}"
-  #  end
-  #  vissim.decisions.each do |dec|
-  #    puts "#{dec}: #{dec.drop_link}"
-  #  end
-  #  scs = vissim.controllers_with_plans
-  #  (0...scs.size-1).to_a[-2..-2].each do |i|
-  #    sc1, sc2 = *scs[i..i+1]
-  #    puts "Distance from #{sc1.name} to #{sc2.name}: #{vissim.distance(sc1, sc2)}"
-  #    #puts "Distance from #{sc2.name} to #{sc1.name}: #{vissim.distance(sc2, sc1)}"
-  #    puts
-  #  end
-  #  for sc in vissim.controllers.find_all{|x| x.has_plans?}.sort
-  #    #rows << [sc.number, sc.name, sc.arterial_groups.map{|grp|grp.name}.join(', ')]
-  #    puts sc
-  #  end
-  #
-  #  puts rows.inspect  
-  #  puts to_tex(rows,:caption => 'Groups for main traffic direction as perceived by traffic signal designer', :label => 'lab:arterial_groups')
+  #puts rows.inspect  
+  puts to_tex(rows,:row_sep => "\r", :caption => 'Groups for main traffic direction as perceived by traffic signal designer', :label => 'tab:traffic_counts')
 end

@@ -4,8 +4,8 @@
 
 require 'rubygems'
 require 'sequel'
-#Project = 'dtu'
-Project = 'cowi'
+Project = 'dtu'
+#Project = 'cowi'
 
 CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source="
 if Project == 'dtu'
@@ -118,7 +118,7 @@ def get_from_direction(fromsc,tosc)
   ((fromsc.number < tosc.number) ? ARTERY[:sc1] : ARTERY[:sc2])[:from_direction]  
 end
 def to_tex(table, user_opts = {})
-  default_opts = {:center => true, :sep_cols => true, :col_align => 'l'}
+  default_opts = {:center => true, :sep_cols => true, :col_align => 'l', :row_sep => "\n"}
   opts = default_opts.merge(user_opts)  
   lines = ['\begin{table}[!ht]']
   lines << '\begin{center}' if opts[:center]
@@ -132,7 +132,7 @@ def to_tex(table, user_opts = {})
   lines << "\\caption{#{opts[:caption]}}" if opts[:caption]
   lines << "\\label{#{opts[:label]}}" if opts[:label]
   lines << '\end{table}'
-  lines.join("\n")
+  lines.join(opts[:row_sep])
 end
 # create an array of linearly spaced numbers
 def linspace(from,step,limit)
