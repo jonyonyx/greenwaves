@@ -256,12 +256,7 @@ class Hash
 end
 
 class Range
-  # determine if self and other has overlapping parts by denial
-  # assume first == min and last == max
-  def overlap?(other)
-    case [first <=> other.first, last <=> other.last]
-    when [-1,-1],[1,1] then false
-    else true
-    end
+  def overlap? other
+    include? other.first or other.include? first
   end
 end

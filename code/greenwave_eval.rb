@@ -1,8 +1,6 @@
 require 'vissim'
 require 'const'
 
-ARTERIAL = 'a'
-
 class Band
   attr_reader :tstart, :tend, :width
   def initialize tstart, tend 
@@ -13,17 +11,17 @@ class Band
   def width; @tend - @tstart + 1; end
   # returns a list of bands, which are the result of subtracting other from self
   def subtract(other)
+    return [copy] unless overlap?(other)
     case [@tstart <=> other.tstart, @tend <=> other.tend]
     when [0,0], [1,-1], [0,-1], [1,0] # self is completely covered by other
       []
-    when [-1,-1], [1,1] # self lies before or after other and nothing can be subtracted
-      [copy]
     when [-1,1] # start before other start and end is after other end, multiple bands
-      [Band.new(@tstart,other.tstart - 1),Band.new(@tend + 1,other.tend)]
-    when [-1,0] # starts before other but ends at same time
+      [Band.new(@tstart,other.tstart - 1),
+        Band.new(other.tend + 1,@tend)]
+    when [-1,0],[-1,-1] # starts before other but ends at same time
       [Band.new(@tstart,other.tstart - 1)]
-    when [0,1] # starts same time as other but ends after
-      [Band.new(@tend + 1,other.tend)]
+    when [0,1],[1,1] # starts same time as other but ends after
+      [Band.new(other.tend + 1,@tend)]
     else
       raise "Should not get here. Attempted #{self} - #{other}"
     end
