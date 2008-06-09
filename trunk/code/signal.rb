@@ -86,21 +86,6 @@ class SignalController < VissimElem
     end
     waves
   end
-      
-  #      cycle_count = 0
-  #      loop do
-  #        cycle_offset = cycle_count * @cycle_time
-  #        tstart = tstart_base + cycle_offset
-  #        tend = tend_base + cycle_offset
-  #        
-  #        break if tstart >= horizon.max # only show bands in the horizon
-  #        # create the band. the end time might be cut off by the horizon limits
-  #        if [tstart,tend].any?{|t|horizon.include?(t)} # entered the horizon
-  #          # end must not be bounded by horizon max, otherwise
-  #          # heuristic will push bands out of horizon
-  #          wavebands << Band.new([tstart,horizon.min].max, tend)
-  #        end
-  #        cycle_count += 1
   def stages
     return @stagear if @stagear # cache hit
     last_stage = nil
@@ -142,7 +127,7 @@ class SignalController < VissimElem
     #      puts from_direction
     #    end
     
-    25
+    42
   end
   class SignalGroup < VissimElem
     attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads,:priority
