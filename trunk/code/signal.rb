@@ -36,6 +36,11 @@ class SignalController < VissimElem
     @arterial_groups_from[from_direction] ||= 
       arterial_groups.find_all{|grp|grp.arterial_from.include?(from_direction)}
   end
+  def arterial_group_from(from_direction)
+    groups = arterial_groups_from(from_direction)
+    raise "Expected exactly one group from #{from_direction}" if groups.size != 1
+    groups.first
+  end
   def interstage_active?(cycle_sec)
     # all-red phases are considered interstage
     return true if @groups.all?{|grp| grp.color(cycle_sec) == RED}
