@@ -86,8 +86,8 @@ class Coordination
   # green start of sc2 under the given offsets and speed (travel time).
   # deviations from default speed are punished
   def eval_fixed o1, o2, s, c
-    red_end_sc1 = @sc1.arterial_groups_from(@from_direction).first.red_end + o1
-    red_end_sc2 = @sc2.arterial_groups_from(@from_direction).first.red_end + o2
+    red_end_sc1 = @sc1.arterial_group_from(@from_direction).red_end + o1
+    red_end_sc2 = @sc2.arterial_group_from(@from_direction).red_end + o2
     green_time_displacement = case red_end_sc1 <=> red_end_sc2
     when 1 # sc1 arterial green starts before sc2
       red_end_sc1 - red_end_sc2
