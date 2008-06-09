@@ -86,12 +86,33 @@ class Coordination
   def conflict_position
     @left_to_right ? @sc2.position : (@sc1.position - @distance + @sc1.internal_distance)
   end
+  def eval_speed s
+    (@default_speed - s) ** 2 # quadratic punishment of deviation from default speed
+  end; private :eval_speed
   # Finds the utility ie. number of mismatches in the given horizon.
   # Mixing apples and bananas.
   def eval h,o1,o2,s
-    z = (@default_speed - s) ** 2 # quadratic punishment of deviation from default speed
+    z = eval_speed
     mismatches_in_horizon(h,o1,o2,s){|band| z += band.width}
     z
+  end
+  # the green time displacement from green start of sc1 to
+  # green start of sc2 under the given offsets and speed (travel time).
+  # deviations from default speed are punished
+  def eval_fixed o1, o2, s, c
+    red_end_sc1 = @sc1.arterial_groups(@from_direction).first.red_end + o1
+    red_end_sc2 = @sc2.arterial_groups(@from_direction).first.red_end + o2
+    green_time_displacement = case red_end_sc1 <=> red_end_sc2
+    when 1 # sc1 arterial green starts before sc2
+      red_end_sc1 - red_end_sc2
+    when -1 # must wait an entire cycle before green start of sc2
+      c - (red_end_sc2 - red_end_sc1)
+    else
+      0 # green starts at the same time
+    end
+    # the value to minimize is the difference from green time displacement
+    # to the expected travel time, given current speed signs
+    (green_time_displacement - traveltime(s)).abs + eval_speed(s)
   end
   def to_s; "Coordination from #{@sc1.number} #{@sc1.name} to #{@sc2.number} #{@sc2.name}"; end
 end
@@ -102,7 +123,7 @@ class SimulatedAnnealing
     @time_limit = time_limit
     @parameters = params
   end
-  def run    
+  def run
     result = Hash.new(0)
     result[:succesful_changes] = Hash.new(0)
     iters_with_no_improvement = 0
@@ -179,10 +200,17 @@ end
 
 class CoordinationProblem
   attr_reader :current_value,:encumbent_value,:statistics
-  def initialize coords, scs, horizon
+  def initialize coords, scs, opts
     @coordinations = coords
     @controllers = scs
-    @horizon = horizon
+    
+    if opts[:horizon]
+      @scheme = :stage_based
+      @horizon = opts[:horizon]
+    elsif opts[:cycle_time]
+      @scheme = :common_cycle_time
+      @current_cycle_time = opts[:cycle_time] # seconds
+    end
     
     @coord_contribution = {} # individual contribution from coordinations to current value
     @delta_contribution = {} # bookkeeping of changes goes here
@@ -259,20 +287,31 @@ class CoordinationProblem
       # Make a note of the previous contribution of this
       # coordination and subtract it from the current solution value
       @delta_contribution[coord] = @coord_contribution[coord]
-      @current_value -= @coord_contribution[coord]
+      @current_value -= @coord_contribution[coord]      
       
       # Recalculate the contribution of the coordination
       # under the new settings...
-      @coord_contribution[coord] = coord.eval(
-        @horizon, 
-        @current_offset[coord.sc1], 
-        @current_offset[coord.sc2], 
-        @current_speed[coord])
+      @coord_contribution[coord] = eval_coord(coord)
       
       # ... and insert the new value into the current solution value
       @current_value += @coord_contribution[coord]
     end
   end
+  def eval_coord(coord)    
+      o1, o2, s = 
+        @current_offset[coord.sc1], 
+        @current_offset[coord.sc2], 
+        @current_speed[coord]
+      
+      case @scheme 
+      when :common_cycle_time
+        coord.eval_fixed(o1, o2, s, @current_cycle_time)
+      when :stage_based
+        coord.eval(@horizon, o1, o2, s)
+      else
+        raise "Don't know how to evaluate offsets and speeds in a '#{@scheme}' scheme"
+      end
+  end; private :eval_coord
   # return a hash of signals mapping to the found offsets and speeds
   def solution; {:offset => @encumbent_offset, :speed => @encumbent_speed}; end
   # undo all changes made during last call to change
@@ -286,7 +325,7 @@ class CoordinationProblem
     when :speed
       @current_speed[@changed_coord] = @previous_speed
     else
-      raise "Unknown change symbol '#{@last_change}'"
+      raise "Don't know how to undo '#{@last_change}' change!"
     end
     
     # delta-restore the value of the solution
@@ -300,13 +339,7 @@ class CoordinationProblem
   end
   # evaluate the current solution
   def full_evaluation
-    @coordinations.each do |coord|
-      @coord_contribution[coord] = coord.eval(
-        @horizon, 
-        @current_offset[coord.sc1], 
-        @current_offset[coord.sc2], 
-        @current_speed[coord])
-    end
+    @coordinations.each{|coord| @coord_contribution[coord] = eval_coord(coord)}
     @coord_contribution.values.sum
   end
 end
