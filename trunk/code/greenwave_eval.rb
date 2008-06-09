@@ -27,18 +27,6 @@ class Band
     else
       raise "Should not get here. Attempted #{self} - #{other}"
     end
-    
-#    if @tstart < other.tstart and @tend > other.tend
-#      # subtraction will results in multiple bands since
-#      # self covers other and more
-#      [Band.new(@tstart,other.tstart - 1),Band.new(other.tend + 1,@tend)]
-#    elsif @tstart < other.tstart
-#      [Band.new(@tstart,other.tstart - 1)]
-#    elsif @tend > other.tend
-#      [Band.new(other.tend+1,@tend)]
-#    else
-#      raise "Should not get here. Attempted #{self} - #{other}"
-#    end
   end
   def shift!(offset); @tstart += offset ; @tend += offset; @as_range = nil end
   def to_s; "(#{to_r})"; end
@@ -100,8 +88,8 @@ class Coordination
   # green start of sc2 under the given offsets and speed (travel time).
   # deviations from default speed are punished
   def eval_fixed o1, o2, s, c
-    red_end_sc1 = @sc1.arterial_groups(@from_direction).first.red_end + o1
-    red_end_sc2 = @sc2.arterial_groups(@from_direction).first.red_end + o2
+    red_end_sc1 = @sc1.arterial_groups_from(@from_direction).first.red_end + o1
+    red_end_sc2 = @sc2.arterial_groups_from(@from_direction).first.red_end + o2
     green_time_displacement = case red_end_sc1 <=> red_end_sc2
     when 1 # sc1 arterial green starts before sc2
       red_end_sc1 - red_end_sc2
@@ -126,6 +114,9 @@ class SimulatedAnnealing
   def run
     result = Hash.new(0)
     result[:succesful_changes] = Hash.new(0)
+    result[:action_count] = Hash.new(0) # number of times each action has been taken
+    result[:action_success] = Hash.new(0) # no. times the action improved the encumbent
+    
     iters_with_no_improvement = 0
     
     start_time = Time.now # start the clock
@@ -149,7 +140,6 @@ class SimulatedAnnealing
         @problem.store_encumbent
         result[:encumbent_found_time] = Time.now - start_time
         result[:encumbent_found_iteration] = result[:iterations]
-        result[:encumbents] += 1
         result[:succesful_changes][change_type] += 1
         iters_with_no_improvement = 0
         
@@ -171,18 +161,23 @@ class SimulatedAnnealing
         if temp < @parameters[:start_temp] and rand < 0.5 # pure reheating
           prevtemp = temp.round          
           temp = @parameters[:start_temp]
-          result[:reheats] += 1      
           puts "Reheat from #{prevtemp.round} to #{temp.round}"
-        else # random restart
-          @problem.random_restart
-          if @problem.current_value < @problem.encumbent_value
-            # the random restart actually gave the best solution thus far!
-            yield @problem.current_value, @problem.encumbent_value, 'random restart', @problem.solution if block_given?
-            @problem.store_encumbent
-            result[:succesful_changes][:restart] += 1
-          end
-          puts "Random restart, value change from #{neighborval} to #{@problem.current_value}"
+          action = :reheat
+        else
+          action = [:random_restart,:focus].rand
+          previous_value = @problem.current_value
+          @problem.send(action)
+          puts "#{action}, value change from #{previous_value} to #{@problem.current_value}"
         end
+        
+        if @problem.current_value < @problem.encumbent_value
+          # the action (random restart) actually gave the best solution thus far!
+          yield @problem.current_value, @problem.encumbent_value, action, @problem.solution if block_given?
+          @problem.store_encumbent
+          result[:action_success][action] += 1
+        end
+        
+        result[:action_count][action] += 1
         iters_with_no_improvement = 0
       else
         temp *= @parameters[:alpha]        
@@ -230,11 +225,16 @@ class CoordinationProblem
   SPEED_CHANGE_OPTIONS = [-SPEED_INCREMENT, SPEED_INCREMENT]
   SPEED_CHANGE_OPTIONS_WITH_ZERO = SPEED_CHANGE_OPTIONS + [0]
   def random_restart
-    @statistics[:restarts] += 1
     @controllers.each{|sc| @current_offset[sc] = rand(sc.cycle_time)}
     @coordinations.each do |coord|
       @current_speed[coord] = coord.default_speed + SPEED_CHANGE_OPTIONS_WITH_ZERO.rand
     end
+    @current_value = full_evaluation
+  end
+  # returns focus to encumbent solution
+  def focus
+    @current_offset = @encumbent_offset.copy
+    @current_speed = @encumbent_speed.copy
     @current_value = full_evaluation
   end
   # make a clean copy of the current solution free from backreferences
@@ -298,19 +298,19 @@ class CoordinationProblem
     end
   end
   def eval_coord(coord)    
-      o1, o2, s = 
-        @current_offset[coord.sc1], 
-        @current_offset[coord.sc2], 
-        @current_speed[coord]
+    o1, o2, s = 
+      @current_offset[coord.sc1], 
+      @current_offset[coord.sc2], 
+      @current_speed[coord]
       
-      case @scheme 
-      when :common_cycle_time
-        coord.eval_fixed(o1, o2, s, @current_cycle_time)
-      when :stage_based
-        coord.eval(@horizon, o1, o2, s)
-      else
-        raise "Don't know how to evaluate offsets and speeds in a '#{@scheme}' scheme"
-      end
+    case @scheme 
+    when :common_cycle_time
+      coord.eval_fixed(o1, o2, s, @current_cycle_time)
+    when :stage_based
+      coord.eval(@horizon, o1, o2, s)
+    else
+      raise "Don't know how to evaluate offsets and speeds in a '#{@scheme}' scheme"
+    end
   end; private :eval_coord
   # return a hash of signals mapping to the found offsets and speeds
   def solution; {:offset => @encumbent_offset, :speed => @encumbent_speed}; end
@@ -325,7 +325,7 @@ class CoordinationProblem
     when :speed
       @current_speed[@changed_coord] = @previous_speed
     else
-      raise "Don't know how to undo '#{@last_change}' change!"
+      raise "Don't know how to undo a '#{@last_change}' change!"
     end
     
     # delta-restore the value of the solution
@@ -389,8 +389,9 @@ def run_simulation_annealing
     horizon = (0..300)
     
     solutions = []
-
-    problem = CoordinationProblem.new(coords, scs, horizon)
+    #opts = {:horizon => horizon}
+    opts = {:cycle_time => BASE_CYCLE_TIME}
+    problem = CoordinationProblem.new(coords, scs, opts)
     siman = SimulatedAnnealing.new(problem, 2, :start_temp => 100.0, :alpha => 0.95, :no_improvement_action_threshold => 50)
     
     result = siman.run do |newval, prevval, change_desc, solution|
@@ -400,35 +401,18 @@ def run_simulation_annealing
     puts "Solver finished in #{result[:time]} seconds."
     puts "Completed iterations: #{result[:iterations]}"
     puts "Iterations per second: #{result[:iter_per_sec]}"
+    puts "Actions taken on no improvement:"
+    result[:action_count].each do |action,count|
+      puts "   #{action}: #{count} of which #{result[:action_success][action]} improved encumbent"
+    end
     puts "Reheatings: #{result[:reheats]}"
     puts "Restarts: #{result[:restarts]}"
     puts "Accepted solutions (jumps): #{result[:accepted]}"
     puts "Rejected solutions: #{result[:rejected]}"
     puts "Encumbents found: #{result[:encumbents]}"
-    result[:succesful_changes].each do |change_type,succes_count|
-      puts "   due to #{change_type}: #{succes_count}"
-    end
     puts "Final solution value: #{result[:encumbent_value]}"
     
     return coords, scs, solutions, horizon
-        
-    #    coord = coords[2]
-    #    puts coord
-    #    puts "travel time: #{coord.traveltime}s"
-    #    sc1 = coord.sc1
-    #    sc2 = coord.sc2
-    #    o1 = 0
-    #    o2 = 10
-    #    from_direction = coord.from_direction
-    #    puts "#{sc1} emits:"
-    #    puts sc1.greenwaves(H, o1, from_direction)
-    #    puts "#{sc2} receives:"
-    #    puts sc2.greenwaves(H, o2, from_direction)
-    #        
-    #    puts "found mismatches:"
-    #    coord.mismatches_in_horizon(H, o1, o2) do |band|
-    #      puts "yielded band: #{band}"
-    #    end
   end
 end
 if __FILE__ == $0
