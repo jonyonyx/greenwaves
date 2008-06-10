@@ -122,7 +122,7 @@ end
 Replacement = {221 => 'ae', 248 => 'oe', 206 => 'aa'} # be sure to use character codes for non-ascii chars
   
 # Below is code for generating a DOGS SLAVE controller in VAP
-def gen_vap sc, outputdir
+def gen_vap sc, outputdir, offset
   cp = CodePrinter.new
   
   cp.add_verb get_generated_info  
@@ -156,7 +156,9 @@ def gen_vap sc, outputdir
     cp.add_verb "\tBUSDETN_END = 2#{sc.bus_detector_n}," # departure detector
     cp.add_verb "\tBUSDETS_END = 2#{sc.bus_detector_s}," # departure detector
   end
-  cp.add_verb "\tBASE_CYCLE_TIME = #{sc.cycle_time},\n\tOFFSET = #{sc.offset};"
+  # unless there are cycle times per dogs level, use the transyt cycle times, which are
+  # stored in the signal controller
+  cp.add_verb "\tBASE_CYCLE_TIME = #{sc.cycle_time}" + (offset.nil? ? ",\n\tOFFSET = #{sc.offset}" : '') + ";"
   cp.add_verb ''
   # calculate stage end times based on stage lengths, respecting dogs level and bus priorities
   for i in (0...uniq_stages.length)
@@ -188,8 +190,17 @@ def gen_vap sc, outputdir
   cp.add_verb ''
   
   if USEDOGS
-    # dogs master sync and local timing calculations
+    # dogs master sync and local timing calculations  
+    
     cp << 'DOGS_LEVEL := Marker_get(1); TIME := Marker_get(2);'
+  
+    if Hash === offset # map from dogs level to current offset
+      offset.sort.each do |dogs_level,offset|
+        cp << "IF DOGS_LEVEL = #{dogs_level} THEN"
+        cp << "   OFFSET := #{offset};"
+        cp.add 'END;'
+      end
+    end
     cp << 'IF NOT SYNC THEN'
     cp << '   IF TIME = (OFFSET - 1) THEN'
     cp << '      SYNC := 1;'
@@ -415,7 +426,7 @@ def generate_controllers vissim, user_opts = {}, outputdir = Vissim_dir
       sc.update :bus_detector_n => nil,:bus_detector_s => nil,:donor_stage => nil,:recipient_stage => nil
     end
     puts "Generating VAP and PUA for #{sc}" if opts[:verbose]
-    gen_vap sc, outputdir
+    gen_vap sc, outputdir, opts[:offset][sc] # map from dogs level to offset or nil
     gen_pua sc, outputdir
   end
 end

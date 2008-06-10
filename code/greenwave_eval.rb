@@ -34,15 +34,15 @@ class Band
 end
 class Coordination
   attr_reader :sc1, :sc2, :distance, :from_direction, :left_to_right, :default_speed
-  def initialize sc1, sc2, speed
+  def initialize sc1, sc2, speed, distance
     @sc1, @sc2 = sc1, sc2
     @default_speed = speed
     @from_direction = get_from_direction(@sc1,@sc2)
-    @left_to_right = @from_direction == ARTERY[:sc1][:from_direction]
+    @left_to_right = sc1.number < sc2.number ? true : false
     
     # simplify things and visualization by always taking the distance
     # in the primary direction
-    @distance = @left_to_right ? VISSIM.distance(@sc1,@sc2) : VISSIM.distance(@sc2,@sc1)
+    @distance = distance
     [@sc1,@sc2].each{|sc|sc.member_coordinations << self} # notify controllers
   end
   def traveltime(s); (@distance / s).round; end
@@ -78,7 +78,7 @@ class Coordination
   # Finds the utility ie. number of mismatches in the given horizon.
   # Mixing apples and bananas.
   def eval h,o1,o2,s
-    z = eval_speed
+    z = eval_speed(s)
     mismatches_in_horizon(h,o1,o2,s){|band| z += band.width}
     z
   end
@@ -86,21 +86,30 @@ class Coordination
   # green start of sc2 under the given offsets and speed (travel time).
   # deviations from default speed are punished
   def eval_fixed o1, o2, s, c
-    red_end_sc1 = @sc1.arterial_group_from(@from_direction).red_end + o1
-    red_end_sc2 = @sc2.arterial_group_from(@from_direction).red_end + o2
-    green_time_displacement = case red_end_sc1 <=> red_end_sc2
-    when 1 # sc1 arterial green starts before sc2
-      red_end_sc1 - red_end_sc2
-    when -1 # must wait an entire cycle before green start of sc2
-      c - (red_end_sc2 - red_end_sc1)
-    else
-      0 # green starts at the same time
+    red_end = {}
+    [[@sc1,o1],[@sc2,o2]].each do |sc,o|
+      red_end[sc] = (sc.arterial_group_from(@from_direction).red_end + o) % c
     end
-    # the value to minimize is the difference from green time displacement
-    # to the expected travel time, given current speed signs
+    
+    green_time_displacement = case red_end[@sc1] <=> red_end[@sc2]
+    when 1 # sc1 arterial green starts before sc2
+      red_end[@sc1] - red_end[@sc2]
+    when -1 # must wait an entire cycle before green start of sc2
+      c - (red_end[@sc2] - red_end[@sc1])
+    else
+      c # green starts at the same time, both must wait an entire cycle
+    end
+    
     (green_time_displacement - traveltime(s)).abs + eval_speed(s)
   end
-  def to_s; "Coordination from #{@sc1.number} #{@sc1.name} to #{@sc2.number} #{@sc2.name}"; end
+  def to_s; "Coordination between #{@sc1.number} #{@sc1.name} and #{@sc2.number} #{@sc2.name}"; end  
+  def <=>(other)
+    if @sc1 == other.sc1
+      @sc2 <=> other.sc2
+    else
+      @sc1 <=> other.sc1
+    end
+  end
 end
 
 class SimulatedAnnealing
@@ -156,23 +165,22 @@ class SimulatedAnnealing
       # adjust temperature,
       # check if some action must be taken due to being stuck
       if iters_with_no_improvement > @parameters[:no_improvement_action_threshold]
-        if temp < @parameters[:start_temp] and rand < 0.5 # pure reheating
-          prevtemp = temp.round          
+        if temp < @parameters[:start_temp] and maybe? # pure reheating
           temp = @parameters[:start_temp]
-          puts "Reheat from #{prevtemp.round} to #{temp.round}"
           action = :reheat
+        elsif @problem.current_value > @problem.encumbent_value and maybe?
+          @problem.focus
+          action = :focus
         else
-          action = [:random_restart,:focus].rand
-          previous_value = @problem.current_value
-          @problem.send(action)
-          puts "#{action}, value change from #{previous_value} to #{@problem.current_value}"
-        end
+          @problem.random_restart
         
-        if @problem.current_value < @problem.encumbent_value
-          # the action (random restart) actually gave the best solution thus far!
-          yield @problem.current_value, @problem.encumbent_value, action, @problem.solution if block_given?
-          @problem.store_encumbent
-          result[:action_success][action] += 1
+          if @problem.current_value < @problem.encumbent_value
+            # the random restart actually gave the best solution thus far!
+            yield @problem.current_value, @problem.encumbent_value, action, @problem.solution if block_given?
+            @problem.store_encumbent
+            result[:action_success][action] += 1
+          end
+          action = :random_restart
         end
         
         result[:action_count][action] += 1
@@ -193,9 +201,10 @@ end
 
 class CoordinationProblem
   attr_reader :current_value,:encumbent_value,:statistics
-  def initialize coords, scs, opts
+  def initialize coords, opts
+    raise "Cannot proceed without coordinations!" if coords.nil? or coords.empty?
     @coordinations = coords
-    @controllers = scs
+    @controllers = coords.map{|coord|[coord.sc1,coord.sc2]}.flatten.uniq
     
     if opts[:horizon]
       @scheme = :stage_based
@@ -205,35 +214,41 @@ class CoordinationProblem
       @current_cycle_time = opts[:cycle_time] # seconds
     end
     
+    @change_probability = opts[:change_probability]
+    
+    @desired_bias = opts[:direction_bias]
+    
     @coord_contribution = {} # individual contribution from coordinations to current value
     @delta_contribution = {} # bookkeeping of changes goes here
     
-    @current_offset = {} ; @encumbent_offset = {} 
-    @current_speed  = {} ; @encumbent_speed  = {}     
+    @current_offset = {} ; @encumbent_offset = {}
+    @current_speed  = {} ; @encumbent_speed  = {}
     
     @statistics = Hash.new(0)
   end
   def create_initial_solution
     @controllers.each{|sc| @current_offset[sc] = 0}    
     @coordinations.each{|coord| @current_speed[coord] = coord.default_speed}    
-    @current_value = full_evaluation # updates current solution value
+    full_evaluation # updates current solution value
     store_encumbent
   end
   SPEED_INCREMENT = 5 / 3.6 # 5KM/H
   SPEED_CHANGE_OPTIONS = [-SPEED_INCREMENT, SPEED_INCREMENT]
   SPEED_CHANGE_OPTIONS_WITH_ZERO = SPEED_CHANGE_OPTIONS + [0]
   def random_restart
-    @controllers.each{|sc| @current_offset[sc] = rand(sc.cycle_time)}
-    @coordinations.each do |coord|
-      @current_speed[coord] = coord.default_speed + SPEED_CHANGE_OPTIONS_WITH_ZERO.rand
+    @controllers.each{|sc| @current_offset[sc] = rand(@current_cycle_time || sc.cycle_time)}
+    if @change_probability[:speed].nonzero?
+      @coordinations.each do |coord|
+        @current_speed[coord] = coord.default_speed + SPEED_CHANGE_OPTIONS_WITH_ZERO.rand
+      end
     end
-    @current_value = full_evaluation
+    full_evaluation
   end
   # returns focus to encumbent solution
   def focus
     @current_offset = @encumbent_offset.copy
     @current_speed = @encumbent_speed.copy
-    @current_value = full_evaluation
+    full_evaluation
   end
   # make a clean copy of the current solution free from backreferences
   def store_encumbent    
@@ -252,14 +267,14 @@ class CoordinationProblem
   # make a change in the current solution
   # note the change so that it may be undone, if requested
   def change
-    @last_change = if rand < 0.2
+    @last_change = if rand < @change_probability[:speed]
       change_speed; :speed
     else
       change_offset; :offset
     end
   end
   # Change the speed of one coordination between two controllers.
-  def change_speed        
+  def change_speed
     @statistics[:speed_changes] += 1
     # pick a coordination to change speed for
     @changed_coord = @coordinations.rand
@@ -271,29 +286,34 @@ class CoordinationProblem
     @statistics[:offset_changes] += 1
     @changed_sc = @controllers.rand
     @previous_offset = @current_offset[@changed_sc]
-    @current_offset[@changed_sc] = @previous_offset + (rand < 0.5 ? -1 : 1)
-            
+    @current_offset[@changed_sc] = 
+      (@previous_offset + (maybe? ? -1 : 1)) % (@current_cycle_time || @changed_sc.cycle_time)
+
     # perform delta-evaluation
     delta_eval(*@changed_sc.member_coordinations)
   end; private :change_offset
+  # update current value by recalculating only the given coords
   def delta_eval(*coords)
     @current_value_check = @current_value # note previous value for delta restore integrity check
-    
     # refresh evaluations for the coordinations which involve the changed signal controller
     @delta_contribution.clear # forget how to revert to the previous solution
     for coord in coords      
       # Make a note of the previous contribution of this
       # coordination and subtract it from the current solution value
-      @delta_contribution[coord] = @coord_contribution[coord]
-      @current_value -= @coord_contribution[coord]      
+      old_value = @coord_contribution[coord]
+      @delta_contribution[coord] = old_value
+      @direction_sum[coord.left_to_right] -= old_value
       
       # Recalculate the contribution of the coordination
       # under the new settings...
-      @coord_contribution[coord] = eval_coord(coord)
-      
-      # ... and insert the new value into the current solution value
-      @current_value += @coord_contribution[coord]
+      new_value = eval_coord(coord)
+      @coord_contribution[coord] = new_value
+      @direction_sum[coord.left_to_right] += new_value
     end
+    store_current_value
+  end
+  def store_current_value    
+    @current_value = @direction_sum.values.sum * bias_deviation_punishment_factor
   end
   def eval_coord(coord)    
     o1, o2, s = 
@@ -311,7 +331,9 @@ class CoordinationProblem
     end
   end; private :eval_coord
   # return a hash of signals mapping to the found offsets and speeds
-  def solution; {:offset => @encumbent_offset, :speed => @encumbent_speed}; end
+  def solution
+    Solution.new @encumbent_value, :offset => @encumbent_offset, :speed => (@change_probability[:speed].nonzero? ? @encumbent_speed : nil)
+  end
   # undo all changes made during last call to change
   def undo_changes
     @statistics[:rejected] += 1
@@ -327,30 +349,40 @@ class CoordinationProblem
     end
     
     # delta-restore the value of the solution
-    for coord, prev_contrib in @delta_contribution
-      @current_value -= @coord_contribution[coord]
-      @coord_contribution[coord] = prev_contrib
-      @current_value += prev_contrib
+    for coord, old_value in @delta_contribution
+      current_value = @coord_contribution[coord]
+      @direction_sum[coord.left_to_right] -= current_value
+      @coord_contribution[coord] = old_value
+      @direction_sum[coord.left_to_right] += old_value
     end
+    
+    store_current_value
+    
     raise "Restoration of previous solution failed after change in #{@last_change}:\n" +
       "expected value #{@current_value_check} got #{@current_value}" if (@current_value_check - @current_value).abs > EPS
   end
+  # punish deviation from desired direction bias   
+  def bias_deviation_punishment_factor 
+    bias = @direction_sum[true].to_f / @direction_sum[false].to_f
+    ratio = @desired_bias / bias # ratio will be close to 1 when the direction bias is good
+    Math.exp((1-ratio).abs) # exp(0) = 1 ie. no punishment
+  end
   # evaluate the current solution
-  def full_evaluation
-    @coordinations.each{|coord| @coord_contribution[coord] = eval_coord(coord)}
-    @coord_contribution.values.sum
+  def full_evaluation    
+    @direction_sum = {true => 0, false => 0} # sum of value contributions for each direction (artery)
+    @coordinations.each do |coord| 
+      value = eval_coord(coord)
+      @coord_contribution[coord] = value
+      @direction_sum[coord.left_to_right] += value      
+    end
+    
+    store_current_value
   end
 end
 
-VISSIM = Vissim.new
+H = (0..160)
 
-def parse_coordinations
-  
-  # filter out relevant signal controllers
-  scs = VISSIM.controllers_with_plans.find_all do |sc|
-    #sc.number <= 5 # Herlev
-    sc.number >= 9 # Glostrup
-  end
+def parse_coordinations scs, vissim
   
   # adjust the position of controllers such the left-most one
   # is at position zero  
@@ -361,41 +393,41 @@ def parse_coordinations
   scs.each_cons(2) do |sc1,sc2|
     next unless (sc2.number - sc1.number).abs == 1 # assigned numbers indicate proximity
     # setup a coordination in each direction
-    coordinations << Coordination.new(sc1,sc2,VISSIM.speed(sc1,sc2))
-    coordinations << Coordination.new(sc2,sc1,VISSIM.speed(sc2,sc1))
+    [[sc1,sc2],[sc2,sc1]].each do |fromsc,tosc|
+      coordinations << Coordination.new(fromsc,tosc,vissim.speed(fromsc,tosc),vissim.distance(fromsc,tosc))
+    end
   end
   
-  yield coordinations, scs
+  coordinations
 end
 def get_dogs_scenarios
-  parse_coordinations do |coords, scs|
-    
-    solutions = numbers(80,20,1).map do |dogs_cycle_time|
-      puts dogs_cycle_time
-      cycle_time = {}
-      scs.each{|sc|cycle_time[sc] = dogs_cycle_time}
-      {:cycle_time => cycle_time}
-    end
-    
-    return coords, scs, solutions, (0..300)
+  solutions = numbers(80,20,1).map do |dogs_cycle_time|
+    puts dogs_cycle_time
+    cycle_time = {}
+    scs.each{|sc|cycle_time[sc] = dogs_cycle_time}
+    {:cycle_time => cycle_time}
   end
+    
+  return parse_coordinations(scs, vissim), solutions, H
 end
-def run_simulation_annealing
-  parse_coordinations do |coords, scs|
-    #require 'profile'
+
+def run_simulation_annealing(controllers, vissim, opts = {:cycle_time => 80, :verbose => false})
+  coords = parse_coordinations(controllers, vissim)
+  problem = CoordinationProblem.new(coords, opts + 
+    {:direction_bias => 1.0, :change_probability => {:speed => 0.0, :offset => 1.0}})
     
-    horizon = (0..300)
-    
-    solutions = []
-    #opts = {:horizon => horizon}
-    opts = {:cycle_time => BASE_CYCLE_TIME}
-    problem = CoordinationProblem.new(coords, scs, opts)
-    siman = SimulatedAnnealing.new(problem, 2, :start_temp => 100.0, :alpha => 0.95, :no_improvement_action_threshold => 50)
-    
-    result = siman.run do |newval, prevval, change_desc, solution|
-      puts "Found new encumbent #{newval} vs. #{prevval} by #{change_desc}"
-      solutions << solution
-    end
+  siman = SimulatedAnnealing.new(problem, 2, 
+    :start_temp => 100.0, 
+    :alpha => 0.95, 
+    :no_improvement_action_threshold => 50
+  )
+  
+  solutions = [] 
+  result = siman.run do |newval, prevval, change_desc, solution|
+    puts "Found new encumbent #{newval} vs. #{prevval} by #{change_desc}" if opts[:verbose]
+    solutions << solution
+  end
+  if opts[:verbose]
     puts "Solver finished in #{result[:time]} seconds."
     puts "Completed iterations: #{result[:iterations]}"
     puts "Iterations per second: #{result[:iter_per_sec]}"
@@ -409,10 +441,48 @@ def run_simulation_annealing
     puts "Rejected solutions: #{result[:rejected]}"
     puts "Encumbents found: #{result[:encumbents]}"
     puts "Final solution value: #{result[:encumbent_value]}"
+  end
     
-    return coords, scs, solutions, horizon
+  return coords, solutions, H
+end
+
+class Solution
+  attr_reader :offset,:speed,:value
+  def initialize(value,settings)
+    @value = value
+    @offset = settings[:offset]
+    @speed = settings[:speed]
+  end
+  def to_s   
+    str = "Solution value: #{@value}\n"
+    if @offset
+      str << "Offsets:\n"
+      @offset.sort.each do |sc,offset|
+        str << "   #{sc.number} #{sc.name}: #{offset}s\n"
+      end
+    end    
+    if @speed
+      str << "Speeds:\n"
+      @speed.sort.each do |coord,speed|
+        str << "   #{coord}: #{(speed * 3.6).round}km/h, travel time: #{coord.traveltime(speed)}s\n"    
+      end
+    end
+    str
+  end
+  def <=>(other)
+    @value <=> other.value
   end
 end
+
+def get_solution  
+  vissim = Vissim.new
+  coords, solutions = run_simulation_annealing(
+    vissim.controllers.find_all{|sc|(1..5) === sc.number}, vissim)
+  
+  puts solutions.join("\n")
+end
+
 if __FILE__ == $0
-  run_simulation_annealing
+  #run_simulation_annealing
+  get_solution
 end
