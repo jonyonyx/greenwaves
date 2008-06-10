@@ -7,7 +7,7 @@ class RoadTimeDiagram < Frame
   def initialize
     super(nil, :size => [800,600])
     
-    @coordinations,@controllers, @solutions, @horizon = 
+    @coordinations,@controllers,@solutions,@horizon = 
       #get_dogs_scenarios
     run_simulation_annealing
     
@@ -52,24 +52,21 @@ class RoadTimeDiagram < Frame
   def fetch_next_solution    
     return if @solutions.empty?
     solution = @solutions.shift
-    if solution.has_key?(:offset)
-      @offset = solution[:offset]
+    if solution.offset
+      @offset = solution.offset
     else
       @offset = {}
       @controllers.each{|sc|@offset[sc] = sc.offset}      
     end    
-    if solution.has_key?(:speed)
-      @speed = solution[:speed]
+    if solution.speed
+      @speed = solution.speed
     else
       @speed = {}
       @coordinations.each{|coord| @speed[coord] = coord.default_speed}
-    end        
-    if solution.has_key?(:cycle_time)
-      @cycle_time = solution[:cycle_time]
-    else
-      @cycle_time = {}
-      @controllers.each{|sc| @cycle_time[sc] = sc.cycle_time}
     end
+    @cycle_time = {}
+    @controllers.each{|sc| @cycle_time[sc] = sc.cycle_time}
+    puts "#{solution}\n"
   end
   def on_paint
     paint_buffered do | dc |
@@ -203,15 +200,6 @@ class RoadTimeDiagram < Frame
           gdc.stroke_line(x1, y1, x2, y2)
         end
       end
-    end
-  end
-end
-
-def print_solution(solution)
-  for setting_type, settings in solution
-    puts setting_type
-    settings.each do |el,setting|
-      puts "   #{el}: #{setting}"
     end
   end
 end

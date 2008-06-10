@@ -143,6 +143,9 @@ end
 def numbers(from,step,count)
   linspace(from,step,(count - 1) * step + from)
 end
+def maybe?
+  rand < 0.5
+end
 def to_xls rows, sheetname, xlsfile = DATAFILE
    
   begin
