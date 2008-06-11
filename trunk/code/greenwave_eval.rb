@@ -4,7 +4,8 @@ require 'const'
 class Band
   attr_reader :tstart, :tend, :width
   def initialize tstart, tend 
-    raise "A waveband must start before it ends" if tstart > tend
+    raise "A waveband must start before it ends, received tstart = #{tstart} and tend = #{tend}" if tstart > tend
+    raise "Only integer values are accepted, received tstart = #{tstart} and tend = #{tend}" unless [tstart,tend].all?{|n|Integer===n}
     @tstart, @tend = tstart, tend
   end
   def overlap?(other); to_r.overlap?(other.to_r); end
@@ -16,8 +17,7 @@ class Band
     when [0,0], [1,-1], [0,-1], [1,0] # self is completely covered by other
       []
     when [-1,1] # start before other start and end is after other end, multiple bands
-      [Band.new(@tstart,other.tstart - 1),
-        Band.new(other.tend + 1,@tend)]
+      [Band.new(@tstart,other.tstart - 1),Band.new(other.tend + 1,@tend)]
     when [-1,0],[-1,-1] # starts before other but ends at same time
       [Band.new(@tstart,other.tstart - 1)]
     when [0,1],[1,1] # starts same time as other but ends after
@@ -39,13 +39,28 @@ class Coordination
     @default_speed = speed
     @from_direction = get_from_direction(@sc1,@sc2)
     @left_to_right = sc1.number < sc2.number ? true : false
+    @tt = {} # cache for travel times, keys are speeds
     
     # simplify things and visualization by always taking the distance
     # in the primary direction
-    @distance = distance
+    @distance = distance.to_f
     [@sc1,@sc2].each{|sc|sc.member_coordinations << self} # notify controllers
   end
-  def traveltime(s); (@distance / s).round; end
+  ACCELERATION = 2.5 # m/s^2 uniform acceleration
+  def traveltime(s)
+    return @tt[s] if @tt[s] # cache hit
+    
+    tacc = s / ACCELERATION # s
+    dist_final_speed_reached = 0.5 * ACCELERATION * (tacc ** 2) # m (assume initial speed = 0)
+    
+    @tt[s] = if dist_final_speed_reached > @distance
+      # we accelerated all the way to the next intersection (very close!)
+      Math.sqrt(0.5 * ACCELERATION / @distance)
+    else
+      # reached desired speed before the next intersection
+      tacc + (@distance - dist_final_speed_reached) / s
+    end.round
+  end
   # returns times where there is a mismatch between sc1 and sc2 ie.
   # when traffic emitted from sc1 is not received by green light at sc2
   # respecting the current offsets of these controllers and the traveltime
@@ -69,8 +84,8 @@ class Coordination
     end
   end
   # the position where a green band *may* become held up by a red light
-  def conflict_position
-    @left_to_right ? @sc2.position : (@sc1.position - @distance + @sc1.internal_distance)
+  def conflict_position # conflict always happen at sc2
+    @left_to_right ? @sc2.position : (@sc2.position + @sc1.internal_distance)
   end
   def eval_speed s
     (@default_speed - s) ** 2 # quadratic punishment of deviation from default speed
@@ -86,9 +101,31 @@ class Coordination
   # green start of sc2 under the given offsets and speed (travel time).
   # deviations from default speed are punished
   def eval_fixed o1, o2, s, c
+    #    green_bands = {}
+    #    [ [@sc1,o1 + traveltime(s)], # offset sc1 and project it forward by the expected travel time
+    #      [@sc2,o2] ].each do |sc,o|
+    #      group = sc.arterial_group_from(@from_direction)
+    #      red_end = (group.red_end + o) % c + 1
+    #      green_end = (group.green_end + o) % c + 1
+    #      green_bands[sc] = if red_end < green_end
+    #        [Band.new(red_end,green_end)] # contained within a cycle
+    #      else
+    #        [Band.new(1,green_end), Band.new(red_end,c)] # split in two
+    #      end
+    #    end
+    #    
+    #    sc1_green = green_bands[@sc1].map{|b|b.to_a}.flatten
+    #    sc2_green = green_bands[@sc2].map{|b|b.to_a}.flatten
+    #    res = sc1_green - sc2_green
+    #    
+    #    puts "#{sc1_green.inspect} - \n#{sc2_green.inspect} = \n\t#{res.inspect}"
+    #    puts
+    #    # check how well these bands overlap
+    #    res.size + eval_speed(s)
     red_end = {}
-    [[@sc1,o1],[@sc2,o2]].each do |sc,o|
-      red_end[sc] = (sc.arterial_group_from(@from_direction).red_end + o) % c
+    [[@sc1,o1],[@sc2,o2] ].each do |sc,o|
+      group = sc.arterial_group_from(@from_direction)
+      red_end[sc] = (group.red_end + o) % c + 1
     end
     
     green_time_displacement = case red_end[@sc1] <=> red_end[@sc2]
@@ -204,6 +241,8 @@ class CoordinationProblem
   def initialize coords, opts
     raise "Cannot proceed without coordinations!" if coords.nil? or coords.empty?
     @coordinations = coords
+    @maximum_coord_distance = coords.map{|c|c.distance}.max
+    
     @controllers = coords.map{|coord|[coord.sc1,coord.sc2]}.flatten.uniq
     
     if opts[:horizon]
@@ -216,7 +255,7 @@ class CoordinationProblem
     
     @change_probability = opts[:change_probability]
     
-    @desired_bias = opts[:direction_bias]
+    @desired_bias = opts[:direction_bias] # if nil, do not consider direction bias
     
     @coord_contribution = {} # individual contribution from coordinations to current value
     @delta_contribution = {} # bookkeeping of changes goes here
@@ -321,7 +360,7 @@ class CoordinationProblem
       @current_offset[coord.sc2], 
       @current_speed[coord]
       
-    case @scheme 
+    value = case @scheme 
     when :common_cycle_time
       coord.eval_fixed(o1, o2, s, @current_cycle_time)
     when :stage_based
@@ -329,10 +368,16 @@ class CoordinationProblem
     else
       raise "Don't know how to evaluate offsets and speeds in a '#{@scheme}' scheme"
     end
+    
+    # put a weight of the value of the coord with current settings
+    # such that high values (-> poor coordinations) are punished
+    # more severely when the intersections of the coordination are close by
+    ratio = @maximum_coord_distance / coord.distance
+    value * Math.exp((1-ratio).abs)
   end; private :eval_coord
   # return a hash of signals mapping to the found offsets and speeds
   def solution
-    Solution.new @encumbent_value, :offset => @encumbent_offset, :speed => (@change_probability[:speed].nonzero? ? @encumbent_speed : nil)
+    Solution.new @encumbent_value, :offset => @encumbent_offset, :speed => @encumbent_speed
   end
   # undo all changes made during last call to change
   def undo_changes
@@ -359,10 +404,11 @@ class CoordinationProblem
     store_current_value
     
     raise "Restoration of previous solution failed after change in #{@last_change}:\n" +
-      "expected value #{@current_value_check} got #{@current_value}" if (@current_value_check - @current_value).abs > EPS
+      "expected value #{@current_value_check} got #{@current_value}" if (1 - @current_value_check / @current_value).abs > EPS
   end
   # punish deviation from desired direction bias   
   def bias_deviation_punishment_factor 
+    return 1 if @desired_bias.nil?
     bias = @direction_sum[true].to_f / @direction_sum[false].to_f
     ratio = @desired_bias / bias # ratio will be close to 1 when the direction bias is good
     Math.exp((1-ratio).abs) # exp(0) = 1 ie. no punishment
@@ -414,7 +460,7 @@ end
 def run_simulation_annealing(controllers, vissim, opts = {:cycle_time => 80, :verbose => false})
   coords = parse_coordinations(controllers, vissim)
   problem = CoordinationProblem.new(coords, opts + 
-    {:direction_bias => 1.0, :change_probability => {:speed => 0.2, :offset => 0.8}})
+      {:direction_bias => 1.0, :change_probability => {:speed => 0.0, :offset => 0.8}})
     
   siman = SimulatedAnnealing.new(problem, 2, 
     :start_temp => 100.0, 
@@ -474,15 +520,16 @@ class Solution
   end
 end
 
-def get_solution  
-  vissim = Vissim.new
+def get_solution vissim
   coords, solutions = run_simulation_annealing(
     vissim.controllers.find_all{|sc|(1..5) === sc.number}, vissim)
   
-  puts solutions.join("\n")
+  #puts solutions.join("\n")
+  puts solutions.last
 end
 
-if __FILE__ == $0
-  #run_simulation_annealing
-  get_solution
+if __FILE__ == $0  
+  vissim = Vissim.new
+  
+  get_solution vissim
 end

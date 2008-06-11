@@ -14,36 +14,39 @@ puts "Loading Vissim..."
 vissimnet = Vissim.new
 results = NodeEvals.new(vissimnet)
 
-SOLVER_TIME = 2 # seconds
+SOLVER_TIME = 10 # seconds
 SOLVER_ITERATIONS = 3 # number of times to rerun SA solver, trying to get better solutions
 
-RUNS = 1 # number of simulation runs per test
+RUNS = 3 # number of simulation runs per test
 #SIMULATION_TIME =  1200
 SIMULATION_TIME =  2 * MINUTES_PER_HOUR * Seconds_per_minute # simulation seconds
 
 testqueue = [
-#  {:testname => 'DOGS and bus',     :dogs_enabled => true,  :buspriority => true},
-#  {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false},
-#  {:testname => 'No DOGS with bus', :dogs_enabled => false, :buspriority => true},
-#  {:testname => 'No DOGS or bus',   :dogs_enabled => false, :buspriority => false},
-  {:testname => 'DOGS fixed offsets',   :dogs_enabled => true, :use_calculated_offsets => false},
+  #  {:testname => 'DOGS and bus',     :dogs_enabled => true,  :buspriority => true},
+  #  {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false},
+  #  {:testname => 'No DOGS with bus', :dogs_enabled => false, :buspriority => true},
+  {:testname => 'No DOGS or bus',       :buspriority => false},
+  {:testname => 'DOGS fixed offsets',   :dogs_enabled => true},
   {:testname => 'DOGS varying offsets', :dogs_enabled => true, :use_calculated_offsets => true}
 ]
 
 seeds = numbers(rand(100) + 1, rand(100) + 1, testqueue.size*RUNS)
 
-optimized_offsets = {} # controller => dogs level => offset
+calculated_offsets = {} # controller => dogs level => offset
 
 # check if any test needs precalculated offsets
 if testqueue.any?{|test|test[:use_calculated_offsets]}
   require 'greenwave_eval'
   
   [[:herlev, (1..5)], [:glostrup,(9..12)]].each do |area,controller_range|
-    optimized_offsets[area] = {}
     puts "Calculating offsets for signal controllers in #{area}..."
     controllers = vissimnet.controllers.find_all{|sc|controller_range === sc.number}
+    
+    controllers.each{|sc| calculated_offsets[sc] = {}}
+          
     coords = parse_coordinations(controllers, vissimnet)
     
+    # precalculate new offsets for each valid dogs level
     (0..DOGS_MAX_LEVEL).each do |dogs_level|
       solution_candidates = []
       cycle_time = BASE_CYCLE_TIME + DOGS_TIME * dogs_level
@@ -52,7 +55,7 @@ if testqueue.any?{|test|test[:use_calculated_offsets]}
         
         problem = CoordinationProblem.new(coords, 
           :cycle_time => cycle_time,
-          :direction_bias => 1.0, 
+          :direction_bias => nil, 
           :change_probability => {:speed => 0.0, :offset => 1.0})    
         
         result = SimulatedAnnealing.new(problem, SOLVER_TIME, 
@@ -66,8 +69,7 @@ if testqueue.any?{|test|test[:use_calculated_offsets]}
       
       best_solution = solution_candidates.min
       best_solution.offset.each do |sc,offset|
-        optimized_offsets[sc] = {} unless optimized_offsets.has_key?(sc)
-        optimized_offsets[sc][dogs_level] = offset
+        calculated_offsets[sc][dogs_level] = offset
       end
       
       puts "Best offsets found in #{area} was for cycle time #{cycle_time}:", best_solution
@@ -101,12 +103,12 @@ while parms = testqueue.pop
   sim = vissim.Simulation
 
   sim.Period = SIMULATION_TIME
-  sim.Resolution = 5 # steps per simulation second
+  sim.Resolution = 3 # steps per simulation second
   sim.Speed = 0 # maximum speed
   
   # creates vap and pua files respecting the simulation parameters
   generate_controllers vissimnet, parms + 
-    {:verbose => false, :offset => (parms[:use_calculated_offsets] ? optimized_offsets : nil)}, 
+    {:verbose => false, :offset => (parms[:use_calculated_offsets] ? calculated_offsets : nil)}, 
     workdir 
   
   print "Vissim running #{RUNS} simulation#{RUNS != 1 ? 's' : ''} of '#{simname}'... "
@@ -127,7 +129,7 @@ while parms = testqueue.pop
   vissim.Exit
 end
 
-puts "Preparing Results..."
+puts "PREPARING RESULTS - PLEASE WAIT!"
 
 to_xls(results.to_a, 'data', "#{Base_dir}results\\results.xls")
 

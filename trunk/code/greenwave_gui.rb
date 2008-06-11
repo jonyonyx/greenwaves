@@ -6,10 +6,14 @@ class RoadTimeDiagram < Frame
   FATPENWIDTH = 3
   def initialize
     super(nil, :size => [800,600])
-    
-    @coordinations,@controllers,@solutions,@horizon = 
+    vissim = Vissim.new
+    @coordinations,@solutions,@horizon = 
       #get_dogs_scenarios
-    run_simulation_annealing
+      run_simulation_annealing(
+        vissim.controllers.find_all{|sc|(1..5) === sc.number},
+        vissim,:verbose => true, :cycle_time => 80)
+      
+    @controllers = @coordinations.map{|coord|[coord.sc1,coord.sc2]}.flatten.uniq
     
     set_title "Road-Time Diagram (#{@controllers.size} intersections)"
     
