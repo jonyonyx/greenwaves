@@ -414,7 +414,7 @@ end
 def run_simulation_annealing(controllers, vissim, opts = {:cycle_time => 80, :verbose => false})
   coords = parse_coordinations(controllers, vissim)
   problem = CoordinationProblem.new(coords, opts + 
-    {:direction_bias => 1.0, :change_probability => {:speed => 0.0, :offset => 1.0}})
+    {:direction_bias => 1.0, :change_probability => {:speed => 0.2, :offset => 0.8}})
     
   siman = SimulatedAnnealing.new(problem, 2, 
     :start_temp => 100.0, 
