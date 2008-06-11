@@ -206,6 +206,11 @@ We see that with default offsets and cycle time - as well as under DOGS level 2 
 
 During simulation it has been observed how such imperfect coordinations are affected by DOGS; more vehicles are stopped at the red light due to the increased capacity and queues become longer.
 
+\subsection{DOGS with level-specific offsets}
+In the previous section we saw that the performance of DOGS is unreliable when adjusting the cycle time with adjust the coordination by changing the offsets.
+
+To show that incorrect offsets are indeed the problem with the original DOGS I use the optimization routine described in section \ref{optimization} to precalculate cycle-time specific offsets for each DOGS-controller signal controller. While original DOGS allows level changes after one cycle has passed, DOGS with cycle-time specific offsets was reprogrammed to wait at least 3 cycles before changing levels to allow the new offsets to come into effect.
+
 \subsection{Coordination with Direction Priority Offsets}
-In this test the system for coordination of section \ref{coordination} os compared with DOGS without bus priority. DRD requested this test to discover whether DOGS (dynamic capacity) can outperform a proper coordination. DOGS has support for dynamically adjusting the coordination - including prioritizing directions - though it is not enabled in either the Glostrup or Herlev sites at the moment.
+In this test the system for coordination of section \ref{coordination} is compared with DOGS without bus priority. DRD requested this test to discover whether DOGS (dynamic capacity) can outperform a proper coordination. DOGS has support for dynamically adjusting the coordination - including prioritizing directions - though it is not enabled in either the Glostrup or Herlev sites at the moment.
 
