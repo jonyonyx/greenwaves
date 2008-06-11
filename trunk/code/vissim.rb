@@ -3,6 +3,7 @@ require 'network'
 require 'signal'
 require 'vissim_elem'
 require 'vissim_distance'
+require 'vissim_routes'
 
 # vissim element names. match anything that isn't the last quotation mark
 NAMEPATTERN = '\"([^\"]*)\"'

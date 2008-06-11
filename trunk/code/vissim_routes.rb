@@ -23,6 +23,9 @@ class Vissim
     def mark_arterial from_direction
       @road_segments.each{|rs| rs.update(:arterial_from => from_direction)}
     end
+    def [](i)
+      @road_segments[i]
+    end
     # Calculates the length from the beginning of the first road segment
     # to the end of the last road segment.
     def length; @road_segments.map{|rs| rs.length}.sum; end

@@ -1,14 +1,11 @@
-# 
-# To change this template, choose Tools | Templates
-# and open the template in the editor.
- 
+
 require 'const'
 require 'win32ole'
 require 'vap'
 require 'results'
 require 'measurements'
 
-puts "BEGIN"
+puts "#{Time.now}: BEGIN"
 
 insert_measurements # bus traveltime measurements
 
@@ -17,15 +14,18 @@ puts "Loading Vissim..."
 vissimnet = Vissim.new
 results = NodeEvals.new(vissimnet)
 
-RUNS = 10 # number of runs per test
+SOLVER_TIME = 2 # seconds
+SOLVER_ITERATIONS = 3 # number of times to rerun SA solver, trying to get better solutions
 
-#testqueue = [
+RUNS = 1 # number of simulation runs per test
+#SIMULATION_TIME =  1200
+SIMULATION_TIME =  2 * MINUTES_PER_HOUR * Seconds_per_minute # simulation seconds
+
+testqueue = [
 #  {:testname => 'DOGS and bus',     :dogs_enabled => true,  :buspriority => true},
 #  {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false},
 #  {:testname => 'No DOGS with bus', :dogs_enabled => false, :buspriority => true},
 #  {:testname => 'No DOGS or bus',   :dogs_enabled => false, :buspriority => false},
-#]
-testqueue = [
   {:testname => 'DOGS fixed offsets',   :dogs_enabled => true, :use_calculated_offsets => false},
   {:testname => 'DOGS varying offsets', :dogs_enabled => true, :use_calculated_offsets => true}
 ]
@@ -47,7 +47,7 @@ if testqueue.any?{|test|test[:use_calculated_offsets]}
     (0..DOGS_MAX_LEVEL).each do |dogs_level|
       solution_candidates = []
       cycle_time = BASE_CYCLE_TIME + DOGS_TIME * dogs_level
-      1.times do |i| # get a bunch of solutions to choose from for each cycle time
+      SOLVER_ITERATIONS.times do |i| # get a bunch of solutions to choose from for each cycle time
         puts "Offset calculation run #{i+1} for cycle time #{cycle_time}"        
         
         problem = CoordinationProblem.new(coords, 
@@ -55,7 +55,7 @@ if testqueue.any?{|test|test[:use_calculated_offsets]}
           :direction_bias => 1.0, 
           :change_probability => {:speed => 0.0, :offset => 1.0})    
         
-        result = SimulatedAnnealing.new(problem, 2, 
+        result = SimulatedAnnealing.new(problem, SOLVER_TIME, 
           :start_temp => 100.0, 
           :alpha => 0.95, 
           :no_improvement_action_threshold => 50
@@ -100,8 +100,7 @@ while parms = testqueue.pop
 
   sim = vissim.Simulation
 
-  sim.Period = 2 * MINUTES_PER_HOUR * Seconds_per_minute # simulation seconds
-  #sim.Period = 600 # simulation seconds
+  sim.Period = SIMULATION_TIME
   sim.Resolution = 5 # steps per simulation second
   sim.Speed = 0 # maximum speed
   
@@ -132,4 +131,4 @@ puts "Preparing Results..."
 
 to_xls(results.to_a, 'data', "#{Base_dir}results\\results.xls")
 
-puts "END"
+puts "#{Time.now}: END"
