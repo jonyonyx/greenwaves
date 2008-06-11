@@ -102,6 +102,16 @@ We can change both the travel time, by changing speed signs, and also the green 
 
 Metaheuristic search procedures are designed to cope with situations such as these where the immediate effects of a change cannot be foretold or enumerated.
 
+\subsection{Direction bias}
+In section \ref{data} we looked at the detector data and traffic counts, which are used to fit the simulation. We saw, among other things, that there northgoing traffic is higher than southgoing. The optimization routine can be coherced into favoring one direction over the other - or be completely fair - by punishing deviations from a certain bias indicator.
+
+To calculate the bias under current offsets we sum, in each direction of the artery, the deviations of the green time displacement to the expected travel time. The bias is thus the ratio of these sums and can be compared to the desired bias. The punisment for choosing settings, which result in deviation from the desired bias, is a factor which grows exponentially with deviations in either direction. Finally the entire solution value is multiplied by this factor.
+
+The effect is that eg. perfect coordination in one direction - on the cost of coordination in the opposite direction - will be heavily punished under neutral bias (identity). This method can also be used to establish highly direction specific coordinations when the bias approaches zero or infinity.
+
+\subsection{Favoring closely distanced intersections}
+Closely distanced intersections must obtain the most attention in coordination since 1) they are closely distanced and queues cannot be very long before reaching back to the downstream intersection and 2) the travel time between the intersections is more predictable since platoons do not have much time to form as they do on longer stretches of intermediate road.
+
 \subsection{Metaheuristic Search}
 DRD has traditionally used TRANSYT to obtain coordination. TRANSYT employs a genetic algorithm to finds its solutions but often it is necessary to manually adjust the offsets in order to obtain a good two-way coordination or to give preference to some direction. 
 
