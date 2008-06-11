@@ -410,6 +410,7 @@ def generate_controllers vissim, user_opts = {}, outputdir = Vissim_dir
   opts = default_opts.merge(user_opts)
   
   offsets_per_cycle_time = Hash === opts[:offset]
+  
   if Project == 'dtu'
     for master_opts in MasterInfo
       # if there are offsets per cycle time remain at least 3 cycles in each level

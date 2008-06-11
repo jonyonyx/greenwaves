@@ -260,6 +260,6 @@ end
 
 class Range
   def overlap? other
-    include? other.first or other.include? first
+    include?(other.first) or other.include?(first)
   end
 end

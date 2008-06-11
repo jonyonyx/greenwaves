@@ -83,8 +83,8 @@ class SignalController < VissimElem
       
       (n..m).each do |cycle_number|
         cycle_offset = cycle_time * cycle_number
-        tstart = tstart_base + cycle_offset
-        tend = tend_base + cycle_offset
+        tstart = (tstart_base + cycle_offset).round
+        tend = (tend_base + cycle_offset).round
         # check if (tstart..tend) overlaps with the horizon
         waves << Band.new(tstart, tend) if (tstart..tend).overlap?(horizon)
       end
