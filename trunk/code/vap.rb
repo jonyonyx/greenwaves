@@ -291,8 +291,9 @@ def gen_vap sc, outputdir, offset
       end
     end
     cp.add '   END'
-    cp.add 'END;'
+    cp.add "END;"
   end
+  
   # checks for missed interstage runs due to dogs level downshifts
   # note this will cause unexpected signal changes (red/amber -> red)
   # if the simulation resolution is 1 step per sim second or worse (less)
@@ -393,14 +394,14 @@ if Project == 'dtu'
       :name => 'Herlev', 
       :dn => 3, :ds => 14, 
       :occ_dets => [3,14], :cnt_dets => [3,4,13,14],
-      :cnt_bounds => {:upper => numbers(11,9,DOGS_LEVELS), :lower => numbers(8,8,DOGS_LEVELS)},
+      :cnt_bounds => {:upper => numbers(20,13,DOGS_LEVELS), :lower => numbers(17,11,DOGS_LEVELS)},
       :occ_bounds => {:upper => [11,29,45,58,70,80,92,96], :lower => [8,17,35,51,65,74,86,94]}
     }, {
       :name => 'Glostrup', 
       :dn => 14, :ds => 1, 
       :occ_dets => [1,2,5,8,9,10,11,12,13,14], :cnt_dets => [1,2,5,8,9,10,11,12,13,14],
-      :cnt_bounds => {:upper => numbers(23,9,DOGS_LEVELS), :lower => numbers(17,8,DOGS_LEVELS)},
-      :occ_bounds => {:upper => [11,29,45,58,70,80,92,96], :lower => [8,17,35,51,65,74,86,94]}
+      :cnt_bounds => {:upper => numbers(45,20,DOGS_LEVELS), :lower => numbers(40,17,DOGS_LEVELS)},
+      :occ_bounds => {:upper => [20,41,53,62,78,84,90,96], :lower => [15,35,44,54,67,76,81,90]}
     }
   ]
 end

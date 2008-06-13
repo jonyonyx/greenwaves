@@ -78,7 +78,7 @@ def get_vissim_routes vissim
     end
     
     # find the sum of weights in order to distributed this rows quantity over the relevant decisions
-    sum_of_weights = rowdecisions.map{|dec| dec.weight || 1}.sum
+    sum_of_weights = rowdecisions.map{|dec| dec.weight || 1}.sum.to_f
     
     for dec in rowdecisions
       for veh_type in Cars_and_trucks_str

@@ -18,8 +18,8 @@ end
   vissim = get_vissim_instance
   get_inputs(vissim).write
   get_vissim_routes(vissim).write
-  generate_controllers(vissim)  
-#end
+  generate_controllers(vissim, :dogs_enabled => true)  
+#end  
 #opts.on('vap'){generate_controllers(get_vissim_instance)}
 #opts.on('inputs'){get_inputs(get_vissim_instance).write}
 #opts.on('routes'){get_vissim_routes(get_vissim_instance).write}

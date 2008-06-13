@@ -18,7 +18,7 @@ class Inputs < Array
       for veh_type, q in input.veh_flow_map      
         str << "INPUT #{inputnum}\n" +
           "      NAME \"#{veh_type} from #{link.from_direction}#{link.name.empty? ? '' : " ON " + link.name}\" LABEL  0.00 0.00\n" +
-          "      LINK #{link.number} Q #{q * INPUT_FACTOR} COMPOSITION #{Type_map[veh_type]}\n" +
+          "      LINK #{link.number} Q #{q * 0.8} COMPOSITION #{Type_map[veh_type]}\n" +
           "      TIME FROM #{input.tstart - tbegin} UNTIL #{input.tend - tbegin}\n"
         
         inputnum += 1
@@ -52,7 +52,7 @@ def get_inputs vissim
                   COUNTS.from_direction = LINKS.from_direction
               WHERE LINKS.link_type = 'IN'
               AND [Period End] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#
-              GROUP BY intersection, [Period End], [Period Start], number
+              GROUP BY intersection, [Period End], [Period Start], LINKS.number
               ORDER BY intersection, [Period End]"
 
   insect_info = DB["SELECT name, count_date FROM [intersections$] WHERE number <> 7"].all
@@ -100,57 +100,57 @@ def get_inputs vissim
   # use the dogs detector data and take the cars-to-truck ratios from the
   # traffic counts  
   
-  if Project == 'dtu'
-    for det in ['D3', # northern input from herlev sygehus
-        'D01','D03','D06' # roskildevej
-        ]
-        
-      # Fetch the link input number for this detector
-      number = exec_query("SELECT LINKS.Number 
-        FROM [detectors$] As DETS
-        INNER JOIN [links$] As LINKS
-        ON DETS.Intersection = LINKS.Intersection_name
-        AND DETS.FROM = LINKS.From_direction
-        WHERE DETS.Name = '#{det}'").flatten.first.to_i
-    
-      # now change the input for this link number to use
-      # the data from this detector, respecting the vehicle ratio
-    
-      inputs_for_link = inputs.get_by_link number
-      raise "No inputs found for link #{number}" if inputs_for_link.empty?
-    
-      #puts "input link: #{number}"
-    
-      sql = "SELECT 
-          HOUR(Time) As h,
-          MINUTE(Time) As m,
-          AVG(Detected) As detected
-        FROM [data$]
-        WHERE NOT DoW IN ('Sat','Sun') 
-        AND Detector = '#{det}'
-        AND [Time] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#
-        GROUP BY Detector,Time"
-    
-      for row in DOGSDB[sql].all
-        input = inputs_for_link.find{|i| i.tend.hour == row[:h] and i.tend.min == row[:m]}
-        raise "Input for link #{number} at tend #{row[:h]}h#{row[:m]}m not found" if input.nil?
-        # Vissim expects flow in vechicles per hour. The dogs flow seems to have been adjusted
-        # already by inspecting of before and after flow data for each vehicle type (see commented code below)
-        flow = row[:detected].to_f
-        
-        # Assume the DOGS detector data follow approx. the same vehicle type
-        # proportion as the counting data and reuse the proportion.
-        r = input.ratio('Cars', 'Trucks')        
-#        before_cars = input.veh_flow_map['Cars']
-#        before_trucks = input.veh_flow_map['Trucks']
-        input.veh_flow_map['Cars'] = flow * r
-        input.veh_flow_map['Trucks'] = flow * (1 - r)
-                
-#        puts "Cars adjusted from #{before_cars} to #{input.veh_flow_map['Cars']}"
-#        puts "Trucks adjusted from #{before_trucks} to #{input.veh_flow_map['Trucks']}"
-      end
-    end
-  end
+#  if Project == 'dtu'
+#    for det in ['D3', # northern input from herlev sygehus
+#        'D01','D03','D06' # roskildevej
+#        ]
+#        
+#      # Fetch the link input number for this detector
+#      number = exec_query("SELECT LINKS.Number 
+#        FROM [detectors$] As DETS
+#        INNER JOIN [links$] As LINKS
+#        ON DETS.Intersection = LINKS.Intersection_name
+#        AND DETS.FROM = LINKS.From_direction
+#        WHERE DETS.Name = '#{det}'").flatten.first.to_i
+#    
+#      # now change the input for this link number to use
+#      # the data from this detector, respecting the vehicle ratio
+#    
+#      inputs_for_link = inputs.get_by_link number
+#      raise "No inputs found for link #{number}" if inputs_for_link.empty?
+#    
+#      #puts "input link: #{number}"
+#    
+#      sql = "SELECT 
+#          HOUR(Time) As h,
+#          MINUTE(Time) As m,
+#          AVG(Detected) As detected
+#        FROM [data$]
+#        WHERE NOT DoW IN ('Sat','Sun') 
+#        AND Detector = '#{det}'
+#        AND [Time] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#
+#        GROUP BY Detector,Time"
+#    
+#      for row in DOGSDB[sql].all
+#        input = inputs_for_link.find{|i| i.tend.hour == row[:h] and i.tend.min == row[:m]}
+#        raise "Input for link #{number} at tend #{row[:h]}h#{row[:m]}m not found" if input.nil?
+#        # Vissim expects flow in vechicles per hour. The dogs flow seems to have been adjusted
+#        # already by inspecting of before and after flow data for each vehicle type (see commented code below)
+#        flow = row[:detected].to_f * 4
+#        
+#        # Assume the DOGS detector data follow approx. the same vehicle type
+#        # proportion as the counting data and reuse the proportion.
+#        r = input.ratio('Cars', 'Trucks')        
+##        before_cars = input.veh_flow_map['Cars']
+##        before_trucks = input.veh_flow_map['Trucks']
+#        input.veh_flow_map['Cars'] = flow * r
+#        input.veh_flow_map['Trucks'] = flow * (1 - r)
+#                
+##        puts "Cars delta: #{before_cars - input.veh_flow_map['Cars']}"
+##        puts "Trucks delta: #{before_trucks - input.veh_flow_map['Trucks']}"
+#      end
+#    end
+#  end
   
   inputs
 end
@@ -160,8 +160,8 @@ if __FILE__ == $0
   vissim = Vissim.new
   
   inputs = get_inputs vissim
-  
-  puts inputs.to_vissim
+  inputs.write
+  #puts inputs.to_vissim
   
   puts "END"
 end
