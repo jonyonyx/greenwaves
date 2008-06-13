@@ -40,7 +40,6 @@ if Project == 'dtu'
   DOGS_MINOR_FACTOR = 1.0 - DOGS_MAJOR_FACTOR
   DOGS_MAX_LEVEL = 5
   BUS_TIME = 10 # number of seconds to extend green time for bus stages
-  MIN_STAGE_LENGTH = 6 # used when DOGS changes level and a stage jump maybe be considered
   DOGS_CNT_BOUNDS_FACTOR = 0.8 # adjust the aggresiveness of DOGS. Lower => more aggressive to increase cycle times.
   DOGS_OCC_BOUNDS_FACTOR = 0.8
   # associated numbers with these vehicle types
@@ -58,6 +57,7 @@ elsif Project == 'cowi'
   Type_map = {'Cars' => 10, 'Trucks' => 20}
 end
 
+MIN_STAGE_LENGTH = 6 # used when DOGS changes level and a stage jump maybe be considered
 Tempdir = ENV['TEMP'].gsub("\\",'/')
 Data_dir = "#{Base_dir}data\\"
 Default_network = "#{Vissim_dir}#{Network_name}"
@@ -83,8 +83,7 @@ Cars_and_trucks_str = ['Cars','Trucks']
 Cars_and_trucks = Type_map.map{|k,v| Cars_and_trucks_str.include?(k) ? v : nil} - [nil]
 
 EPS = 0.01
-INPUT_FACTOR = 1.0 # factor used to adjust link inputs
-ANNUAL_INCREASE = 1.005 # used in input generation for scaling
+ANNUAL_INCREASE = 1.0 # used in input generation for scaling
 BASE_CYCLE_TIME = 80 # seconds
 DATAFILE = "#{Data_dir}data.xls" # main data file containing counts, sgp's, you name it
 CS = "#{CSPREFIX}#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\""

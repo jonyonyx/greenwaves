@@ -113,6 +113,11 @@ class DecisionPoint
     @decisions = []
     @link = nil
   end
+  def convert_fractions_to_proportions
+    time_intervals.each do |interval|
+      
+    end
+  end
   # retrieve a combined set of time intervals
   # for the flows defined on all decisions in this 
   # decision point.
