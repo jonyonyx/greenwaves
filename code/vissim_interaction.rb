@@ -14,20 +14,29 @@ puts "Loading Vissim..."
 vissimnet = Vissim.new
 results = NodeEvals.new(vissimnet)
 
-SOLVER_TIME = 10 # seconds
-SOLVER_ITERATIONS = 3 # number of times to rerun SA solver, trying to get better solutions
+thorough = true
 
-RUNS = 3 # number of simulation runs per test
-#SIMULATION_TIME =  1200
-SIMULATION_TIME =  2 * MINUTES_PER_HOUR * Seconds_per_minute # simulation seconds
+if thorough
+  SOLVER_TIME = 10 # seconds
+  SOLVER_ITERATIONS = 3 # number of times to rerun SA solver, trying to get better solutions
+
+  RUNS = 10 # number of simulation runs per test
+  SIMULATION_TIME =  2 * MINUTES_PER_HOUR * Seconds_per_minute # simulation seconds  
+else
+  SOLVER_TIME = 2 # seconds
+  SOLVER_ITERATIONS = 1 # number of times to rerun SA solver, trying to get better solutions
+
+  RUNS = 1 # number of simulation runs per test
+  SIMULATION_TIME =  1200
+end
 
 testqueue = [
-  #  {:testname => 'DOGS and bus',     :dogs_enabled => true,  :buspriority => true},
-  #  {:testname => 'DOGS no bus',      :dogs_enabled => true,  :buspriority => false},
-  #  {:testname => 'No DOGS with bus', :dogs_enabled => false, :buspriority => true},
-  {:testname => 'No DOGS or bus',       :buspriority => false},
-  {:testname => 'DOGS fixed offsets',   :dogs_enabled => true},
-  {:testname => 'DOGS varying offsets', :dogs_enabled => true, :use_calculated_offsets => true}
+  {:testname => 'DOGS with bus priority', :dogs_enabled => true, :buspriority => true},
+  {:testname => 'DOGS', :dogs_enabled => true},
+  {:testname => 'Basic program with bus priority', :buspriority => true},
+  {:testname => 'Basic program', :buspriority => false},
+  {:testname => 'Modified DOGS with bus priority', :dogs_enabled => true, :use_calculated_offsets => true, :bus_priority => true},
+  {:testname => 'Modified DOGS', :dogs_enabled => true, :use_calculated_offsets => true}
 ]
 
 seeds = numbers(rand(100) + 1, rand(100) + 1, testqueue.size*RUNS)
