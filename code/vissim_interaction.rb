@@ -140,6 +140,6 @@ end
 
 puts "PREPARING RESULTS - PLEASE WAIT!"
 
-to_xls(results.to_a, 'data', "#{Base_dir}results\\results.xls")
+to_xls(results.to_a, 'data', RESULTS_FILE)
 
 puts "#{Time.now}: END"

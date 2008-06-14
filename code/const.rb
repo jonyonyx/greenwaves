@@ -44,6 +44,7 @@ if Project == 'dtu'
   DOGS_OCC_BOUNDS_FACTOR = 0.8
   # associated numbers with these vehicle types
   Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
+  RESULTS_FILE = "#{Base_dir}results\\results.xls"
 elsif Project == 'cowi'
   Base_dir = "C:\\projects\\62832\\"
   Network_name = "amagermotorvejen_avedore-havnevej.inp"
@@ -145,7 +146,7 @@ end
 def maybe?
   rand < 0.5
 end
-def to_xls rows, sheetname, xlsfile = DATAFILE
+def to_xls rows, sheetname, xlsfile
    
   begin
     excel = WIN32OLE::new('Excel.Application')
@@ -163,8 +164,8 @@ def to_xls rows, sheetname, xlsfile = DATAFILE
     datash.Columns.Autofit
     
     wb.Save
-  rescue Error => e
-    raise(e, "Failed to write #{rows.size} rows and #{rows.first.size} columns", rows)
+  rescue Exception => e
+    raise(e, "Failed to write #{rows.size} rows and #{rows.first.size} columns")
   ensure
     excel.DisplayAlerts = false # avoid excel nag to save book
     excel.Quit
