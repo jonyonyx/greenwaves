@@ -1,7 +1,7 @@
 
 require 'const'
 
-SIGNALSQL = 'SELECT DISTINCT simtime,clng(cycsec) as t,sc FROM SIGNALCHANGES WHERE (sc = 4 OR sc = 12) AND cycsec > 80 ORDER BY simtime'
+SIGNALSQL = 'SELECT DISTINCT simtime,clng(cycsec) as t,sc FROM SIGNALCHANGES WHERE (sc = 4 OR sc = 12) AND cycsec >= 80 ORDER BY simtime'
 
 data = [['Simulation Second', 'Cycle Time','DOGS Area','Test Name']]
 ['DOGS','Modified DOGS'].each do |test_name|

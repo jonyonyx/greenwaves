@@ -62,7 +62,7 @@ The queues for minor roads cannot exceeed a predefined length nor must a vehicle
 These rules - given proper parameters - are precise enough to be implemented in a computer program. The setting of parameters (for instance maximum queue length for minor roads) is a difficult subject, which could generate many training hours for end-users. This was my impression about the Utopia/Spot system the municipality of Copenhagen (Vej \& Park) had implemented for Centrum Forbindelsen - they had no idea on how to make adjustsments, when the system acted up. 
 However, many parameters can - and should - be set automatically by repeated simulation with trial-and-error or they are either easy enough to understand that rules of thumb and area specific insight is enough to make proper choices.
 
-I believe stage based signals and more centralized computer control of arterials could be accepted and achieved if systems were more available and open as proposed above. The introduction of stage based signals would be a major break with tradition in denmark - and probably also in many other countries. 
+I believe stage based signals and more centralized computer control of arterials could be accepted and achieved if systems were more available and open as proposed above. The introduction of stage based signals would be a major break with tradition in denmark - and probably also in many other countries. Some system exist, which use stage-based programs including RHODES \cite{rhodes} and UTOPIA/SPOT \cite{utopia_spot} (which is implemented in copenhagen for "Centrumforbindelsen").
 
 Breaking tradition is always hard; this combined with the volume of such a system has compelled me to remain in the common cycle time world in this project. But as will be seen in the following sections, there are many ways to improve arterial signal performance in spite of the the restrictions of $C$.
 
@@ -87,6 +87,8 @@ The current infrastructure on O3 does not offer this fine-grained level of adjus
 
 \subsection{Adjusting offsets}
 The individual signal offset is the traditional parameter for adjustment. The formulas presented earlier (section \ref{coordination}) can be used to establish one-way coordination, under the restrictions described, but two-way coordination is not solved so easily.
+
+Traditional offline optimization systems such as TRANSYT often employs a black-box simulator for fitness evaluation. However for offsets we can do without such overhead since we know exactly what we are looking for.
 
 Basically the purpose of offsets is to properly align adjacent intersections in time such that a platoon emitted during the green time of intersection 1 is met by a green light at the adjacent intersection 2. The best estimate of the propagation time of the platoon is the travel time $tt_{1,2} = d / v$ where $v$ is the average speed and $d$ is the distance between the intersections and the green time displacement, $\Delta o_{i,j}$, should match $tt$ for all adjacent intersections $i$ and $j$.
 
