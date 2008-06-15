@@ -1,48 +1,68 @@
 \section{Test Scenarios}
-The purpose of this section is to highlight the findings in the various simulation runs which were performed.
+DRD and TTS has informed me that the DOGS system has not previously been tested in a simulation environment. The initial project proposal by Steen Lauritzen of DRD was to perform such a test in the Vissim simulation tool, described in section \ref{vissim}.
 
-The primary purpose of the simulation was to test the effect of the DOGS system. 
-As part of this tests were performed to discover the effect of bus priority and to determine whether DOGS with its varying cycle time can outperform a fixed cycle time but properly coordinated offsets.
+As part of this tests were performed to discover the effect of bus priority and to discover whether the uncontrolled green time displacements, which DOGS introduce during level change (see section \ref{dogs_offset}), can be remedied by choosing cycle-time specific offsets at level changes.
 
-All simulations were fitted to the traffic observed in the morning period fra 7-9 am.
-To account for fluctuations each test was run 10 times with different seeds.
+The overall conclusion is that the combined performance of the network is reduced when DOGS is running. This means that the positive effect for traffic traversing the arterial does not outweigh the penalties for crossing traffic. 
+This is acceptable since DOGS, for political reasons, was sanctioned to perform a capacity redistribution from minor road (traffic from east- and west) to arterial traffic. However, tests show that this redistribution does not succeed in a convicing way and even increases queue lengths and delays for arterial traffic in some cases.
 
-The results of the tests are measured by extraction of average queues and delays for each intersection. This is done by inserting a node with node evaluation enabled for each of the twelve intersections.
-
-The overall conclusion is that the combined performance of the network is reduced when DOGS is running. This means that the positive effect for traffic traversing the arterial does not outweigh the penalties for crossing traffic.
+In section \ref{dogs_offset} I discussed how DOGS inadvertently alters the coordination as it increases the cycle time without compensating by implementing new offsets. The tests involving \textit{Modified DOGS} show that DOGS can be improved by choosing new offsets when the cycle time is changed.
 
 For bus priority, although it is only enabled for a few of the involved intersections - and that the implemented priority logic could be more aggressive - there is a noticable effect.
 
-\subsection{The Effect of DOGS}
-This test covers four scenarios:
+The rest of this section explains the test setup and test scenarios I used to arrive at these conclusions. 
+
+\subsection{Test Scenarios \& Setup}
+
+Below are the six scenarios, which were tested:
 
 \begin{enumerate}
-\item DOGS and bus priority
-\item DOGS without bus priority
-\item Default program with bus priority
-\item Default program with no priority for buses
+\item Basic program
+\item Basic program with bus priority
+\item DOGS
+\item DOGS with bus priority
+\item Modified DOGS
+\item Modified DOGS with bus priority
 \end{enumerate}
 
-In scenario 1 and 2 DOGS is enabled and the capacity in the main direction is adjusted according to detector values. In scenarios 3 and 4 DOGS is disabled effectively ignoring all detections (except for buses in scenario 3) and thus the signals will remain in the base program.
+In scenarios 1 and 2 DOGS is disabled effectively ignoring all detections (except for buses in scenario 2) and thus the signals will remain in the basic, morning program (see appendix \ref{app:signalplans}). These scenarios represent the situation before DOGS was introduced and as such constitute a comparison baseline.
 
-As DOGS will naturally cause decreased performance for the minor roads it was decided to split the dataset so that \textit{arterial} and \textit{crossing} traffic can be distinguished. Arterial traffic is defined as traffic which enters an intersection from north or south and makes a throughgoing motion rather than turning off the arterial. All other traffic is marked as crossing.
+In scenarios 3 and 4 DOGS is enabled and the capacity in the main direction is adjusted according to detector values as described in section \ref{dogs}. For Herlev both scenarios are "authentic" ie. they are being used today whereas for Glostrup only scenario 4 is authentic, since this area implements bus prioritization for 3 of 4 intersections.
 
-\subsubsection*{Queue}
-The average queue length indicates the number of vehicles waiting to cross an intersection ie. perform some turning motion in the beginning of the green interval. 
+Finally scenarios 5 and 6 are DOGS with per-level offsets. These scenarios are included to show what happens when DOGS use incorrect offsets and to emphasize that DOGS but can be remedied by using per-level offsets. 
+The optimization routine described in section \ref{optimization} is used to precalculate cycle-time specific offsets for each DOGS-controller signal controller. 
+Apart from the varying offsets, the only other difference between \textit{Modified DOGS} and \textit{original DOGS} is that level changes cannot occur after at least 3 cycles to allow the new offsets to come into effect. Original DOGS allows level change after each cycle and although, as the cycle time increase the longer the time between possible level changes, levels may still change quite frequently, preventing any offsets from coming into effect.
+
+As DOGS will naturally cause decreased performance for the minor roads it was decided to split the dataset so that \textit{arterial} and \textit{minor road} traffic can be distinguished. 
+
+\begin{description}
+\item[Arterial] traffic is defined as traffic which enters an intersection from north or south and makes a throughgoing motion rather than turning off the arterial. 
+\item[Minor road] traffic consist of all traffic from east and west making left- and right turns as well as crossing over the artery.
+\end{description}
+
+The results of the tests are measured by extracting average queue lengths and average delays for each intersection. These values are extracted using Vissim node evaluations, which are inserted for each of the twelve intersections.
+
+All simulations were fitted to the traffic observed in the morning period from 7.00 to 9.00 and run 10 times with different seeds. All graphs shown in this section are based on average values over the 10 runs.
+
+\subsection{DOGS}
+The first set of results compares DOGS to the basic program and DOGS with modifications.
+
+\subsubsection*{Average queue lengths}
+Average queue length indicates, in units of length (m), the number of vehicles waiting to traverse an intersection ie. perform some turning motion, or go straight through, in the beginning of the green interval. 
 
 When queues become too long \textit{spillback} occurs causing queues upstream. In the extreme event queues stretch back to the last upstream intersection blocking all entry into the intersection and effectively causes a gridlock.
 Another spillback situation, although less severe - but more common, is when vehicles waiting for a left-turn fill up a dedicated left-turning lane and spill back into the main direction.
 
 These situations are, of course, not desirable and thus the queue length is an important factor to observe.
 
-The way DOGS work we can make some speculations on how queues will form. The intention of DOGS is to improve the conditions for the arterial traffic, admittedly sacrificing some performance for the side roads. So we expect queues to shorter for the main direction and longer for the side roads.
+The way DOGS work we can make some speculations on how queues will form. The intention of DOGS is to improve the conditions for the arterial traffic while sacrificing some performance for the minor roads. So we expect queues to shorter for the main direction and longer for the side roads. This is a slightly risky strategy since the minor roads will usually have a short distance to the upstream intersection.
 
 \begin{figure}[ht]
 
     \begin{minipage}[b]{0.5\linewidth}
 
 \begin{center}
-\includegraphics[scale=0.30]{aveq.png} 
+\includegraphics[scale=0.40]{aveq.png} 
 \end{center}
 \caption{Average queue lengths for arterial and crossing traffic}
 \label{fig:aveq}
@@ -52,26 +72,30 @@ The way DOGS work we can make some speculations on how queues will form. The int
     \begin{minipage}[b]{0.5\linewidth}
 
 \begin{center}
-\includegraphics[scale=0.30]{aveq_total.png} 
+\includegraphics[scale=0.40]{aveq_total.png} 
 \end{center}
-\caption{Average queue lengths for all traffic types}
+\caption{Average queue lengths for all traffic types (total performance)}
 \label{fig:aveq_tot}
 
     \end{minipage}
 
 \end{figure}
 
-In Figures \ref{fig:aveq} and \ref{fig:aveq_tot} we see the average queue lengths for all intersections with and without DOGS, in both cases with no bus priority (since bus priority may cause increased queues and we want to save this aspect for later).
+In Figures \ref{fig:aveq} and \ref{fig:aveq_tot} we see the average queue lengths for all intersections with and without DOGS, in both cases with no bus priority (since bus priority may cause increased queues and we want to save this aspect for later). The values behind these graphs are the averages for all intersections.
 
-We see that DOGS severely penalizes crossing and the arterial traffic even suffers at the same time in the average case. To further inspect this phenomenon we observe Figures (\ref{fig:aveq_int_cross}-\ref{fig:aveq_int_tot}) where the average queue lengths are shown per intersection.
+In Figure \ref{fig:aveq_detail} we see the total performance of each signal timing strategy per area. 
 
 \begin{figure}[ht]
 \begin{center}
-\includegraphics[scale=0.30]{aveq_intersection_crossing.png} 
+\includegraphics[scale=0.40]{aveq_total_area_vs_traffic-type.png} 
 \end{center}
-\caption{Average queue lengths per intersection for crossing traffic}
-\label{fig:aveq_int_cross}
+\caption{Average queue lengths per area and traffic type}
+\label{fig:aveq_detail}
 \end{figure}
+
+In Glostrup both DOGS variants outperform the basic program for arterial traffic. Original DOGS is delivers about 20\% shorter queues on the artery than modified DOGS, which, in turn is about 10\% better than the basic program. For the minor roads, again both DOGS variants increase the queue lengths for minor roads but modified DOGS has an edge over DOGS in this case.
+
+In Herlev DOGS actually increase the queue lengths for arterial traffic, compared to the baseline program, unlike modified DOGS, which bring a 25\% advantage over the baseline. For the minor road traffic we again see that, on average, this type of traffic experience longer queues however the difference is not as extreme as in Glostrup.
 
 \begin{figure}[ht]
 \begin{center}
@@ -83,33 +107,155 @@ We see that DOGS severely penalizes crossing and the arterial traffic even suffe
 
 \begin{figure}[ht]
 \begin{center}
-\includegraphics[scale=0.30]{aveq_intersection_total.png} 
+\includegraphics[scale=0.30]{aveq_intersection_crossing.png} 
 \end{center}
-\caption{Average queue lengths per intersection for all traffic types}
-\label{fig:aveq_int_tot}
+\caption{Average queue lengths per intersection for minor road traffic}
+\label{fig:aveq_int_cross}
 \end{figure}
 
-Since intersections 6 to 9 are not controlled by DOGS the performance is almost identical wether DOGS is enabled or not. 
+(Since intersections 6 to 9 are not controlled by DOGS the performance is almost identical wether DOGS is enabled or not and are not shown for this reason.)
 
-Figure \ref{fig:aveq_int_art} shows the performance queues forming along the arterial. We see that in the Herlev area only arterial traffic at Mileparken gains a slight advantage (~5\%). On the other hand the Herlev Sygehus and Herlev Bygade intersections actually perform more than twice as bad as it did without DOGS. Herlev Hovedgade experience about 5\% longer average queues and Hjortespringvej seems unaffected.
+Figures \ref{fig:aveq_int_art} and \ref{fig:aveq_int_cross} shows the average lengths of queues forming at arterial and  minor road intersection approaches. We see that in the Herlev area only arterial traffic at Herlev Hovedgade gains an advantage under DOGS. On the other hand the Herlev Sygehus intersection performs almost twice as bad as it did without DOGS. The queues measured at Herlev Sygehus is actually the queues experienced for northgoing traffic since Herlev Sygehus does not have an upstream intersection from north.
 
-DOGS performs better in all Glostrup intersections yielding from 10\% at Fabriksparken to almost 50\% reduced queue length at Gammel Landevej.
+Modified DOGS outperforms DOGS and the basic program in all cases but Hjortespringvej, which deviates drastically from both DOGS and the basic program. In this case the optimization routine has chosen offsets, which yield good average performance for the area, sacrificing Hjortespringvej.
 
-Looking at the performance for crossing traffic, the promised "sacrifices" are clearly visible. In Herlev there are slight increases of average queue length for intersections Herlev Sygehus, Hjortespringvej and Mileparken. Herlev Bygade suffer ~30\% longer queues under DOGS control. Crossing traffic at Herlev Hovedgade, however, actually benefit from DOGS. This can be explained by the fact that the extra cycle time is distributed 4:1 between the main and side directions. Herlev Hovedgade has much crossing traffic and this extra green time will make a difference.
+DOGS performs better in all Glostrup intersections yielding from 10\% at Kindebjergvej to almost 40\% reduced queue length at Gammel Landevej. Here modified DOGS is outperformed by DOGS at Fabriksparken and Gammel Landevej by a margin og almost 50\%, and performs slightly worse than the basic program. At Roskildevej DOGS and its modified sibling is at par, both outperforming the basic program. Modified DOGS excels, however, at Kindebjergvej.
 
-In Glostrup we see moderately decreased performance for Fabriksparken, Kindebjergvej and Roskildevej. Gammel Landevej, however, suffer more than 300\% longer queues on average.
+Looking at the performance for minor road traffic, the promised "sacrifices" are clearly visible. In Herlev there are slight increases of average queue length for intersections Herlev Sygehus, Hjortespringvej and Mileparken. Herlev Bygade suffer ~30\% longer queues under DOGS control - but 20\% less under modified DOGS control.
 
-[TODO: HH og GL Landevej vis / henvis til forholdet mellem korridor og non-korridor trafik]
+In Glostrup we see moderate performance variations for Fabriksparken and Kindebjergvej. Roskildevej and Gammel Landevej are more affected, Roskildevej suffering more than 40\% longer queues on average. In both cases modified DOGS is somewhat closer to the basic program, although still increasing queue lengths.
 
-\subsection*{Bus Priority}
+\subsubsection*{Average delays}
+We conclude the comparison of DOGS and modified DOGS to the basic program by looking at the average delays experienced in each area for each traffic type. 
+
+These are found in Figures \ref{fig:delay_arterial_herlev}-\ref{fig:delay_minor-road_glostrup} where we see the combined performance for intersections in the respective area versus time in seconds.
+
+\begin{figure}[ht]
+
+    \begin{minipage}[b]{0.5\linewidth}
+
+\begin{center}
+\includegraphics[scale=0.25]{delay_arterial_herlev.png} 
+\end{center}
+\caption{Average delay for arterial traffic in Herlev}
+\label{fig:delay_arterial_herlev}
+
+    \end{minipage}
+    \hspace{0.5cm}
+    \begin{minipage}[b]{0.5\linewidth}
+
+\begin{center}
+\includegraphics[scale=0.25]{delay_arterial_glostrup.PNG} 
+\end{center}
+\caption{Average delay for arterial traffic in Glostrup}
+\label{fig:delay_arterial_glostrup}
+
+    \end{minipage}
+    
+        \begin{minipage}[b]{0.5\linewidth}
+
+\begin{center}
+\includegraphics[scale=0.25]{delay_minor-road_herlev.PNG} 
+\end{center}
+\caption{Average delay for minor-road traffic in Herlev}
+\label{fig:delay_minor-road_herlev}
+
+    \end{minipage}
+    \hspace{0.5cm}
+    \begin{minipage}[b]{0.5\linewidth}
+
+\begin{center}
+\includegraphics[scale=0.25]{delay_minor-road_glostrup.PNG} 
+\end{center}
+\caption{Average delay for minor-road traffic in Glostrup}
+\label{fig:delay_minor-road_glostrup}
+
+    \end{minipage}
+
+\end{figure}
+
 In Vissim delays is the difference from the ideal travel time ie. no other vehicles (free flow speeds), no intersections to the actual travel time. 
-By this definition the delays experienced at an intersection are correlated with the queue lengths. Unlike queue lengths, Vissim allows us to see delays per vehicle type. This is used to filter out performance for buses.
+
+We expect that delays are correlated with the queue lengths observed previously. As such we are not surprised to see that modified DOGS is the best option in Herlev for favoring arterial traffic. Original DOGS does seem to avoid the spike in average delays, which is seen in Herlev under the basic program around 8.00 (simulation second 3600) but otherwise is outperformed even by the basic program. 
+For minor road traffic the differences between each program are not profound, although it is clear, as expected, that the basic program is the best choice.
+
+In Glostrup we see that both DOGS variants reduce delays for arterial traffic and that original DOGS, on average, outperforms the modified version. For minor road traffic we see the same tendency as in Herlev, again the basic program favors this type of traffic the most whereas DOGS is hard on minor road traffic.
+
+\subsection*{Improvements to DOGS}
+These analyses leave an impression of DOGS as a system which work as intended, at best and is detrimental minor road traffic and - in some cases - even to arterial traffic as well.
+
+The fact that minor road traffic suffers reduced performance is explained by the fact that the extra green-time, which comes as a result of increased cycle times, is unevenly distributed in the ratio 4:1. What this means is that, when DOGS increase the cycle time by 10 seconds, the arterial phase will receive 8 extra seconds of green per cycle but the minor road phase only receives 2 seconds. 
+The case of arterial traffic requires more study, however.
+
+In the DRD report \ref{dogs} Steen Lauritzen makes a note of the uncontrolled behaviour of offsets when DOGS change level (section 5.8) and in section \ref{dogs_offset} I explained the problem.
+
+During simulation it has been observed how the resulting poor coordinations are affected by DOGS; more vehicles are stopped at the red light due to the increased capacity and queues become longer. 
+
+To test the theory that poor offsets are, in fact, the main cause of less-than-expected performance benefits - and even performance decreases for arterial average delays and -queues we tested a modified version of DOGS with per-cycle-time offsets. The comparisons made in the section has shown us that improper offsets are a likely cause of the performance difference.
+
+\subsection*{Cycle times}
+In Figures \ref{fig:c_dogs_herlev}-\ref{fig:c_modified-dogs_glostrup} are the cycle times chosen between 7 and 9 in the simulation.
+
+\begin{figure}[ht]
+
+    \begin{minipage}[b]{0.5\linewidth}
+
+\begin{center}
+\includegraphics[scale=0.2]{C_dogs_herlev.png} 
+\end{center}
+\caption{DOGS cycle time in Herlev}
+\label{fig:c_dogs_herlev}
+
+    \end{minipage}
+    \hspace{0.1cm}
+    \begin{minipage}[b]{0.5\linewidth}
+
+\begin{center}
+\includegraphics[scale=0.2]{C_dogs_glostrup.png} 
+\end{center}
+\caption{DOGS cycle time in Glostrup}
+\label{fig:c_dogs_glostrup}
+
+    \end{minipage}
+    
+        \begin{minipage}[b]{0.5\linewidth}
+
+\begin{center}
+\includegraphics[scale=0.2]{C_modified-dogs_herlev.png} 
+\end{center}
+\caption{Modified DOGS cycle time in Herlev}
+\label{fig:c_modified-dogs_herlev}
+
+    \end{minipage}
+    \hspace{0.1cm}
+    \begin{minipage}[b]{0.5\linewidth}
+
+\begin{center}
+\includegraphics[scale=0.2]{C_modified-dogs_glostrup.png} 
+\end{center}
+\caption{Modified DOGS cycle time in Glostrup}
+\label{fig:c_modified-dogs_glostrup}
+
+    \end{minipage}
+
+\end{figure}
+
+We see that the modifications made to DOGS reduces the eagerness to change levels. This is an effect of the mandatory rule for modified DOGS to remain at least 3 cycles in each level, whereas DOGS is free to change the cycle time up or down after each cycle has passed. 
+
+This explains why modified DOGS is generally kinder on the minor roads than DOGS. Modified DOGS will remain longer at each level, allowing not only the new offsets to take effect but also the increased traffic, which caused the level change, to traverse the artery, before changing to the next level. An attempt to implement this form of level smoothening was thought into the DOGS system by the lower- and upper threshold values. However it appears that more drastic means should be taken to ensure that this of hysteria does not occur - an obvious approach is simply to require level burn-in times, such at the one I chose for modified DOGS (3 levels).
+
+\subsection{Bus Priority}
+The final analysis is for the bus priority for the three Glostrup intersections, Fabriksparken, Gammel Landevej and Kindebjergvej.
+
+Bus priority is a questionable feature for a crowded arterial, such as ringroad 3. Unless there exist dedicated bus lanes, buses wait in queue to cross an intersection along with all other vehicles. For the three intersections with bus priority there is no such dedicated lane.
+
+In Vissim it is possible to see delays per vehicle type, which in Figure \ref{fig:bus_delay} is used to filter out delays for buses.
 
 \begin{figure}[ht]
 \begin{center}
 \includegraphics[scale=0.40]{delay_bus.PNG} 
 \end{center}
-\caption{Total delay for buses in each test case}
+\caption{Delay for buses in each test case}
 \label{fig:bus_delay}
 \end{figure}
 
@@ -136,81 +282,3 @@ It is clear that the bus priority logic makes a difference of a few percent redu
 \end{figure}
 
 In Figures \ref{fig:bus_delay_int_dogs} and \ref{fig:bus_delay_int_nodogs} we see how the bus delay is split over the intersections. In the case with no DOGS the three intersections with bus priority logic perform consistenly better when bus priority is enabled. This is not the case when DOGS is enabled, now only Fabriksparken and Kindebjergvej reduce delays for buses whereas bus delay at Gammel Landevej is indifferent to bus priority. This observation corresponds to what was seen for the average queue lengths for Gammel Landevej in Figure \ref{fig:aveq_int_cross}.
-
-\subsection*{Why DOGS fail in its current incarnation}
-These analyses leave an impression of DOGS as a system which work as intended, at best and is detrimental to both arterial and crossing traffic.
-
-We can explain the reason about the observed effects on crossing traffic by the argument of unevenly distributed extra-green time. The case of arterial traffic requires more study, however.
-
-In the DRD report \ref{dogs} Steen Lauritzen makes a note of the uncontrolled behaviour of offsets when DOGS change level (section 5.8). in Figures (\ref{fig:coord_p1_herlev_c80}, \ref{fig:coord_p1_herlev_c100}) we see road time diagrams for the morning program as DOGS increase the common cycle time from 80s to 100s in a time horizon of 300s. 
-In the diagram green vertical bands indicate green time for the arterial direction. A platoon of vehicles propagates from the green bands to the next intersection and a red band is drawn when the platoon is met by a red light.
-
-\begin{figure}[ht]
-
-    \begin{minipage}[b]{0.5\linewidth}
-    
-\begin{center}
-\includegraphics[scale=0.22]{coord_p1_herlev_c80.PNG} 
-\end{center}
-\caption{Coordination in Herlev without DOGS}
-\label{fig:coord_p1_herlev_c80}
-
-    \end{minipage}
-    \hspace{0.5cm}
-    \begin{minipage}[b]{0.5\linewidth}
-
-\begin{center}
-\includegraphics[scale=0.22]{coord_p1_herlev_c100.PNG} 
-\end{center}
-\caption{Coordination in Herlev at DOGS level 2}
-\label{fig:coord_p1_herlev_c100}
-
-    \end{minipage}
-    
-\end{figure}
-
-We can see how simultaneously extending the green time for the arterial stages will cause the probability for the platoon head of hitting a red light to remain unchanged. This is true because the cycle time is changed at the same time in all intersections (common cycle) and DOGS does not change the red-end times of the arterial stages.
-This is also true for the platoon tails, as long as the downstream arterial stage receives the same green time extension as the stage from which the platoon departed.
-
-In the coordination between Herlev Hovedgade and Mileparken we see that DOGS actually \textit{improves} upon the green wave by reducing the probability of meeting a red light going from Herlev Hovedgade to Mileparken at 70km/h.
-
-In Figures (\ref{fig:coord_p1_glostrup_c80} and \ref{fig:coord_p1_glostrup_c100}) we see the same comparison only for the DOGS controller intersections in Glostrup.
-
-\begin{figure}[ht]
-
-    \begin{minipage}[b]{0.5\linewidth}
-    
-\begin{center}
-\includegraphics[scale=0.22]{coord_p1_glostrup_c80.PNG} 
-\end{center}
-\caption{Coordination in Glostrup without DOGS}
-\label{fig:coord_p1_glostrup_c80}
-
-    \end{minipage}
-    \hspace{0.5cm}
-    \begin{minipage}[b]{0.5\linewidth}
-
-\begin{center}
-\includegraphics[scale=0.22]{coord_p1_glostrup_c100.PNG} 
-\end{center}
-\caption{Coordination in Glostrup at DOGS level 2}
-\label{fig:coord_p1_glostrup_c100}
-
-    \end{minipage}
-    
-\end{figure}
-
-[FIX THESE FIGURES - THERE ARE RED BANDS EVEN IN GREEN STARTS!]
-
-We see that with default offsets and cycle time - as well as under DOGS level 2 with cycle time 100s - Gammel Landevej is poorly coordinated with its neighbours, Fabriksparken and Hjortespringvej. Platooons arriving from each of these intersections risk being cut in half at Gammel Landevej. This observation can explain some of poor performance we saw in Figure \ref{fig:aveq_tot} for Gammel Landevej in particular.
-
-During simulation it has been observed how such imperfect coordinations are affected by DOGS; more vehicles are stopped at the red light due to the increased capacity and queues become longer.
-
-\subsection{DOGS with level-specific offsets}
-In the previous section we saw that the performance of DOGS is unreliable when adjusting the cycle time with adjust the coordination by changing the offsets.
-
-To show that incorrect offsets are indeed the problem with the original DOGS I use the optimization routine described in section \ref{optimization} to precalculate cycle-time specific offsets for each DOGS-controller signal controller. While original DOGS allows level changes after one cycle has passed, DOGS with cycle-time specific offsets was reprogrammed to wait at least 3 cycles before changing levels to allow the new offsets to come into effect.
-
-\subsection{Coordination with Direction Priority Offsets}
-In this test the system for coordination of section \ref{coordination} is compared with DOGS without bus priority. DRD requested this test to discover whether DOGS (dynamic capacity) can outperform a proper coordination. DOGS has support for dynamically adjusting the coordination - including prioritizing directions - though it is not enabled in either the Glostrup or Herlev sites at the moment.
-

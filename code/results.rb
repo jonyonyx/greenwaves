@@ -89,7 +89,7 @@ class NodeEvals < Array
       traffic_type = if ARTERY_DIRECTIONS.include?(decision.from_direction) and decision.turning_motion == 'T'
         'Arterial'
       else
-        'Crossing'
+        'Minor road'
       end
       
       node = nodeeval.node

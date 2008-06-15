@@ -20,7 +20,7 @@ At present the system must be tailored to the environment in which it operates. 
 \label{fig:dogs_herlev}
 \end{figure}
 
-\subsubsection*{Detection}
+\subsection{Detection}
 Loops are placed in the immediate downstream of intersections and connected to closest controller to reduce the wire length. 
 
 The criteria, which DOGS use, are based on the total inflow and outflow per cycle as well as load percentage, which, in Herlev, is extracted from strategically placed detectors in the ends of the arterial. In Figure \ref{fig:dogs_herlev} the inflow is thus measured at D3 and D14 while the outflow is measured at D15 and D18. 
@@ -29,14 +29,14 @@ During an interview with DRD and TTS it was explained that the traffic from mino
 In addition to vehicles per cycle and load degrees the detectors are capable of measuring vehicle speeds, though this is not taken into consideration in any of the criteria. In the case of prediction such capabilities could be taken advantage off eg. by fitting the predicted speeds to observations.
 Individual vehicle speeds measured at detectors are usually not taken into consideration when performing prediction since they represent the speed at a single point rather than some average speed. It is possible that the average speeds measured at detectors can be used to estimate the level of congestion of the network as an alternative to travel time measurements by video.
 
-\subsubsection*{Prediction}
+\subsection{Prediction}
 DOGS is a purely traffic actuated system and no prediction is used when the system is activated due to heavy traffic conditions.
 
 In spite of the intended flexibility of the system this is a point which puts high demand on the implementing traffic engineers since traffic through the arterial must be assessed manually when the system is put into production as well as during maintenance.
 
 An alleviating point to the lack of prediction is the fact that the current arterials under DOGS control are relatively small and static predictions can be made by an experienced traffic engineer. Furthermore, since DOGS only operate under high load conditions, predictions become less valuable - or superfluous, even - because all that can be said about the arterial in this case is that it is heavily loaded with traffic.
 
-\subsubsection*{Optimization}
+\subsection{Optimization}
 Since DOGS only kicks in under congested or near-congested conditions (for the Herlev area when the load exceeds 60\%) it is simple to optimize the throughput since any increase in green time will just allow more vehicles to pass (the phase is never emptied from vehicles).
 
 That DOGS only operates during high-congestion levels is an unusual trait for an adaptive system since they usually excel in optimization under \textit{normal} ie. uncongested load conditions. This can be explained from the lack of an explicitly defined objective function and optimization routine.
@@ -93,7 +93,36 @@ $$\lbrace I,L \rbrace_{disable,i-1} < \lbrace I,L \rbrace_{disable,i}$$
 
 To avoid hysteresis between programs the same constraints (equations \ref{eqn:hysteresis_intensity}-\ref{eqn:hysteresis_limits}) as for switching between pretimed and dynamic control applies.
 
-\subsubsection*{Evaluation}
+\subsection{Evaluation}
 Tests have shown that the system is indeed capable of increasing the capacity, with reduced queue lengths as a result. When the arterial in Herlev is at or above moderate load DOGS will increase the capacity by 15-25\% compared to the capacity if only the pretimed plans was in use.
 
-Due to its ad-hoc nature it is difficult to compare DOGS to other systems for arterial progression. In a future project by this author simulations of DOGS will allow further comparison studies.
+\subsection{DOGS and offsets}
+\label{dogs_offset}
+
+DOGS makes use of the basic program for the current period, which in Herlev and Glostrup are TRANSYT\footnote{See section \ref{simulation} for more details on simulation	tools.} optimized. Such programs include an offset for each signal controller in the system, which are optimized for a certain cycle time, however DOGS always use the same offsets. Although DOGS has support for dynamically adjusting the coordination - including prioritizing directions - it is not enabled in either the Glostrup or Herlev sites at the moment.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.5]{green_time_displacement_and_cycle_time.png} 
+\end{center}
+\caption{Green time displacement concept}
+\label{fig:green_time_displacement_concept}
+\end{figure}
+
+This optimization of offsets include aligning green starts so that the road users travelling through the arterial at a certain speed will experience green lights as they approach the next intersection. The green time displacement $\Delta f$ is the time from green start at the first intersection to green start at the next should match the travel time, $tt$, between the intersections (see Figure \ref{fig:green_time_displacement_concept}). 
+
+If $\Delta f < tt$ road users from the upstream intersection must stop at the next intersection and wait for green. If $\Delta f > tt$ there is a risk of wasted green time since the downstream intersection starts its green time before vehicles from the upstream intersection has a chance to reach it. These concepts are visualized in Figure \ref{fig:green_time_displacement}.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.5]{green_time_displacement.png} 
+\end{center}
+\caption{Green time displacement scenarios}
+\label{fig:green_time_displacement}
+\end{figure}
+
+When DOGS increase the cycle time the green time displacement in one direction is maintained. By Figure \ref{fig:green_time_displacement} we can see that $C = \Delta f_{12} + \Delta f_{21}$ and so the green time displacement in the other direction will increase by the cycle time increase.
+
+These observations were made already in the DRD analysis of DOGS \cite{dogs} and this project attemps to answer the question of how much of an effect this has. The obvious approach is to select new offsets for each cycle time, which DOGS might choose and switch from the TRANSYT optimized offsets for the lower cycle time to the set of offsets which match the current DOGS level.
+
+This alternative is called \textit{Modified DOGS} and will further explained in the later sections of the report.
