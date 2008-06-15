@@ -249,36 +249,33 @@ The final analysis is for the bus priority for the three Glostrup intersections,
 
 Bus priority is a questionable feature for a crowded arterial, such as ringroad 3. Unless there exist dedicated bus lanes, buses wait in queue to cross an intersection along with all other vehicles. For the three intersections with bus priority there is no such dedicated lane.
 
-In Vissim it is possible to see delays per vehicle type, which in Figure \ref{fig:bus_delay} is used to filter out delays for buses.
+In Vissim it is possible to see delays per vehicle type, which in this analysis is used to filter out delays for buses.
+In Figures \ref{fig:delay_bus_basic}-\ref{fig:delay_bus_modified_dogs} we see how the various systems affects bus delays with and without bus priority.
 
 \begin{figure}[ht]
 \begin{center}
-\includegraphics[scale=0.40]{delay_bus.PNG} 
+\includegraphics[scale=0.30]{delay_bus_basic.png} 
 \end{center}
-\caption{Delay for buses in each test case}
-\label{fig:bus_delay}
-\end{figure}
-
-In Figure \ref{fig:bus_delay} we see how DOGS and bus priority affects bus delays. The worst set of conditions for buses are DOGS enabled and no bus priority while the best occurs without DOGS but with bus priority. 
-
-In both cases, when DOGS is enabled, buses experience more delay than when DOGS is disabled. This could be explained by the increased green time for minor road stages when DOGS increase the cycle time and that buses, when met by a red light, must wait longer than  under a short cycle time.
-
-It is clear that the bus priority logic makes a difference of a few percent reduction in bus delay even though the logic could be more aggressive by detecting waiting buses shortening the non-bus stages so that the stage, which will serve the bus, can start earlier.
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[scale=0.35]{delay_bus_intersection_dogs.PNG} 
-\end{center}
-\caption{Bus delay per intersection with DOGS}
-\label{fig:bus_delay_int_dogs}
+\caption{Delay for buses under basic program}
+\label{fig:delay_bus_basic}
 \end{figure}
 
 \begin{figure}[ht]
 \begin{center}
-\includegraphics[scale=0.35]{delay_bus_intersection_nodogs.PNG} 
+\includegraphics[scale=0.30]{delay_bus_dogs.png} 
 \end{center}
-\caption{Bus delay per intersection without DOGS}
-\label{fig:bus_delay_int_nodogs}
+\caption{Delay for buses under DOGS}
+\label{fig:delay_bus_dogs}
 \end{figure}
 
-In Figures \ref{fig:bus_delay_int_dogs} and \ref{fig:bus_delay_int_nodogs} we see how the bus delay is split over the intersections. In the case with no DOGS the three intersections with bus priority logic perform consistenly better when bus priority is enabled. This is not the case when DOGS is enabled, now only Fabriksparken and Kindebjergvej reduce delays for buses whereas bus delay at Gammel Landevej is indifferent to bus priority. This observation corresponds to what was seen for the average queue lengths for Gammel Landevej in Figure \ref{fig:aveq_int_cross}.
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[scale=0.30]{delay_bus_modified-dogs.png} 
+\end{center}
+\caption{Delay for buses under modified DOGS}
+\label{fig:delay_bus_modified_dogs}
+\end{figure}
+
+It is clear that the bus priority logic makes a considerable positive difference in bus delay reduction. This in spite of the fact that the logic could be more aggressive by detecting waiting buses shortening the non-bus stages so that the stage, which will serve the bus, can start earlier.
+
+When bus priority extends the green time for the arterial stage the extra time is taken from the minor road. To compensate, the minor stage green time is increased in the next cycle, taking time from the arterial stage. Such iterations of borrowing and compensating will affect coordination however, the since only the green-end times are changed and the cycle time remains in sync with the common cycle time set by DOGS, the performance degradation for non-bus traffic becomes a mere matter of capacity redistribution.

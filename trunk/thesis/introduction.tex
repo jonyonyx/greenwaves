@@ -1,19 +1,13 @@
 \section{Introduction}
-Road traffic has become an essential part of modern society and has put a high demand on road networks supplied by municipalities. 
 
-Traffic network congestion causes delays which adds substantial costs to the society and businesses on a daily basis and also increases emissions and the risk of accidents.
+The ringroads sorrounding the city of Copenhagen serve to route traffic from east and west around the city. As such they are part of the collection of arteries in Denmark.
 
-To alleviate congestion, public transport can be improved or the infrastructure can be expanded. In urban areas, the latter is often infeasible due to residential areas adjacent to the existing roads. 
-A more subtle way to improve the network performance is to make better use of the existing roads, which can be done by proper setting of traffic signal parameters. 
+The DOGS system by Technical Traffic Solution (TTS) was chosen to adjust the capacity of ringroad 3 due to the rebuilding of the nearby motorring 3, which was expected to cause increased deman on ringroad 3.
 
-Traffic signals are employed in urban areas in order to control traffic flows and avoid collisions by fairly distributing the right-of-way for adjoining road segments and to ensure a smooth flow of traffic.
+DOGS increases capacity by simultaneously increasing cycle times in all signal controllers, when certain traffic conditions arise. These criteria are determined statically by so as to alleviate the most heavily loaded intersection in the DOGS area.
 
-If not set appropriately traffic signals may seriously hinder the traffic flow through the road network and so great care should be taken when choosing the parameters for an intersection. 
+The purpose of this study is to simulate DOGS to discover the true effects of the system. In previous analysis by the Danish Road Directory (DRD) certain analytical observations have been made, which indicate that DOGS disrupt coordination on ringroad 3.
 
-The literature has many suggestions for the intelligent setting of traffic signals, ranging from purely statistically based methods developed in the early 60's over actuated traffic signals to highly adaptive and cooperative methods, which can be realized using actual flow information supplied by traffic detectors. 
+The simulation tool is chosen to be Vissim, which is the de-facto microsimulation tool in denmark. Ringroad 3 consit of two DOGS areas, which are separated by three intersections, and due to the combined size of the network tools are developed to insert link inputs and route choices.
 
-This report gives a survey of the literature with special emphasis on adaptive methods, which attempts to coordinate traffic signals in larger networks so as to optimize some network-wide performance index such as number of stops or delay. 
-
-The danish ring-roads are important arterials for the traffic 	to and from the city of Copenhagen. As it is not desirable to allow traffic in the city itself due to its medieval-bound road (ie. non-grid, narrow) design they serve to direct traffic to and from the urban areas and to move traffic to and from the highways.
-
-Finally in section \ref{conclusion} the work in this report is summarized with recommendations for future works.
+To test the issue of disrupted coordination during DOGS operation an offset optimization tool was developed to provide precalculated offsets for each signal controller for each cycle time. This tool also integrates closely with Vissim to extract informations such as distances and signal controller plans. 
