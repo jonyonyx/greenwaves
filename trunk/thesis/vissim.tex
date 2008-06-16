@@ -2,16 +2,7 @@
 \label{vissim}
 Vissim provides a microscopic simulation of traffic in a network. In this context microscopic entails that each vehicle is individually modelled and, in a sense, Vissim takes the view of the users of the network.
 
-\subsubsection{Traffic Input}
-Vissim is capable of dynamic traffic assignment (DTA) as well as static input. DTA is a method by \cite{Wardrop} in which the traffic flow adapts to the capacity of the network due to a \textit{stochastic user equilibrium} (SUE). 
-
-Vissim can perform this form of traffic input given zones, which are confined and non-overlapping areas of the network, and a matrix describing the relative traffic from each zone to each other zone.
-
-In this project DTA was abandoned on recommendation from DTU Transport professor Otto Anker Nielsen due to the dynamic nature of the traffic signals since, in his experience, odd phenomenon may occur such as unpredictable gridlocks, when adjacent links are fully saturated.
-
-Instead static input was chosen. In static input traffic enters on specific links and traverse the network until an exit link has been reached. Static input is used in combination with routing decisions, which are usually placed on the input links such that each vehicle entering will immediately be assigned a route through the network. For a description of link input sizes and routes used in the simulations, please refer to section \ref{modelling}.
-
-\subsection{Network Elements}
+\subsubsection{Network Elements}
 
 Vissim is highly flexible with regards to network layout description and intersection turning movements can be fine-tuned almost to perfection, given enough time. The network design process is done using a GUI interface where links are joined using connectors.
 
@@ -21,7 +12,15 @@ Connectors are mostly relevant in intersections where they connect exactly two l
 
 Vissim maintains a \textit{.inp} file, which contains the most relevant informations necessary to run a simulation including information on links, connectors and routes. 
 
-\subsubsection{Links inputs}
+\subsubsection{Traffic input}
+Vissim is capable of dynamic traffic assignment (DTA) as well as static input. DTA is a method by \cite{Wardrop} in which the traffic flow adapts to the capacity of the network due to a \textit{stochastic user equilibrium} (SUE). 
+
+Vissim can perform this form of traffic input given zones, which are confined and non-overlapping areas of the network, and a matrix describing the relative traffic from each zone to each other zone.
+
+In this project DTA was abandoned on recommendation from DTU Transport professor Otto Anker Nielsen due to the dynamic nature of the traffic signals since, in his experience, odd phenomenon may occur such as unpredictable gridlocks, when adjacent links are fully saturated.
+
+Instead static input was chosen. In static input traffic enters on specific links and traverse the network until an exit link has been reached. Static input is used in combination with routing decisions, which are usually placed on the input links such that each vehicle entering will immediately be assigned a route through the network.
+
 Due to the number of input links and the need to run simulations with various inputs it was decided to implement routines to automate link input definitions.
 
 Since Vissim relies on a text format it is possible to generate strings, which can be inserted in the appropriate section of the \textit{.inp} file.
@@ -103,10 +102,12 @@ In line 4 a check is made if the adjacent link, which is currently being explore
 
 The \verb|Route.new| invocation, which is performed when an exit link is found, instantiates a new Route object, which enables additional options such as printing the mentioned sequence of connectors links for Vissim, which is more cumbersome with just the raw path.
 
+For further descriptions of the specific link input sizes and routes used in the simulations, please refer to section \ref{modelling}.
+
 \subsection{Right-of-Way}
 The purpose of traffic signal is to fairly distribute the right-of-way for conflicting traffic motions.  In spite of this traffic signals cannot overcome all situations and rely on road users to enforce themselves some right-of-way rules. This especially becomes relevant when the capacity of the intersection is reached and vehicles become trapped due to a stage change.
 
-Vissim per default allows "collisions" since overlapping links and connectors must be manually prioritized or marked as a conflict area. The existing network was built using previous versions for Vissim, which only supported priority rules (see Figure \ref{fig:priority_rules}). 
+Vissim per default allows "collisions" since overlapping links and connectors must be manually prioritized or marked as a conflict area. The existing network was built using previous versions of Vissim, which only supported priority rules (see Figure \ref{fig:priority_rules}). 
 
 \begin{figure}[!ht]
 \begin{center}
