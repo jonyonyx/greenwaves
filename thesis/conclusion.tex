@@ -23,10 +23,14 @@ In addition to testing DOGS, the bus priority, which is present for the three no
 \subsection{Future works}
 I strongly believe per-level offsets should be further considered in the next revision of DOGS. In conjunction average speeds between intersections and hence travel times used in the optimization should be considered. It is safe to assume that the traffic conditions, which trigger each DOGS level, can be mapped upon a certain set of travel times. I expect the travel time to increase in some proportion to the proper DOGS level and this information can be used to further improve coordination, as the results of this study assumed fixed travel times.
 
+The studies presented in this report tests a busy albeit normal morning situation and does not include an investigation of the DOGS "panic function" ie. the capability of DOGS to adopt very high cycle times when eg. an accident occurs on motorring 3. It is expected that the benefit of DOGS will increase greatly, compared to the basic morning program, when such situations occur.
+
 The optimization routine was implemented in the interpreted language Ruby. Although the implemention will try more than 1000 combinations per second on a 2 GHz CPU, it is expected that an implementation in a faster language, such as C\# will lead to even better solutions.
 
 As mentioned the implemented system is capable of optimizing coordinations by changing speeds as well as offsets. Dynamic speed signs are becoming more and more widespread with the introduction of LED technology, for instance on motorring 3, and simulation studies should be performed to test wether road users will be able to respond to such speed signs indicating \textit{recommended speed for green wave}.
 
 \subsection{Perspective}
-Another feature of considering very large networks is the possibility of traffic redirection. If it is detected - or predicted - that an arterial is, or will be, congested under current flow conditions it is sensible to redirect some traffic onto alternative routes. 
+In this report I almost only discussed signal optimization for arterials. For a city such as Copenhagen it makes sense to expand the area of optimization such that whole grids were optimized for greens and coordinated simultaneously.
+
+A benefit of considering very large networks at the same time is the possibility of traffic redirection. This is in part possible for small-scale arterial optimization by denying procession at the upstream intersection until the downstream controllers have clear the queues. In larger scale networks, if it is detected - or predicted - that an artery is, or will be, congested under current flow conditions it is sensible to redirect some traffic onto alternative routes. 
 Redirecting traffic using traffic signals is a subtle technique which has not received much research yet, though it could pose more efficient than current traffic information systems, which inform road users of congestions and alternative routes, but allows them to ignore the advice.

@@ -53,7 +53,7 @@ function UpdateController(cycle_second){
 
 VAP is suitable, however, for implementation of DOGS due to its simple decision system as described in section \ref{dogs}. In this section I will describe how the DOGS logic was implementated in VAP.
 
-\subsection*{Interstage Definitions - PUA}
+\subsection{Interstage Definitions - PUA}
 Before we move on to DOGS in VAP it is fundamental to explain the \verb|Interstage| (abbr. \verb|Is|) concept. Interstage definitions are mandatory in Vissim whenever a VAP program is to control a signal.
 
 An interstage is basically the lighting scheme to be used during stage transition. Usually, when switching from stage A to B the lights of A switch to amber and then red while B switch from red to red and amber and then green.
@@ -114,7 +114,7 @@ For the interstage definitions, in INTERSTAGE1, we have redend for A to be -127,
 
 It is always up to the interstage designer to ensure that no right-of-way conflicts are present in the stage definitions. PTV supplies a support tool, which solves this issue, called CROSSIG. CROSSIG is capable of generating .PUA files; in this project CROSSIG was not available, however, and they were generated automatically from the signal plans, which are listed in appendix \ref{app:signalplans}.
 
-\subsection*{Interstage rules}
+\subsection{Interstage rules}
 The signal plans, for which interstage definitions are to be built, are formatted so that each named signal group (head) has a row with $C$-cells, where $C$ is the cycle time. Each cell can be amber, green, yellow or red. Thus a complete signal timing plan is visually represented as one or more such rows in a stack.
 
 In order to generate the interstage definitions (.PUA files in Vissim) it is necessary with a definition of an interstage itself. A stage is said to \textit{run} while the signal groups of the stage is settled in the green state. We define that when a stage is running an interstage cannot run and vice versa. Thus every cycle second must specify the current stage or interstage.
@@ -134,7 +134,7 @@ The slave signal controller - even the one on Herlev Hovedgade - must listen for
 
 Both master and slave VAP controllers are generated automatically using a script, which takes parameters such as, for the master, the area-specific detectors and activation / level-up / level-down bounds and, for the slave, offset value(s), signal program etc.
 
-\subsection*{Master}
+\subsubsection{Master}
 Relevant to master controllers we need to know the northern and southern detector names as these are used to determine if DOGS is enabled or turned off. Once DOGS is enabled another set of detectors (possibly overlapping) are measured upon to determine the appropriate level of DOGS. Note that, depending on threshold values, DOGS may be \textit{enabled} but not perform adjustments to the base-program - this is by design.
 
 These threshold values are also parameters which is fed into the generator routine (see section \ref{dogs} for a description). 
@@ -145,14 +145,14 @@ DOGS accumulate detections over a cycle - which is of variable length - and comp
 
 When DOGS is active the level is adjusted at most by one for each cycle. Thus when the level is high it will take longer to change between levels and the measuring periods are longer, resulting in more accurate measurements, but less responsiveness.
 
-\subsection*{Slave}
+\subsubsection{Slave}
 The purpose of slave controllers is to obey the cycle second and DOGS level instructions from the master controller.
 
 The first step for a slave is to calculate the local cycle second, which due to controller offset will usually differ from the master cycle second. An exception is the slave controller, which controls the intersection in which the master controller is physically positioned - the distance between them is 0 and likewise the offset.
 
 Consider stage A which is active while the master controller lowers the DOGS level by 1. In this case the end time is lowered if stage A receives priority from DOGS and it may happen that the end time for stage A is now lower then the current cycle second. Stage A will then have received more green time than it was supposed to and the slave will immediately make the transition from stage A to the next stage, B. In case B is not the stage which was supposed to be active (a rare case - stage B is short indeed) we allow stage A to carry over to the next cycle as we can only make stage transitions between subsequent stages - not in arbitrary order.
 
-\subsection*{Bus Priorities}
+\subsection{Bus priority}
 Three intersections in the Glostrup area - Fabriksparken, Gammel Landevej and Kindebjergvej - operate with bus priority on the arterial direction. 
 
 If a bus arrives from north or south during the stage which belongs to the arterial green time of up to 10 seconds is distributed from the minor road stage to this stage. The effect is that buses might just make it across before the next stage is started rather than being cut off. In the next cycle the main stage is shortened by the same amount of time and the minor stage is lengthened accordingly.
