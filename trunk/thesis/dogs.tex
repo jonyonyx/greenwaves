@@ -13,15 +13,14 @@ DOGS is also capable of providing priority to buses by extending the green time 
 At present the system must be tailored to the environment in which it operates. For this reason the following sections will use the Herlev area as a reference area in order to explain certain concepts. In Figure \ref{fig:dogs_herlev} is a layout of this network.
 
 \begin{figure}[!ht]
-\begin{center}
+\centering
 \includegraphics[scale=0.5]{dogs_herlev.png} 
-\end{center}
 \caption{Layout of the partial O3 arterial in Herlev, which is under DOGS control. The arrows and numbers indicate flow direction and examples of typical vehicle count.}
 \label{fig:dogs_herlev}
 \end{figure}
 
 \subsection{Detection}
-Loops are placed in the immediate downstream of intersections and connected to closest controller to reduce the wire length. 
+Detector loops are placed in the immediate downstream of intersections and connected to closest controller to reduce the wire length. 
 
 The criteria, which DOGS use, are based on the total inflow and outflow per cycle as well as load percentage, which, in Herlev, is extracted from strategically placed detectors in the ends of the arterial. In Figure \ref{fig:dogs_herlev} the inflow is thus measured at D3 and D14 while the outflow is measured at D15 and D18. 
 During an interview with DRD and TTS it was explained that the traffic from minor roads can be neglected in the load measurement, though both parties would be interested in seeing the effect of increasing the number of detectors used.
@@ -101,10 +100,9 @@ Tests have shown that the system is indeed capable of increasing the capacity, w
 
 DOGS makes use of the basic program for the current period, which in Herlev and Glostrup are TRANSYT\footnote{See section \ref{simulation} for more details on simulation	tools.} optimized. Such programs include an offset for each signal controller in the system, which are optimized for a certain cycle time, however DOGS always use the same offsets. Although DOGS has support for dynamically adjusting the coordination - including prioritizing directions - it is not enabled in either the Glostrup or Herlev sites at the moment.
 
-\begin{figure}[ht]
-\begin{center}
+\begin{figure}[htb]
+\centering
 \includegraphics[scale=0.5]{green_time_displacement_and_cycle_time.png} 
-\end{center}
 \caption{Green time displacement concept}
 \label{fig:green_time_displacement_concept}
 \end{figure}
@@ -113,10 +111,9 @@ This optimization of offsets include aligning green starts so that the road user
 
 If $\Delta f < tt$ road users from the upstream intersection must stop at the next intersection and wait for green. If $\Delta f > tt$ there is a risk of wasted green time since the downstream intersection starts its green time before vehicles from the upstream intersection has a chance to reach it. These concepts are visualized in Figure \ref{fig:green_time_displacement}.
 
-\begin{figure}[ht]
-\begin{center}
+\begin{figure}[htb]
+\centering
 \includegraphics[scale=0.5]{green_time_displacement.png} 
-\end{center}
 \caption{Green time displacement scenarios}
 \label{fig:green_time_displacement}
 \end{figure}
