@@ -19,14 +19,13 @@ Independent on the detail level of the model a simulation must run until it is c
 
 Previous studies have shown that the CORSIM microsimulator is superior to the mesoscopic simulator from the TRANSYT package when combined with a genetic algorithm, since the flow equations do not capture the dynamic aspects of traffic. But microsimulation is also slower to converge and thus evaluation of a solution will take longer. In a comparison study \cite{simcompare} Holst estimates the required simulation type as in table \ref{tab:convergespeed}.
 
-\begin{table}[!ht]
-\begin{center}
+\begin{table}[ht]
+\centering
 \begin{tabular}{c|c|c}
 \textbf{Vissim} & \textbf{Dynameq} & \textbf{Time Slice Assistant} \\
 \textit{(micro)} & \textit{(meso)} & \textit{(macro)} \\ \hline
 1000 & 100 & 1
 \end{tabular}
-\end{center}
 \caption{Estimate of of relative required simulation time for convergence}
 \label{tab:convergespeed}
 \end{table}

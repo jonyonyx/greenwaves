@@ -75,9 +75,8 @@ The first option, which is implemented in the search procedure (see section \ref
 In Figure \ref{fig:change_speed} we can see how this works. In the \textit{before} situation, platoons from intersection $i+1$ arrive too late and some experience red light. In the \textit{after} situation, the platoon is allowed to go faster and arrive entirely during the green time of intersection $i$.
 
 \begin{figure}[ht]
-\begin{center}
-\includegraphics[scale=0.2]{change_speed.png} 
-\end{center}
+\centering
+\includegraphics[scale=0.2]{change_speed.png}
 \caption{Changing speeds to obtain better coordination}
 \label{fig:change_speed}
 \end{figure}
@@ -96,10 +95,9 @@ Traditional offline optimization systems such as TRANSYT often employs a black-b
 Basically the purpose of offsets is to properly align adjacent intersections in time such that a platoon emitted during the green time of intersection 1 is met by a green light at the adjacent intersection 2. The best estimate of the propagation time of the platoon is the travel time $tt_{1,2} = d / v$ where $v$ is the average speed and $d$ is the distance between the intersections and the green time displacement, $\Delta o_{i,j}$, should match $tt$ for all adjacent intersections $i$ and $j$.
 
 \begin{figure}[ht]
-\begin{center}
-\includegraphics[scale=0.2]{change_offset.png} 
-\end{center}
-\caption{Changing speeds to obtain better coordination}
+\centering
+\includegraphics[scale=0.2]{change_offset.png}
+\caption{Changing offsets to obtain better coordination}
 \label{fig:change_offset}
 \end{figure}
 
@@ -156,9 +154,8 @@ $$|\Delta f - traveltime|$$
 In the above evaluation method only green starts are considered. If the green durations of the signal controllers being coordinated are not equally long it is possible to introduce some flexibility, as can be seen in Figure \ref{fig:green_time_displacement_flex}.
 
 \begin{figure}[ht]
-\begin{center}
-\includegraphics[scale=0.4]{green_time_displacement_flex.png} 
-\end{center}
+\centering
+\includegraphics[scale=0.4]{green_time_displacement_flex.png}
 \caption{Flexibility in green time displacement considering downstream green duration}
 \label{fig:green_time_displacement_flex}
 \end{figure}
@@ -209,10 +206,9 @@ Every time a neighbor solution is generated we normally immediately want to eval
 
 A change in the offset of signal controller $sc_i$ will affect the coordinations between $sc_{i-1}$ and $sc_{i}$ and also between $sc_{i}$ and $sc_{i+1}$. Since we didn't change the offset $sc_{i-1}$ or $sc_{i+1}$ or any other offset, all coordinations but those mentioned will remain just as good - or bad - as before the offset change for $sc_i$. This is illustrated in Figure \ref{fig:delta_eval}.
 
-\begin{figure}[!ht]
-\begin{center}
-\includegraphics[scale=0.3]{delta_eval.png} 
-\end{center}
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.3]{delta_eval.png}
 \caption{Local nature of coordinations. This illustrates the quality of coordinations between three signal controllers before and after changing the offset of the middle controller. Notice that the coordinations between the outer controllers and $sc_{i-2}$ and $sc_{i+2}$ remain the same.}
 \label{fig:delta_eval}
 \end{figure}

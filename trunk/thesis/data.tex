@@ -8,14 +8,13 @@ This is a supplement to the traffic counts, which were given by DRD. Since the d
 
 The format of the data is:
 
-\begin{table}[!ht]
-\begin{center}
+\begin{table}[ht]
+\centering
 \begin{tabular}{c|c|c|c|c}
 \textbf{Date} & \textbf{Time} & \textbf{D1} & \textbf{...} & \textbf{DN} \\ \hline
 13-11-2007 & 08:42:56 & 39 & ... & 35 \\
 13-11-2007 & 08:44:26 & 38 & ...  & 28 \\
 \end{tabular}
-\end{center}
 \caption{Format of TTS supplied detector data}
 \label{tab:dataformat}
 \end{table}
@@ -27,24 +26,22 @@ It was agreed with DRD that the temporal resolution be fixed at 15 minutes. This
 Multiple data files - for different sets of detectors - was received for each area. Since the data period was not identical over the data files it was necessary to perform some cleanup in order to generate accumulated data in which all detectors were represented.
 
 \begin{table}[!ht]
-\begin{center}
+\centering
 \begin{tabular}{c|c|c|c}
 \textbf{Area} & \textbf{From} & \textbf{To} & \textbf{Detectors} \\ \hline
 Herlev & 13-11-2007 20:45 & 28-11-2007 09:45 & D3-D8, D13-D15, D18 \\
 Glostrup & 13-11-2007 08:45 & 26-11-2007 14:15 & D1-D14 \\
 \end{tabular}
-\end{center}
 \caption{Periods of aggregated and cleaned data sets}
 \label{tab:dataperiod}
 \end{table}
 
 The cleaned data was exported to a single table of more than 30.000 rows in the format:
 \begin{table}[!ht]
-\begin{center}
+\centering
 \begin{tabular}{c|c|c|c|c|c}
 \textbf{Date} & \textbf{Time} & \textbf{Area} & \textbf{Detector Name} & \textbf{From Direction} & \textbf{Vehicles} \\
 \end{tabular}
-\end{center}
 \caption{Format of cleaned data set}
 \label{tab:cleandataformat}
 \end{table}
@@ -61,9 +58,8 @@ The first four graphs (Figures \ref{fig:herlev_props_morning}-\ref{fig:glostrup_
 
     \begin{minipage}[b]{0.5\linewidth}
 
-\begin{center}
+\centering
 \includegraphics[scale=0.25]{herlev_direction_proportions_morning.png} 
-\end{center}
 \caption{Herlev - morning}
 \label{fig:herlev_props_morning}
 
@@ -71,9 +67,8 @@ The first four graphs (Figures \ref{fig:herlev_props_morning}-\ref{fig:glostrup_
     \hspace{0.5cm}
     \begin{minipage}[b]{0.5\linewidth}
 
-\begin{center}
+\centering
 \includegraphics[scale=0.25]{herlev_direction_proportions_afternoon.png} 
-\end{center}
 \caption{Herlev - afternoon}
 \label{fig:herlev_props_afternoon}
 
@@ -81,15 +76,12 @@ The first four graphs (Figures \ref{fig:herlev_props_morning}-\ref{fig:glostrup_
 
 \end{figure}
 
-
-
 \begin{figure}[ht]
 
     \begin{minipage}[b]{0.5\linewidth}
 
-\begin{center}
+\centering
 \includegraphics[scale=0.25]{glostrup_direction_proportions_morning.png} 
-\end{center}
 \caption{Glostrup - morning}
 \label{fig:glostrup_props_morning}
 
@@ -97,9 +89,8 @@ The first four graphs (Figures \ref{fig:herlev_props_morning}-\ref{fig:glostrup_
     \hspace{0.5cm}
     \begin{minipage}[b]{0.5\linewidth}
     
-\begin{center}
-\includegraphics[scale=0.25]{glostrup_direction_proportions_afternoon.png} 
-\end{center}
+\centering
+\includegraphics[scale=0.25]{glostrup_direction_proportions_afternoon.png}
 \caption{Glostrup - afternoon}
 \label{fig:glostrup_props_afternoon}
 
@@ -113,20 +104,18 @@ From these graphs we can also see that, in the weekend, most traffic happens in 
 
 The next graph, see Figure \ref{fig:commuter}, shows the usual commuter- and lunch traffic patterns. The data from all mondays to fridays in the dataset have almost identical temporal distributions and thus the graph shows summarized data from workdays.
 
-\begin{figure}[!ht]
-\begin{center}
+\begin{figure}[ht]
+\centering
 \includegraphics[scale=0.25]{distribution_workday.png} 
-\end{center}
 \caption{Distribution of traffic throughout workdays in Herlev and Glostrup}
 \label{fig:commuter}
 \end{figure}
 
 By comparing the workday distribution to the detected traffic in the weekend, see Figure \ref{fig:weekends} - and at the same time looking and the directional proportions - it is clear that ringroad 3 is heavily used by commuters in both Herlev and Glostrup. Traffic is almost identically distributed on saturdays and sundays and the graph shows summarized data for the weekend.
 
-\begin{figure}[!ht]
-\begin{center}
+\begin{figure}[ht]
+\centering
 \includegraphics[scale=0.25]{distribution_weekend.png} 
-\end{center}
 \caption{Distribution of traffic throughout the weekend in Herlev and Glostrup}
 \label{fig:weekends}
 \end{figure}
@@ -134,9 +123,8 @@ By comparing the workday distribution to the detected traffic in the weekend, se
 The next graph (Figure \ref{fig:detector_directions}) show how detections are aligned in the north and southgoing directions in both areas. (For both directions and areas these proportions do not vary in particular between workday and weekend.)
 
 \begin{figure}[!ht]
-\begin{center}
-\includegraphics[scale=0.4]{detector_directions.png} 
-\end{center}
+\centering
+\includegraphics[scale=0.4]{detector_directions.png}
 \caption{Relative detections for north- and southgoing links in Herlev and Glostrup}
 \label{fig:detector_directions}
 \end{figure}
@@ -158,7 +146,7 @@ From table \ref{tab:traffic_counts} we see a listing of the traffic counts and c
 For some of the most important intersections (Mileparken, Jyllingevej, Roskildevej) we have newer traffic counts. For Herlev Hovedgade I received a detector count (MASTRA) from 2007 in addition to the traffic count in 2001, however the resolution was 1 hour and there was no distinction between cars and trucks and so it was disregarded.
 
 \begin{table}[!ht]
-\begin{center}
+\centering
 \begin{tabular}{l|l|l}
 \textbf{\#} & \textbf{Intersection} & \textbf{Date Counted}\\ \hline
 1 & Herlev Sygehus & 30-10-2001\\
@@ -174,7 +162,6 @@ For some of the most important intersections (Mileparken, Jyllingevej, Roskildev
 11 & Kindebjergvej & 18-09-2001\\
 12 & Roskildevej & 28-08-2003\\
 \end{tabular}
-\end{center}
 \caption{Traffic count dates}
 \label{tab:traffic_counts}
 \end{table}
@@ -184,9 +171,8 @@ The main advantage of traffic counts is that the ratio of cars to trucks is obta
 The columns E and W indicate the total load of trucks and vehicles coming from east and west respectively, in which we see that the traffic from west, which is travelling towards the city of copenhagen, is somewhat heavier than the traffic coming from east, travelling away from the city. 
 
 \begin{figure}[!ht]
-\begin{center}
-\includegraphics[scale=0.5]{cars_vs_truck_vs_direction.png} 
-\end{center}
+\centering
+\includegraphics[scale=0.5]{cars_vs_truck_vs_direction.png}
 \caption{Combined ratio of cars to trucks from each direction in the morning period. There are more trucks coming from south than from north.}
 \label{fig:cars2trucks}
 \end{figure}
@@ -194,9 +180,8 @@ The columns E and W indicate the total load of trucks and vehicles coming from e
 In Figure \ref{fig:cars2trucks_time} we see how the proportion of cars and trucks evolve over time and note that the proportion remains the same in the sampling period.
 
 \begin{figure}[!ht]
-\begin{center}
-\includegraphics[scale=0.5]{cars_vs_trucks_vs_time_morning.png} 
-\end{center}
+\centering
+\includegraphics[scale=0.5]{cars_vs_trucks_vs_time_morning.png}
 \caption{As Figure \ref{fig:cars2trucks} but over time. The proportion of cars to trucks does not vary much.}
 \label{fig:cars2trucks_time}
 \end{figure}
@@ -204,9 +189,8 @@ In Figure \ref{fig:cars2trucks_time} we see how the proportion of cars and truck
 In the next figure (\ref{fig:cars2trucks_insect}) we see the proportions of cars to trucks for each intersection. The bars are the sum of cars and trucks in the morning period and also give an indication of the load each intersection faces. We can see that the most heavily loaded intersections are Herlev Hovedgade, Jyllingevej and Roskildevej (disregarding that two latter two were counted later than the other intersections) and that Herlev Hovedgade is the junction which sees the most trucks per car while Jyllingevej serve considerably less trucks. It is interesting to see that these heavily loaded intersections are the ones which were recounted after 2001, except for Mileparken.
 
 \begin{figure}[!ht]
-\begin{center}
-\includegraphics[scale=0.35]{cars_vs_trucks_all_intersections.png} 
-\end{center}
+\centering
+\includegraphics[scale=0.35]{cars_vs_trucks_all_intersections.png}
 \caption{Cars to trucks proportions per intersection}
 \label{fig:cars2trucks_insect}
 \end{figure}
@@ -214,17 +198,15 @@ In the next figure (\ref{fig:cars2trucks_insect}) we see the proportions of cars
 The final two figures (\ref{fig:insect_herlev}-\ref{fig:insect_glostrup}) show, for each DOGS controlled area, the demand faces from each direction split on trucks and cars. 
 
 \begin{figure}[ht]
-\begin{center}
-\includegraphics[scale=0.30]{demand_from_direction_per_intersection_herlev.png} 
-\end{center}
+\centering
+\includegraphics[scale=0.30]{demand_from_direction_per_intersection_herlev.png}
 \caption{Demand from direction per vehicle type in Herlev}
 \label{fig:insect_herlev}
 \end{figure}  
     
 \begin{figure}[ht]
-\begin{center}
-\includegraphics[scale=0.30]{demand_from_direction_per_intersection_glostrup.png} 
-\end{center}
+\centering
+\includegraphics[scale=0.30]{demand_from_direction_per_intersection_glostrup.png}
 \caption{Demand from direction per vehicle type in Glostrup}
 \label{fig:insect_glostrup}
 \end{figure}
