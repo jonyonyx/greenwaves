@@ -51,9 +51,24 @@ class RoutingDecision
     str
   end
 end
-def get_vissim_routes vissim
+class Stream
+  attr_reader :from, :to # eg N / S / E / W
+  
+  def initialize
+    @traffic = Hash.new {|h,k| h[k] = {}} # period => veh_type => quantity
+  end
+  
+  def add_traffic veh_type, period, quantity
+    @traffic[period][veh_type] << quantity
+  end
+  
+  # left / right / through
+  def turning_motion
+    
+  end
+end
 
-  turning_sql = "SELECT INTSECT.number,
+TURNING_SQL = "SELECT INTSECT.number,
                   from_direction, 
                   [Turning Motion] As turn, 
                   [Period Start] As tstart,
@@ -64,8 +79,20 @@ def get_vissim_routes vissim
                 ON COUNTS.Intersection = INTSECT.Name
                 WHERE [Period End] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#"
 
+def get_streams
+  streams = []
+  DB[TURNING_SQL].each do |row|
+    from_direction = row[:from_direction][0..0]
+    from_direction = row[:from_direction][0..0]
+    
+  end
+  streams
+end
+
+def get_vissim_routes vissim
+
   decisions = []
-  DB[turning_sql].each do |row|
+  DB[TURNING_SQL].each do |row|
     isnum = row[:number].to_i
     from_direction = row[:from_direction][0..0] # extract the first letter (N, S, E or W)    
     turning_motion = row[:turn][0..0] # turning_motion must equal L(eft), T(hrough) or R(ight)
@@ -105,14 +132,14 @@ def get_vissim_routes vissim
   decisions.map{|dec|dec.decision_point}.uniq.sort.each do |dp|
     decision_link = dp.link(vissim)
     #puts "Decision taken at: #{decision_link}"
-#    puts dp
+    #    puts dp
     
     for veh_type in Cars_and_trucks_str
       rd = RoutingDecision.new!(:input_link => decision_link, :veh_type => veh_type, :time_intervals => dp.time_intervals)
   
       # add routes to the decision point
       for dec in dp.decisions
-#        puts "  #{dec} drop at #{dec.drop_link}, decide at #{decision_link}"
+        #        puts "  #{dec} drop at #{dec.drop_link}, decide at #{decision_link}"
         dest = dec.drop_link
     
         # find the route through the intersection (ie. the turning motion)
@@ -121,9 +148,9 @@ def get_vissim_routes vissim
         raise "No routes from #{decision_link} to #{dest} over #{dec} among these routes:
                #{local_routes.map{|lr|lr.to_vissim}.join("\n")}" if local_route.nil?
         
-#        for ldec in local_route.decisions
-#          puts "    passing #{ldec}"
-#        end
+        #        for ldec in local_route.decisions
+        #          puts "    passing #{ldec}"
+        #        end
         
         rd.add_route(local_route, 
           dec.fractions.find_all{|f| f.veh_type == veh_type})
