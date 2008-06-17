@@ -16,19 +16,9 @@ To prevent side-effects all links not connected to O3 from Herlev Sygehus to Jyl
 A number of mistakes were corrected in the definition of the intersections. This was done using layout plans for the intersections, provided by DRD. Most mistakes were related to non-existent turning-lanes (and even turning possibilities) and the placement of bus-only lanes. 
 
 \subsection{Link Inputs}
+Link inputs are created on the basis of the detector data from TTS and the traffic counts from DRD. First the traffic counts is used to establish the proportion of cars to trucks for all approaches, except Ejby Torvevej. Then, for the approaches, which were measured upon in the TTS data, I apply detector values rather than traffic count values. This is done using detectors north of Herlev Sygehus in Herlev and from south for the east-, west- and southern approaches to Roskildevej.
 
-Due to the arterial nature of the Herlev area there is a natural distinction between major and minut link inputs. The major inputs are positioned in the ends and minor inputs are placed for each minor road.
-
-In the southgoing direction vehicles entering the arterial from highway 3 and the northern extension of O3 are represented by a single input positioned before the intersection at Herlev Sygehus and would be detected by D3.
-
-Northgoing traffic input is defined on the link leading to the Mileparken intersection and is detected by D14. 
-
-As the available dataset does not include detectors on the minor sideroads - from either side of the arterial - it is difficult to assess the relative size of the inputs from them. Thus for the remaining roads adjacent to the arterial are defined minor input links of identical size with the exception of the Herlev Sygehus link, which is set to be double the size to match the observations made above.
-It is arguable that much traffic enters at the Herlev Hovedgade intersection, but the detected traffic does not indicate that this is significant.
-
-The combined traffic input is set so that in total 20\% arise from the minor roads and the remainder enters from the ends of the arterial. 
-
-XXX Try to find something to back this up eg. from Steen Lauritzens report XXX.
+The link inputs were scaled to represent hourly traffic input, as Vissim require, and inserted into the Vissim network file.
 
 \subsection{Routes}
 \label{routefractions}
@@ -48,14 +38,14 @@ As an example the decision point at Herlev Sygehus (intersection 1), which faces
 To find the insertion point for the routing a backtracking search is made from each turning motion until a common link is found. This link is thus the decision point and we can automatically generate our internal routes by using the discovery routine of section \ref{routingdecisions} to find a valid route.
 
 In Figure \ref{fig:flow_dist_principle} is an example of decision points (y) and the proportions of traffic for each turning motion.
-\begin{figure}[!ht]
-\begin{center}
+\begin{figure}[ht]
+\centering
 \includegraphics[scale=0.6]{trafficcount_to_routes_sketch.png} 
-\end{center}
 \caption{Flow distribution principle}
 \label{fig:flow_dist_principle}
 \end{figure}
 
+\clearpage
 \subsection{Signal Plans}
 Signal plans define the stage sequence, green duration and how changes between adjacent stages should happen with respect to colors in the from and to stages. For cycle-based signal plans the cycle time must be equal to the sum of green and interstage time from the beginning of the first stage until it begins again.
 
@@ -64,9 +54,8 @@ A single stage defines the signal head colors of one or more signal group, which
 The simplest signal controller consist of two stages. In  Figure \ref{fig:simple_intersection} the arrows indicate the directions being served green.
 
 \begin{figure}[!ht]
-\begin{center}
+\centering
 \includegraphics[scale=0.5]{simple_intersection.png} 
-\end{center}
 \caption{A simple intersection}
 \label{fig:simple_intersection}
 \end{figure}
@@ -114,7 +103,7 @@ The reason I only require stages and groups to \textit{contain} an arterial grou
 During group naming, when intersections are built, the designers usually prefix the name of the main direction \verb|A| and the side roads \verb|B|. By extracting the definitions of arterial groups as explained above we can see that not all road engineers had the same opinion:
 
 \begin{table}[!ht]
-\begin{center}
+\centering
 \begin{tabular}{l|l|l}
  & \textbf{Intersection} & \textbf{Arterial Groups}\\ \hline
 1 & Herlev Sygehus & A1, A2\\
@@ -127,7 +116,6 @@ During group naming, when intersections are built, the designers usually prefix 
 11 & Kindebjergvej & A1, A2\\
 12 & Roskildevej & B, Bt\\
 \end{tabular}
-\end{center}
 \caption{Groups for main traffic direction as perceived by traffic signal designer}
 \label{tab:arterial_groups}
 \end{table}

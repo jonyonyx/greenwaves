@@ -4,10 +4,9 @@ VAP is an optional module for Vissim which enables direct programming of signal 
 
 With VAP there is a graphical program, VISVAP, that allows the user to design a flowchart description of the controller logic, rather than writing it in VAP, as VISVAP can compile the flowchart into VAP. Figure \ref{fig:visvap_example} shows an example of a simple logic to control the lights at the ring 3 / Herlev Sygehus intersection.
 
-\begin{figure}[!ht]
-\begin{center}
+\begin{figure}[ht]
+\centering
 \includegraphics[scale=0.5]{visvap_example_herlev-sygehus.png} 
-\end{center}
 \caption{VISVAP flowchart description of simple fixed-time logic for Herlev Sygehus / ring 3}
 \label{fig:visvap_example}
 \end{figure}
@@ -64,10 +63,9 @@ The red and amber period of B indicates that attentive entry into the intersecti
 
 Thus a total stage transition will last 6 seconds. In Figure \ref{fig:lost_time_example} is an example of the interstage lost times for various number of stages and cycle times. Some stages - eg. a through, left and rightgoing stage followed by a left-only stage - will be \textit{compatible} ie. there is no pause during the transition thus the table is pessimistic. However it clearly shows that there is a tradeoff between lost time and cycle time - especially in complex, multistaged intersections.
 
-\begin{figure}[!ht]
-\begin{center}
+\begin{figure}[ht]
+\centering
 \includegraphics[scale=0.6]{interstage_lost_time.png} 
-\end{center}
 \caption{Interstage lost time in percent of cycle time for some combinations of cycle time and number of incompatible stages}
 \label{fig:lost_time_example}
 \end{figure}

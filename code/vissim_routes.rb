@@ -37,18 +37,18 @@ class Vissim
     def to_s; "#{start} > ... (#{@road_segments.size-2}) > #{exit}"; end  
     def <=>(other); @road_segments.size <=> other.road_segments.size; end
   end
-  def discover start, exits, road_segments = [], &on_route_found
+  def discover start, exits, path = [], &on_route_found
     return if not start.allows_private_vehicles?
-    return if road_segments.include?(start) # avoid loops
+    return if path.include?(start) # avoid loops
     # check if start is the road segment we search for
-    on_route_found.call(Route.new(road_segments + [start])) if exits.include?(start)
+    on_route_found[Route.new(path + [start])] if exits.include?(start)
     if start.is_a?(Connector)
       # you can only search on by going to the connected link
-      discover(start.to_link, exits, road_segments + [start], &on_route_found)
+      discover(start.to_link, exits, path + [start], &on_route_found)
     else
       # start is a link and has zero or more outgoing connectors 
       start.outgoing_connectors.each do |conn|
-        discover(conn, exits, road_segments + [start], &on_route_found)
+        discover(conn, exits, path + [start], &on_route_found)
       end
     end
   end

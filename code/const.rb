@@ -121,14 +121,13 @@ def to_tex(table, user_opts = {})
   default_opts = {:center => true, :sep_cols => true, :col_align => 'l', :row_sep => "\n"}
   opts = default_opts.merge(user_opts)  
   lines = ['\begin{table}[!ht]']
-  lines << '\begin{center}' if opts[:center]
+  lines << '\centering' if opts[:center]
   headers = table.first
   lines << "\\begin{tabular}{#{headers.map{opts[:col_align]}.join(opts[:sep_cols] ? '|' : '')}}"
   headers_in_bold = headers.map{|header| (header.nil? or header.empty?) ? '' : "\\textbf{#{header}}"}
   lines << headers_in_bold.join(' & ') + '\\\\ \\hline'
   table[1..-1].each{|row| lines << row.join(' & ') + '\\\\'}
   lines << '\end{tabular}'
-  lines << '\end{center}' if opts[:center]
   lines << "\\caption{#{opts[:caption]}}" if opts[:caption]
   lines << "\\label{#{opts[:label]}}" if opts[:label]
   lines << '\end{table}'
