@@ -38,6 +38,7 @@ The distance between one signal head (intersection) and the next can be extracte
 For travel times (which is a key component in finding a proper offset) it is possible to rely on the speed limitations / free flow speeds for offset calculation, however under congestion speeds will decrease causing the travel times to increase. A better solution is to continously inspect the smoothened travel times which are inserted for each stretch. 
 
 \subsection*{Why are we using common cycle schemes?}
+\label{phase_based}
 In this section I highlight the restrictions imposed when introducing two-way coordination between common cycle time signal controllers. Are there no alternatives, which are less strict and why aren't they used in denmark?
 
 With a common cycle time comes fixed signal plans that give us full insight into the operation of the each signal controller. We can see exactly which signal groups ie. heads are green, red, yellow and amber at any give second. Furthermore, as presented above, there exist expressions for the offset and cycle time which causes coordination. 
@@ -45,6 +46,8 @@ With a common cycle time comes fixed signal plans that give us full insight into
 Although traffic actuated green time extension schemes exist to make fine adjustsmens, such as the ones used for bus priority, it is always necessary to take the seconds from some other stage due to the common cycle time requirement. Likewise with stage skipping, you must always "spend" $C$ cycle seconds and may never spend more.
 
 These restrictions makes it difficult for a computer system to obtain optimum performance for the signal controllers and the observed / predicted traffic.
+
+In addition, for large networks the enforcement of a common cycle time is inappropriate. Consider a network which is so large that two disjoint arterials exist (such as the case of ringroad 3 - Herlev and Glostrup). In this case it is unlikely that a common cycle time will allow green waves to exist for both arterials eg. when the intersections of one arterial are more tightly spaced than in the other. Even though the arterials cannot be considered as a single arterial, they are not completely disjoint and will affect each other, if relatively close.
 
 Stage based signals is an alternative to fixed signal plans where stages are queued for future execution along with a green time. There is no fixed order of the stages and no fixed green time. This gives great flexibility for the computer system, however the problem is the plans cannot be written down in advance in terms of $C$ for human inspection and control. Instead they must be defined dynamically on the basis of a set of signal rules, which are implemented and respected by the computer system while adapting to the measured traffic conditions. 
 
@@ -59,10 +62,10 @@ The green times for all stages in the direction of the arterial must match the l
 The queues for minor roads cannot exceeed a predefined length nor must a vehicle wait more than a certain amount of time at the intersection to pass.
 \end{description}
 
-These rules - given proper parameters - are precise enough to be implemented in a computer program. The setting of parameters (for instance maximum queue length for minor roads) is a difficult subject, which could generate many training hours for end-users. This was my impression about the Utopia/Spot system the municipality of Copenhagen (Vej \& Park) had implemented for Centrum Forbindelsen - they had no idea on how to make adjustsments, when the system acted up. 
+These rules - given proper parameters - are precise enough to be implemented in a computer program. The setting of parameters (for instance maximum queue length for minor roads) is a difficult subject, which could generate many training hours for end-users. This was my impression about the Utopia/Spot system the municipality of Copenhagen (Vej \& Park) had implemented for Centrum Forbindelsen - its was difficult for them to decide on which adjustsments should be made, when the system acted up. 
 However, many parameters can - and should - be set automatically by repeated simulation with trial-and-error or they are either easy enough to understand that rules of thumb and area specific insight is enough to make proper choices.
 
-I believe stage based signals and more centralized computer control of arterials could be accepted and achieved if systems were more available and open as proposed above. The introduction of stage based signals would be a major break with tradition in denmark - and probably also in many other countries. Some system exist, which use stage-based programs including RHODES \cite{rhodes} and UTOPIA/SPOT \cite{utopia_spot} (which is implemented in copenhagen for "Centrumforbindelsen").
+I believe stage based signals and more centralized computer control of arterials could be accepted and achieved if systems were more available and open as proposed above. The introduction of stage based signals would be a major break with tradition in Denmark - and probably also in many other countries. Some system exist, which use stage-based programs including RHODES \cite{rhodes} and UTOPIA/SPOT \cite{utopia_spot} (which is implemented in copenhagen for "Centrumforbindelsen").
 
 Breaking tradition is always hard; this combined with the volume of such a system has compelled me to remain in the common cycle time world in this project. But as will be seen in the following sections, there are many ways to improve arterial signal performance in spite of the the restrictions of $C$.
 
