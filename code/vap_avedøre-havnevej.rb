@@ -23,6 +23,7 @@ end
 CLOCK_CHANNEL = 1
 SWITCH_STAGE_CHANNEL = 2
 EXTEND_REQUEST_CHANNEL = 3
+WAITING_FOR_SYNC = 10
 
 DETECTOR_EXTENSION_INTERVAL = {
   1 => 4.0,
@@ -68,52 +69,58 @@ SLAVES = [
 # A is north-south going
 # Av is for left-turning down on highway
 # B is for traffic coming off the highway and up from the ramp
-STAGES = [
-  ExtendableStage.new!(:name => 'A',  :number => 1, :min_time => 12, :max_time => 30),
-  ExtendableStage.new!(:name => 'Av', :number => 2, :min_time => 22, :max_time => 44, :wait_for_sync => true, :shares_time_with_previous => true),
-  ExtendableStage.new!(:name => 'B',  :number => 3, :min_time => 10, :max_time => 23)
-]
+STAGES = {
+  'nord' => [
+    ExtendableStage.new!(:name => 'A1',  :number => 1, :min_time => 12, :max_time => 30),
+    ExtendableStage.new!(:name => 'At1', :number => 2, :min_time => 22 - 12, :max_time => 44 - 30, :wait_for_sync => true),
+    ExtendableStage.new!(:name => 'B1',  :number => 3, :min_time => 10, :max_time => 23)
+  ],
+  'syd' => [
+    ExtendableStage.new!(:name => 'A2',  :number => 1, :min_time => 21 - 12, :max_time => 38 - 21),
+    ExtendableStage.new!(:name => 'At2', :number => 2, :min_time => 12, :max_time => 21, :wait_for_sync => true),
+    ExtendableStage.new!(:name => 'B2',  :number => 3, :min_time => 10, :max_time => 29)
+  ]
+}
 
 def generate_master
 
   cp = CodePrinter.new
 
-  cp.add_verb "
-PROGRAM master;
-
-CONST
-   TSYNC = #{STAGES.find{|s|s.wait_for_sync}.max_time};
-  "
+  cp.add_verb "PROGRAM master;"
+  cp.add_verb "CONST LATEST_SYNC = 44;"
 
   cp << 'IF NOT INITIALIZED THEN'
-  cp << '   sett(1); /* start the clock */'
   cp << '   INITIALIZED := 1;'
   cp << '   TRACE(ALL);'
-  cp.add '   GOTO PROG_ENDE;'
+  cp << "   complete_the_cycle := 1;"
+  cp.add '   GOTO CLOCK_TICK;'
   cp.add 'END;'
-
-  cp << "IF T = TSYNC THEN"
-  cp << "   mput(#{SWITCH_STAGE_CHANNEL},#{STAGES.last.number});"
-  cp.add "END;"
   
   cp.add '/* collect current stage input from slaves */'
   SLAVES.each do |slave|
     cp << "current_stage_#{slave.name} := mget(#{slave.in_stage_channel});"
   end
   
-  cp << "IF (T > TSYNC) AND " + SLAVES.map{|slave|"(current_stage_#{slave.name} = #{STAGES.first.number})"}.join(' AND ') + " THEN"
+  cp << "IF " + SLAVES.map{|slave|"(current_stage_#{slave.name} = #{WAITING_FOR_SYNC})"}.join(' AND ') + " THEN"
+  cp << "   mput(#{SWITCH_STAGE_CHANNEL},3);/* send signal to allow slaves to enter stage 3 */"
+  cp.add "ELSE"
+  cp << "   mput(#{SWITCH_STAGE_CHANNEL},0);/* communications are static variables and must be filled each cycle second */"
+  cp.add "END;"
+  
+  cp << "IF (T > LATEST_SYNC) AND " + SLAVES.map{|slave|"(current_stage_#{slave.name} = 1)"}.join(' AND ') + " THEN"
   cp << "   complete_the_cycle := 1;"
   cp.add "END;"
 
-  cp << "IF complete_the_cycle THEN"
-  cp << '   sett(1);'
+  cp.add_verb "CLOCK_TICK: IF complete_the_cycle THEN"
   cp << '   complete_the_cycle := 0;'
+  cp << '   sett(1);'
+  cp << "   mput(#{CLOCK_CHANNEL},1);"
   cp.add 'ELSE'
   cp << '   cur_cycle_sec := t;'
   cp << '   cycle_sec_plus1 := cur_cycle_sec + 1;'
   cp << '   sett(cycle_sec_plus1);'
-  cp.add "END;"
-  cp << "mput(#{CLOCK_CHANNEL},cycle_sec_plus1)"
+  cp << "   mput(#{CLOCK_CHANNEL},cycle_sec_plus1);"
+  cp.add "END"
 
   cp.add_verb 'PROG_ENDE:    .'
 
@@ -121,7 +128,7 @@ CONST
   puts 'Generated master controller'
 end
 
-def generate_slave slave
+def generate_slave slave,stages
   
   cp = CodePrinter.new
 
@@ -129,50 +136,62 @@ def generate_slave slave
   
   cp << "cur_cycle_sec := mget(#{CLOCK_CHANNEL});"
   cp << 'sett(cur_cycle_sec); /* get time from master */'
-  cp << "green_time_extension := green_time_extension - 1;"
-  cp << "time_in_stage := time_in_stage + 1;"
   
   cp << 'TRACE(ALL);'
   
-  (0...STAGES.size).each do |i|
-    current_stage = STAGES[i]
-    next_stage = STAGES[(i + 1) % STAGES.size]    
+  (0...stages.size).each do |i|
+    current_stage = stages[i]
+    next_stage = stages[(i + 1) % stages.size]    
     
     cp << "IF stga(#{current_stage.number}) THEN"
+    
+    if current_stage.number == 1
+      cp << "   mput(#{slave.in_stage_channel},#{current_stage.number}); /* inform of current stage */" 
+    end
+    cp << "   time_in_stage := time_in_stage + 1;"
+    cp << "   green_time_extension := green_time_extension - 1;"
+    
+    occupancy_detectors = slave.detectors(current_stage.number).find_all{|det|det.detects_occupancy?}
+    unless occupancy_detectors.empty?
+      cp << "   IF green_time_extension < 1 THEN"
+      cp << "      green_time_extension := #{occupancy_detectors.map{|occdet|"(occt(#{occdet.number}) > 0)"}.join(' OR ')};"
+      cp.add "   END;"
+    end
+    
+    slave.detectors(current_stage.number).find_all{|det|not det.detects_occupancy?}.sort_by{|d1| d1.extension_time}.each do |passagedet|
+      cp << "   IF det(#{passagedet.number}) THEN"
+      cp << "      IF green_time_extension < #{passagedet.extension_time} THEN"
+      cp << "         green_time_extension := #{passagedet.extension_time};"
+      cp.add "      END;"
+      cp.add "   END;"
+    end
+    
+    cp << "   IF ((time_in_stage >= #{current_stage.min_time}) AND ((green_time_extension <= 0) OR (time_in_stage >= #{current_stage.max_time}))) THEN"
+    
     if current_stage.wait_for_sync
-      cp << "   IF mget(#{SWITCH_STAGE_CHANNEL}) THEN"
-      cp << "      is(#{current_stage.number},#{next_stage.number});"
-    else
-    
-      occupancy_detectors = slave.detectors(current_stage.number).find_all{|det|det.detects_occupancy?}
-      unless occupancy_detectors.empty?
-        cp << "   IF green_time_extension < 1 THEN"
-        cp << "      green_time_extension := #{occupancy_detectors.map{|occdet|"(occt(#{occdet.number}) > 0)"}.join(' OR ')};"
-        cp.add "   END;"
+      cp << "      proceed := mget(#{SWITCH_STAGE_CHANNEL});"
+      cp << "      IF proceed THEN"
+      cp << "         is(#{current_stage.number},#{next_stage.number});"
+      cp << "         time_in_stage := 0;"
+      cp << "         green_time_extension := 0;"
+      cp << "         proceed := 0;"
+      cp.add "      ELSE"
+      cp << "         mput(#{slave.in_stage_channel},#{WAITING_FOR_SYNC}); /* waiting for synchronization */"
+      cp.add "      END;"
+      cp.add "      GOTO PROG_ENDE;"
+    else    
+      cp << "      is(#{current_stage.number},#{next_stage.number});"    
+      cp << "      green_time_extension := 0;"
+      unless next_stage.shares_time_with_previous
+        cp << "      time_in_stage := 0;"
       end
-    
-      slave.detectors(current_stage.number).find_all{|det|not det.detects_occupancy?}.sort_by{|d1| d1.extension_time}.each do |passagedet|
-        cp << "   IF det(#{passagedet.number}) THEN"
-        cp << "      IF green_time_extension < #{passagedet.extension_time} THEN"
-        cp << "         green_time_extension := #{passagedet.extension_time};"
-        cp.add "      END;"
-        cp.add "   END;"
-      end
-    
-      cp << "   IF (#{current_stage.wait_for_sync ? "mget(#{SWITCH_STAGE_CHANNEL}) AND " : ''}(time_in_stage >= #{current_stage.min_time}) AND ((green_time_extension <= 0) OR (time_in_stage = #{current_stage.max_time}))) THEN"
-      cp << "      is(#{current_stage.number},#{next_stage.number});"
+      cp.add "      GOTO PROG_ENDE;"
     end
     
-    cp << "      green_time_extension := 0;"
-    unless current_stage.shares_time_with_previous
-      cp << "      time_in_stage := 0;"
-    end
-    
-    cp.add '   END;'  
-    cp << "   mput(#{slave.in_stage_channel},#{current_stage.number});"
-    cp.add "END#{(i == STAGES.size - 1) ? '' : ';'}"
+    cp.add '   END;'
+    cp.add "END" + (i == stages.size - 1 ? '' : ';')
   end
-    
+  
   cp.add_verb 'PROG_ENDE:    .'
 
   cp.write(File.join(Vissim_dir,"#{slave.name}.vap"))
@@ -181,5 +200,5 @@ end
 
 if __FILE__ == $0
   generate_master
-  SLAVES.each{|slave|generate_slave slave}
+  SLAVES.each{|slave|generate_slave slave,STAGES[slave.name]}
 end

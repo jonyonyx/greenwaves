@@ -17,10 +17,7 @@ class Vissim
     raise "Found no routes from #{from_links} to #{to_links}!" if routes.empty?
     raise "Found multiple routes (#{routes.size}) from #{from_links} to #{to_links}:\n#{routes.map{|r|r.to_vissim}.join("\n")}" if routes.size > 1
     route = routes.first
-#    puts "Measuring length of route #{route}"
-#    for rs in route.road_segments
-#      puts "#{rs}: #{rs.length}"
-#    end
+    
     # Find the signal heads we measure distance between so
     # that the at-position can be subtracted from the position link lengths
     

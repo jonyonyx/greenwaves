@@ -7,41 +7,45 @@ require 'measurements'
 
 puts "#{Time.now}: BEGIN"
 
-insert_measurements # bus traveltime measurements
-
-puts "Loading Vissim..."
-
-vissimnet = Vissim.new
-results = NodeEvals.new(vissimnet)
-
-thorough = true
+thorough = true # false => quick test
 
 if thorough
   SOLVER_TIME = 10 # seconds
   SOLVER_ITERATIONS = 3 # number of times to rerun SA solver, trying to get better solutions
 
-  RUNS = 10 # number of simulation runs per test
+  RUNS = 1#0 # number of simulation runs per test
   SIMULATION_TIME =  2 * MINUTES_PER_HOUR * Seconds_per_minute # simulation seconds  
+  RESOLUTION = 3 # steps per simulation second
 else
   SOLVER_TIME = 2 # seconds
   SOLVER_ITERATIONS = 1 # number of times to rerun SA solver, trying to get better solutions
 
   RUNS = 1 # number of simulation runs per test
-  SIMULATION_TIME =  1200
+  SIMULATION_TIME =  1200 
+  RESOLUTION = 3 # steps per simulation second
 end
 
 testqueue = [
-  {:testname => 'DOGS with bus priority', :dogs_enabled => true, :buspriority => true},
+  #{:testname => 'DOGS with bus priority', :dogs_enabled => true, :buspriority => true},
   {:testname => 'DOGS', :dogs_enabled => true},
-  {:testname => 'Basic program with bus priority', :buspriority => true},
-  {:testname => 'Basic program', :buspriority => false},
-  {:testname => 'Modified DOGS with bus priority', :dogs_enabled => true, :use_calculated_offsets => true, :bus_priority => true},
+  #{:testname => 'Basic program with bus priority', :buspriority => true},
+  {:testname => 'Basic program'},
+  #{:testname => 'Modified DOGS with bus priority', :dogs_enabled => true, :use_calculated_offsets => true, :bus_priority => true},
   {:testname => 'Modified DOGS', :dogs_enabled => true, :use_calculated_offsets => true}
 ]
 
 seeds = numbers(rand(100) + 1, rand(100) + 1, testqueue.size*RUNS)
 
 calculated_offsets = {} # controller => dogs level => offset
+
+if testqueue.any?{|test|test[:buspriority]}
+  insert_measurements # bus traveltime measurements
+end
+
+puts "Loading Vissim..."
+
+vissimnet = Vissim.new
+results = NodeEvals.new(vissimnet)
 
 # check if any test needs precalculated offsets
 if testqueue.any?{|test|test[:use_calculated_offsets]}
@@ -112,7 +116,7 @@ while parms = testqueue.pop
   sim = vissim.Simulation
 
   sim.Period = SIMULATION_TIME
-  sim.Resolution = 3 # steps per simulation second
+  sim.Resolution = RESOLUTION
   sim.Speed = 0 # maximum speed
   
   # creates vap and pua files respecting the simulation parameters
@@ -140,6 +144,6 @@ end
 
 puts "PREPARING RESULTS - PLEASE WAIT!"
 
-to_xls(results.to_a, 'data', RESULTS_FILE)
+#to_xls(results.to_a, 'data', RESULTS_FILE)
 
 puts "#{Time.now}: END"

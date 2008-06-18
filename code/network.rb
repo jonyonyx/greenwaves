@@ -32,7 +32,8 @@ end
 # A decision is a connector, which, whenever taken, has a deciding effect
 # on the final route of the motorist
 class Decision < Connector
-  attr_reader :from_direction,:intersection,:turning_motion,:fractions,:weight,:drop_link
+  attr_reader :from_direction,:intersection,:turning_motion,:fractions,:weight,:drop_link,
+    :decide_from_direction, :decide_at_intersection
   def initialize(number)
     super(number)
     # the numbered option for this turning motion, when altertives for the
@@ -40,8 +41,7 @@ class Decision < Connector
     @fractions = []
   end
   def time_intervals; @fractions.map{|f| f.interval}; end
-  def add_fraction(tstart, tend, vehtype, quantity)
-    interval = Interval.new!(:tstart => tstart, :tend => tend)
+  def add_fraction(interval, vehtype, quantity)
     raise "Fractions at #{to_s} for #{vehtype} from #{interval} already exist!" if @fractions.any?{|f| f.interval == interval and f.veh_type == vehtype}
     @fractions << Fraction.new!(:interval => interval, :veh_type => vehtype, :quantity => quantity)
   end
@@ -63,21 +63,6 @@ class Decision < Connector
     @dp = DecisionPoint.new(@decide_from_direction,@decide_at_intersection) unless @dp
     @dp.decisions << self
     @dp
-  end
-  # helper-classes for Decision
-  class Interval
-    attr_reader :tstart, :tend
-    def hash; @tstart.hash + @tend.hash; end
-    def eql?(other); @tstart == other.tstart and @tend == other.tend; end
-    def to_vissim; "FROM #{@tstart} UNTIL #{@tend}"; end
-    def to_s; "#{@tstart} to #{@tend}"; end
-    def <=>(i2); @tstart <=> i2.tstart; end
-  end
-  class Fraction
-    attr_reader :interval, :veh_type, :quantity
-    def <=>(f2); @interval <=> f2.interval; end
-    def to_s; "Fraction from #{@interval} = #{quantity} #{@veh_type}"; end
-    def to_vissim; "FRACTION #{@quantity}";end
   end
 end
 class Link < RoadSegment
@@ -113,11 +98,7 @@ class DecisionPoint
     @decisions = []
     @link = nil
   end
-  def convert_fractions_to_proportions
-    time_intervals.each do |interval|
-      
-    end
-  end
+  
   # retrieve a combined set of time intervals
   # for the flows defined on all decisions in this 
   # decision point.

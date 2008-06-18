@@ -17,7 +17,7 @@ end
 #opts.on('all') do 
   vissim = get_vissim_instance
   get_inputs(vissim).write
-  get_vissim_routes(vissim).write
+  get_decisions_with_fractions(vissim).write
   generate_controllers(vissim, :dogs_enabled => true)  
 #end  
 #opts.on('vap'){generate_controllers(get_vissim_instance)}

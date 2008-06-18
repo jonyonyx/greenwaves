@@ -51,25 +51,9 @@ class RoutingDecision
     str
   end
 end
-class Stream
-  attr_reader :from, :to # eg N / S / E / W
-  
-  def initialize
-    @traffic = Hash.new {|h,k| h[k] = {}} # period => veh_type => quantity
-  end
-  
-  def add_traffic veh_type, period, quantity
-    @traffic[period][veh_type] << quantity
-  end
-  
-  # left / right / through
-  def turning_motion
-    
-  end
-end
 
-TURNING_SQL = "SELECT INTSECT.number,
-                  from_direction, 
+TURNING_SQL = "SELECT clng(INTSECT.number) as intersection_number,
+                  from_direction, to_direction,
                   [Turning Motion] As turn, 
                   [Period Start] As tstart,
                   [Period End] As tend,
@@ -78,47 +62,127 @@ TURNING_SQL = "SELECT INTSECT.number,
                 INNER JOIN [intersections$] As INTSECT
                 ON COUNTS.Intersection = INTSECT.Name
                 WHERE [Period End] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#"
+class Stream
+  attr_reader :from, :to, :intersection, :traffic # eg N / S / E / W
+  
+  def initialize from,to,intersection,turning_motion
+    @from,@to,@intersection = from,to,intersection
+    @turning_motion = turning_motion
+    @traffic = Hash.new {|h,k| h[k] = {}} # period => veh_type => quantity
+  end
+  
+  def turning_motion
+    @turning_motion
+  end
+  
+  def add_fraction tstart, tend, cars, trucks
+    period = Interval.new(tstart,tend)
+    @traffic[period][:cars] = cars
+    @traffic[period][:trucks] = trucks
+  end
+  
+  def subtract!(recipient_stream)
+    recipient_stream.traffic.each_key do |period|
+      recipient_stream.traffic[period].each do |veh_type,quantity|
+        prev_quantity = @traffic[period][veh_type]
+        
+        if prev_quantity < quantity
+          #raise "Subtracting #{recipient_stream} from #{self} leaves #{prev_quantity-quantity} vehicles left in period #{period}!" 
+          @traffic[period][veh_type] = 0
+        else
+          @traffic[period][veh_type] -= quantity
+        end
+      end
+    end
+  end
+  
+  def to_s
+    "#{@from}->#{@to} at #{@intersection}"
+  end
+end
 
 def get_streams
   streams = []
   DB[TURNING_SQL].each do |row|
-    from_direction = row[:from_direction][0..0]
-    from_direction = row[:from_direction][0..0]
+    from = row[:from_direction][0..0]
+    to = row[:to_direction][0..0]
+    intersection = row[:intersection_number]
     
+    stream = streams.find{|s|s.from == from and s.to == to and s.intersection == intersection}
+    if not stream 
+      stream = Stream.new(from[0..0],to[0..0],intersection,row[:turn][0..0])
+      streams << stream
+    end
+    stream.add_fraction(
+      Time.parse(row[:tstart][-8..-1]) - START_TIME, 
+      Time.parse(row[:tend][-8..-1]) - START_TIME, 
+      row[:cars], row[:trucks])
   end
+  #print_streams streams
   streams
 end
-
-def get_vissim_routes vissim
-
-  decisions = []
-  DB[TURNING_SQL].each do |row|
-    isnum = row[:number].to_i
-    from_direction = row[:from_direction][0..0] # extract the first letter (N, S, E or W)    
-    turning_motion = row[:turn][0..0] # turning_motion must equal L(eft), T(hrough) or R(ight)
-    
-    # extract all decisions relevant to this turning count row
-    rowdecisions = vissim.decisions.find_all do |d| 
-      d.intersection == isnum and 
-        d.from_direction == from_direction and 
-        turning_motion == d.turning_motion
-    end
-    
-    # find the sum of weights in order to distributed this rows quantity over the relevant decisions
-    sum_of_weights = rowdecisions.map{|dec| dec.weight || 1}.sum.to_f
-    
-    for dec in rowdecisions
-      for veh_type in Cars_and_trucks_str
-        vehicles = row[veh_type.downcase.to_sym] * (dec.weight || 1) / sum_of_weights
-        dec.add_fraction(
-          Time.parse(row[:tstart][-8..-1]) - START_TIME, 
-          Time.parse(row[:tend][-8..-1]) - START_TIME, 
-          veh_type, vehicles)
-      end
-      #puts dec, row.inspect if dec.from_direction == 'E' and dec.intersection == 1
-      decisions << dec unless decisions.include?(dec)
+def print_streams streams
+  streams.each do |s|
+    puts s
+    s.traffic.keys.sort.each do |period|
+      puts "\t#{period}: #{s.traffic[period]}"
     end
   end
+end
+# helper-classes for Decision
+class Interval
+  attr_reader :tstart, :tend
+  def initialize tstart,tend
+    @tstart,@tend = tstart,tend    
+  end
+  def hash; @tstart.hash + @tend.hash; end
+  def eql?(other); @tstart == other.tstart and @tend == other.tend; end
+  def to_vissim; "FROM #{@tstart} UNTIL #{@tend}"; end
+  def to_s; "#{@tstart} to #{@tend}"; end
+  def <=>(i2); @tstart <=> i2.tstart; end
+end
+class Fraction
+  attr_reader :interval, :veh_type, :quantity
+  def <=>(f2); @interval <=> f2.interval; end
+  def to_s; "Fraction from #{@interval} = #{quantity} #{@veh_type}"; end
+  def to_vissim; "FRACTION #{@quantity}";end
+end
+
+def get_routing_decisions vissim  
+  
+  streams = get_streams
+  
+  vissim.decisions.each do |dec|
+    
+    # find the stream which defines the quantity of vehicles over this decision
+    quantity_stream = streams.find do |s|
+      s.from == dec.from_direction and 
+        s.turning_motion == dec.turning_motion and 
+        s.intersection == dec.intersection
+    end || raise("Could not find stream for #{dec}")
+    
+    # the donor stream is usually identical to quantity_stream
+    # but may be some upstream source, which should be adjusted
+    donor_stream = streams.find do |s|
+      s.from == dec.decide_from_direction and
+        s.intersection == dec.decide_at_intersection and
+        s.turning_motion == 'T' # TODO correctly determine which stream is the donor
+    end
+    
+    if donor_stream and donor_stream != quantity_stream
+      # using upstream source
+      donor_stream.subtract!(quantity_stream)
+    end
+    
+    quantity_stream.traffic.keys.sort.each do |period|
+      quantity_stream.traffic[period].each do |veh_type,vehicles|
+        dec.add_fraction(period, veh_type, vehicles)
+      end
+    end
+    quantity_stream.subtract!(quantity_stream) # stream is emptied into the decision
+  end
+  
+  decisions = vissim.decisions.find_all{|dec|not dec.fractions.empty?}
 
   # TODO: add checkup to tell if all flows from the database were assigned to a decision point
   # will manifest itself in too few decisions in the routing decisions (normally 1 per turning motion)
@@ -129,17 +193,16 @@ def get_vissim_routes vissim
   # to the point where the vehicles are dropped off downstream of intersection
   # 
   #.find_all{|dp|dp.intersection == 1 and dp.from_direction == 'S'}
-  decisions.map{|dec|dec.decision_point}.uniq.sort.each do |dp|
+  decisions.find_all{|d|d.decide_at_intersection != d.intersection}.map{|dec|dec.decision_point}.uniq.sort.each do |dp|
     decision_link = dp.link(vissim)
-    #puts "Decision taken at: #{decision_link}"
-    #    puts dp
+    puts dp
     
-    for veh_type in Cars_and_trucks_str
+    for veh_type in [:cars,:trucks]
       rd = RoutingDecision.new!(:input_link => decision_link, :veh_type => veh_type, :time_intervals => dp.time_intervals)
   
       # add routes to the decision point
       for dec in dp.decisions
-        #        puts "  #{dec} drop at #{dec.drop_link}, decide at #{decision_link}"
+        puts "  #{dec} drop at #{dec.drop_link}, decide at #{decision_link}"
         dest = dec.drop_link
     
         # find the route through the intersection (ie. the turning motion)
@@ -148,9 +211,9 @@ def get_vissim_routes vissim
         raise "No routes from #{decision_link} to #{dest} over #{dec} among these routes:
                #{local_routes.map{|lr|lr.to_vissim}.join("\n")}" if local_route.nil?
         
-        #        for ldec in local_route.decisions
-        #          puts "    passing #{ldec}"
-        #        end
+        for ldec in local_route.decisions
+          puts "    passing #{ldec}"
+        end
         
         rd.add_route(local_route, 
           dec.fractions.find_all{|f| f.veh_type == veh_type})
@@ -164,11 +227,12 @@ end
 
 if __FILE__ == $0  
   puts "BEGIN"
+  
   vissim = Vissim.new
   
-  routingdec = get_vissim_routes vissim
-  puts routingdec.to_vissim
-  #routingdec.write
+  rds =  get_routing_decisions vissim
+  #puts rds.to_vissim
+  #rds.write
     
   puts "END"
 end

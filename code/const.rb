@@ -43,7 +43,7 @@ if Project == 'dtu'
   DOGS_CNT_BOUNDS_FACTOR = 0.8 # adjust the aggresiveness of DOGS. Lower => more aggressive to increase cycle times.
   DOGS_OCC_BOUNDS_FACTOR = 0.8
   # associated numbers with these vehicle types
-  Type_map = {'Cars' => 1001, 'Trucks' => 1002, 'Buses' => 1003}
+  Type_map = {:cars => 1001, :trucks => 1002, :buses => 1003}
   RESULTS_FILE = "#{Base_dir}results\\results.xls"
 elsif Project == 'cowi'
   Base_dir = "C:\\projects\\62832\\"
@@ -55,7 +55,7 @@ elsif Project == 'cowi'
   USEDOGS = false
   
   # associated numbers with these vehicle types
-  Type_map = {'Cars' => 10, 'Trucks' => 20}
+  Type_map = {:cars => 10, :trucks => 20}
 end
 
 MIN_STAGE_LENGTH = 6 # used when DOGS changes level and a stage jump maybe be considered
@@ -80,8 +80,8 @@ Type_map_rev = []
 Type_map.each{|k,v| Type_map_rev[v] = k}
 
 # strings and composition numbers for cars and trucks (buses are handled separately
-Cars_and_trucks_str = ['Cars','Trucks']
-Cars_and_trucks = Type_map.map{|k,v| Cars_and_trucks_str.include?(k) ? v : nil} - [nil]
+Cars_and_trucks_str1 = [:cars,:trucks]
+Cars_and_trucks = Type_map.map{|k,v| Cars_and_trucks_str1.include?(k) ? v : nil} - [nil]
 
 EPS = 0.01
 ANNUAL_INCREASE = 1.0 # used in input generation for scaling
