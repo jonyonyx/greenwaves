@@ -11,8 +11,8 @@ approach_names = {
   48131202 => 'Herlev Hovedgade from South'
 }
 
-data = [['Approach', 'Simulation Second','Volume']]
-['DOGS','Modified DOGS'].each do |test_name|
+data = [['Approach', 'Simulation Second','Volume','Test Name']]
+['DOGS','Modified DOGS','Basic Program'].each do |test_name|
   resdir = File.join(ENV['TEMP'],"vissim#{test_name.gsub(/\s/,'_').downcase}")
  
   rows = exec_query(SIGNALSQL, "#{CSPREFIX}#{File.join(resdir,'results.mdb')};")
@@ -20,7 +20,7 @@ data = [['Approach', 'Simulation Second','Volume']]
   for row in rows
     link = row['link'].to_i
     next unless approach_names.has_key?(link)
-    data << [approach_names[link] || link,row['t'].to_i,row['volume'].round]
+    data << [approach_names[link] || link,row['t'].to_i,row['volume'].round,test_name]
   end
 end
 
