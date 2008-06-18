@@ -185,7 +185,7 @@ During simulation it has been observed how the resulting poor coordinations are 
 
 To test the theory that poor offsets are, in fact, the main cause of less-than-expected performance benefits - and even performance decreases for arterial average delays and -queues we tested a modified version of DOGS with per-cycle-time offsets. The comparisons made in the section has shown us that improper offsets are a likely cause of the performance difference.
 
-\subsection*{Cycle times}
+\subsection{Cycle times}
 In Figures \ref{fig:c_dogs_herlev}-\ref{fig:c_modified-dogs_glostrup} are the cycle times chosen between 7 and 9 in the simulation.
 
 \begin{figure}[ht]
@@ -231,6 +231,29 @@ In Figures \ref{fig:c_dogs_herlev}-\ref{fig:c_modified-dogs_glostrup} are the cy
 We see that the modifications made to DOGS reduces the eagerness to change levels. This is an effect of the mandatory rule for modified DOGS to remain at least 3 cycles in each level, whereas DOGS is free to change the cycle time up or down after each cycle has passed. 
 
 This explains why modified DOGS is generally kinder on the minor roads than DOGS. Modified DOGS will remain longer at each level, allowing not only the new offsets to take effect but also the increased traffic, which caused the level change, to traverse the artery, before changing to the next level. An attempt to implement this form of level smoothening was thought into the DOGS system by the lower- and upper threshold values. However it appears that more drastic means should be taken to ensure that this of hysteria does not occur - an obvious approach is simply to require level burn-in times, such at the one I chose for modified DOGS (3 levels).
+
+\subsection{Throughput}
+DOGS attempts to increase throughput ie. the number of vehicles which traverse a section of road in the same time. The observed effect of a throughput increase is a smoothening af traffic peaks when more vehicles are let through due to increase cycle times. As we saw earlier, for instance in Figure \ref{fig:delay_arterial_herlev}, the DOGS system is capable of smoothening the average delays durings peaks of traffic (in the figure, around simulation second 3600 ie at 8-o'clock).
+
+I have performed throughput measurements using Vissim link evaluations to see that the \textit{capacity} increase, which DOGS brings by theoretical fact, also makes an impression on the vehicle through.
+
+The final figures \ref{fig:volume_hb-hh} and \ref{fig:volume_hh-hb} show the throughput of DOGS and modified DOGS for the road segments connecting Herlev Hovedgade and Herlev Bygade. This area was chosen since Herlev Hovedgade is considered the major bottle-neck of the Herlev area of the artery.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.30]{volume_hb-hh.png}
+\caption{Throughput over time from Herlev Bygade to Herlev Hovedgade}
+\label{fig:volume_hb-hh} 
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.30]{volume_hh-hb.png}
+\caption{Throughput over time from Herlev Hovedgade to Herlev Bygade}
+\label{fig:volume_hh-hb} 
+\end{figure}
+
+Comparing the throughput of both DOGS versions to the we see that DOGS is capable of increasing the through, as expected. It appears that there is no immediate correlation between the other measurements performed on queue lengths and delays.
 
 \subsection{Bus Priority}
 The final analysis is for the bus priority for the three Glostrup intersections, Fabriksparken, Gammel Landevej and Kindebjergvej.
