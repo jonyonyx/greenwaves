@@ -474,19 +474,7 @@ def run_simulation_annealing(controllers, vissim, opts = {:cycle_time => 80, :ve
     solutions << solution
   end
   if opts[:verbose]
-    puts "Solver finished in #{result[:time]} seconds."
-    puts "Completed iterations: #{result[:iterations]}"
-    puts "Iterations per second: #{result[:iter_per_sec]}"
-    puts "Actions taken on no improvement:"
-    result[:action_count].each do |action,count|
-      puts "   #{action}: #{count} of which #{result[:action_success][action]} improved encumbent"
-    end
-    puts "Reheatings: #{result[:reheats]}"
-    puts "Restarts: #{result[:restarts]}"
-    puts "Accepted solutions (jumps): #{result[:accepted]}"
-    puts "Rejected solutions: #{result[:rejected]}"
-    puts "Encumbents found: #{result[:encumbents]}"
-    puts "Final solution value: #{result[:encumbent_value]}"
+    print_results(result)
   end
     
   return coords, solutions, H
@@ -518,6 +506,22 @@ class Solution
   def <=>(other)
     @value <=> other.value
   end
+end
+
+def print_results(result)
+  puts "Solver finished in #{result[:time]} seconds."
+  puts "Completed iterations: #{result[:iterations]}"
+  puts "Iterations per second: #{result[:iter_per_sec]}"
+  puts "Actions taken on no improvement:"
+  result[:action_count].each do |action,count|
+    puts "   #{action}: #{count} of which #{result[:action_success][action]} improved encumbent"
+  end
+  puts "Reheatings: #{result[:reheats]}"
+  puts "Restarts: #{result[:restarts]}"
+  puts "Accepted solutions (jumps): #{result[:accepted]}"
+  puts "Rejected solutions: #{result[:rejected]}"
+  puts "Encumbents found: #{result[:encumbents]}"
+  puts "Final solution value: #{result[:encumbent_value]}"
 end
 
 def get_solution vissim

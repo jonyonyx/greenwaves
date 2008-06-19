@@ -173,6 +173,13 @@ end
 class Array
   def sum ; inject{|a,x|x+a} ; end
   def mean ; sum.to_f/size ; end
+  def top(n)
+    if n > size
+      self
+    else
+      self[0...n]
+    end
+  end
   def median
     case size % 2
     when 0 then sort[size/2-1,2].mean
@@ -180,8 +187,13 @@ class Array
     end if size.nonzero?
   end
   def squares ; inject{|a,x|x**2+a} ; end
-  def variance ; squares.to_f/size - mean**2; end
-  def deviation ; variance**(1/2) ; end
+  def variance
+    mu = mean
+    inject{|a,x|(x - mu)**2 + a}
+  end
+  def deviation 
+    Math.sqrt(variance)
+  end
   def sample n=1 ; (0...n).collect{ self[Kernel::rand(size)] } ; end
   def rand ; self[Kernel::rand(size)] ; end
   def copy

@@ -185,9 +185,9 @@ During testing it was found that the simplest evaluation option, to regard only 
 \subsection{Simulated Annealing}
 \label{siman}
 In this section I describe the metaheuristic search routing, which was chosen: Simulated Annealing (SA). 
-SA is a \textit{hill-climber} with the ability to escape from local optima ie. jump to another hill-top.
+SA is a \textit{hill-climber} with the ability to escape from local optima ie. jump to another hill-top. It builds on ideas of the \textit{annealing} from the metal industry where metals are heated and slowly cooled down to allow the molecules to arrange themselves so that the metal is as strong as possible.
 
-What this means is that SA performs a randomized, converging search in the entire search space (for offsets that is each combination of $N \bmod C$ over the intersections) looking for the possible best set of offsets without getting stuck with the \textit{first-and-best} solution it encounters.
+In computer-aided optimization this can be related as taking a completely random (ie. "smeltered" solution) and slowly cool it (inspecting neighbor solutions) to find a good solution. Thus SA performs a randomized, converging search in the entire search space (for offsets that is each combination of $N \bmod C$ over the intersections) looking for the possible best set of offsets without getting stuck with the \textit{first-and-best} solution it encounters.
 
 The initial solution is chosen so that all offsets are zero. SA then works its way toward a better solution by examining neighbor solutions to the current one. A neighbor solution is found by incrementing or decrementing a single offset in the current solution or changing the allowed speed between the intersections by 5$km/h$.
 
@@ -232,13 +232,13 @@ We must be ready to undo the changes we just made, so we track all these changes
 
 The extra time spent on bookkeeping is bounded by the number of affected coordinations, as explained previously and does increase the complexity of the codes by a great amount.
 
-\subsection{Parameter tuning}
+\subsubsection{Parameter tuning}
 The performance of simulated annealing is highly dependent on the parameters, which are used. Parameter tuning involves finding the best possible set of parameters. 
 
-The core parameters in simulated annealing are:
+The core parameters in implemented simulated annealing are:
 \begin{enumerate}
 \item The starting temperature, which is an indication of the initial chance of adopting solutions regardless of them being poor ie. the initial \textit{hill-jumping} capability.
-\item Alpha - or the cooling factor - is multiplied upon the current temperature after each iteration of simulated annealing. Alpha is in the range $]0;1[$ so that the temperature converges on zero continuously reducing the probability of jumping away from (potential) \textit{local} optima.
+\item Alpha - or the cooling factor - is multiplied upon the current temperature after each iteration of simulated annealing. Alpha is in the range $]0;1]$ so that the temperature converges on zero continuously reducing the probability of jumping away from (potential) \textit{local} optima.
 \end{enumerate}
 
 Starting temperature and the cooldown factor work together to focus on the good solutions without becoming too \textit{narrow sighted} in the early iterations. There are no cut-in-stone definitions of good choices of starting temperature and alpha values so they are chosen in parameter tuning.
@@ -259,3 +259,80 @@ In parameter tuning a large number of parameter combinations are tested and sele
 
 Tuning is usually done in the generic case where an array of "problems" - in this context arterials - are solved using all parameter combinations. Metrics such as the average fitness and variance is compared and the paramteres which gave the best result are chosen. In our case there are only two arterials to test ie. Herlev and Glostrup. Furthermore we know that all critical runs will be done in these areas and thus the parameter tuning is focused here.
 
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.3]{tuning_jumpstart-vs-alpha.png}
+\caption{Jumpstart threshold values versus cooling factors}
+\label{fig:jumpstart-vs-alpha}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.3]{tuning_starttemp-vs-jumpstart.png}
+\caption{Starting temperatures versus jumpstart threshold values}
+\label{fig:starttemp-vs-jumpstart}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.3]{tuning_starttemp-vs-alpha.png}
+\caption{Starting temperatures versus cooling factors}
+\label{fig:starttemp-vs-alpha}
+\end{figure}
+
+In Figures (\ref{fig:jumpstart-vs-alpha}-\ref{fig:starttemp-vs-alpha}) are the average fitness values of all 2-combinations of parameters where lower is better. Each parameter combination was tested 10 times and the fitness is the average of the final solution values. The running time of the solver was $0.1$ seconds since convergence was quickly achieved in the small networks available.
+
+The parameter, which is most sensitive, seems to be alpha, which must not be too high. In Figures \ref{fig:starttemp-vs-alpha} and {fig:jumpstart-vs-alpha} we see that alpha = $0.99$ gives considerably worse fitness values and taking alpha down to $0.95$ reduces the gap in fitness. The best alpha value is $0.9$ by a minor margin indicating that the best solutions are found by - relatively quickly - decreasing the capability of accepting a worse-than-current solution.
+
+The jumpstart threshold value is not very sensitive, which is seen in Figures \ref{fig:jumpstart-vs-alpha} and \ref{fig:starttemp-vs-jumpstart} in that it is mainly the variation in the other parameter (cooling factor and starting temperature resp.) that causes changes of fitness. We can deduce from this that the jumpstart actions are not of high importance to simulated annealing in this problem.
+
+The best starting temperature among the tested values is 100 again supporting the solvers desire to quickly zoom in on a specific region of the search space. Using this temperature and the best alpha value of $0.90$, we see in Figure \ref{fig:cooling_scheme} the resulting cooling.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.3]{temp-vs-iter_alpha09_starttemp100.png}
+\caption{Cooling diagram for alpha $0.9$ and starting temperature $100$.}
+\label{fig:starttemp-vs-alpha}
+\end{figure}
+
+The final results of the parameter tuning, which was used in the final testing, can be seen in Table \ref{tab:saparms}.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{l|c}
+\textbf{Parameter} & \textbf{Value}\\ \hline
+Starting temperature & 100 \\
+Cooling factor (alpha) & 0.9 \\ 
+Jumpstart threshold & 75
+\end{tabular}
+\caption{Parameters used for simulated annealing}
+\label{tab:saparms}
+\end{table}
+
+\subsubsection*{Effect of speed changes on fitness values}
+A neighbor solution is different by the speed in a coordination \textit{or} by an offset and thus when creating the neighbor solution it must be decided which change to make.
+Maintaining the values of Table \ref{tab:saparms} I have performed another test to see the effect of making speed changes compared to changing offsets.
+
+\begin{figure}[ht]
+
+    \begin{minipage}[b]{0.5\linewidth}
+
+\centering
+\includegraphics[scale=0.25]{tuning_change_offset-speed_ratio0.png}
+\caption{Probability of changing offsets and speeds}
+\label{fig:offset-vs-speed0}
+
+    \end{minipage}
+    \hspace{0.5cm}
+    \begin{minipage}[b]{0.5\linewidth}
+
+\centering
+\includegraphics[scale=0.25]{tuning_change_offset-speed_ratio.png}
+\caption{Probability of changing offsets and speeds}
+\label{fig:offset-vs-speed}
+
+    \end{minipage}
+
+\end{figure}
+
+In Figure \ref{fig:offset-vs-speed0} we see the importance of offsets compared to the average speeds used between intersections. In Figure \ref{fig:offset-vs-speed} we are zoomed in on the upper probability levels for changing offsets and see that, although marginal, allowing speed changes with probability $0.3$ is preferable to not allowing speed changes at all.
