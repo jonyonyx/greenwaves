@@ -100,7 +100,7 @@ def gen_master opts, cycles_to_remain_in_level, outputdir
   cp << "   IF (CYCLES_AT_LEVEL >= #{cycles_to_remain_in_level}) THEN"
   cp << "      CYCLES_AT_LEVEL := 0; /* allow fall through to dogs level change */"
   cp.add "   ELSE"
-  cp.add "      GOTO PROG_ENDE;"
+  cp.add "      GOTO ADJUST_LEVEL; /* make sure the new level is fully implemented */"
   cp.add "   END;"
   cp.add "END;"
   
@@ -125,7 +125,15 @@ def gen_master opts, cycles_to_remain_in_level, outputdir
     cp.add "  END;"
   end
   cp.add "END;"
-  cp << "DOGS_LEVEL := NEW_DOGS_LEVEL"
+  cp.add_verb "/*|NEW_DOGS_LEVEL - DOGS_LEVEL| = 0 or 1 */"
+  cp.add_verb "ADJUST_LEVEL: IF DOGS_LEVEL <> NEW_DOGS_LEVEL THEN /* DOGS level changes are implemented by increments of +- 5 seconds per cycle */"
+  cp << "   IF DOGS_LEVEL < NEW_DOGS_LEVEL THEN"
+  cp << "      DOGS_LEVEL_STEP := DOGS_LEVEL + 0.5;"
+  cp.add "   ELSE"
+  cp << "      DOGS_LEVEL_STEP := DOGS_LEVEL - 0.5;"
+  cp.add "   END;"
+  cp << "   DOGS_LEVEL := DOGS_LEVEL_STEP;"
+  cp.add "END"
   cp.add_verb 'PROG_ENDE:    .'
 
   cp.write File.join(outputdir, "DOGS_MASTER_#{opts[:name].upcase}.vap")
@@ -416,7 +424,7 @@ def generate_controllers vissim, user_opts = {}, outputdir = Vissim_dir
     for master_opts in MasterInfo
       # if there are offsets per cycle time remain at least 3 cycles in each level
       # otherwise, allow level change after each cycle time has ended (original dogs)
-      gen_master opts.merge(master_opts), offsets_per_cycle_time ? 3 : 1, outputdir
+      gen_master opts.merge(master_opts), offsets_per_cycle_time ? 4 : 2, outputdir
     end
   end
 

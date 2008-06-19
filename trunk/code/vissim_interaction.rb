@@ -10,12 +10,12 @@ puts "#{Time.now}: BEGIN"
 thorough = true # false => quick test
 
 if thorough
-  SOLVER_TIME = 2 # seconds
-  SOLVER_ITERATIONS = 3 # number of times to rerun SA solver, trying to get better solutions
+  SOLVER_TIME = 0.2 # seconds
+  SOLVER_ITERATIONS = 1 # number of times to rerun SA solver, trying to get better solutions
 
   RUNS = 1#0 # number of simulation runs per test
   SIMULATION_TIME =  2 * MINUTES_PER_HOUR * Seconds_per_minute # simulation seconds  
-  RESOLUTION = 3 # steps per simulation second
+  RESOLUTION = 10 # steps per simulation second
 else
   SOLVER_TIME = 2 # seconds
   SOLVER_ITERATIONS = 1 # number of times to rerun SA solver, trying to get better solutions
@@ -51,6 +51,8 @@ results = NodeEvals.new(vissimnet)
 if testqueue.any?{|test|test[:use_calculated_offsets]}
   require 'greenwave_eval'
   
+  offset_data = [['Area','Signal Controller','DOGS Level','Offset']]
+  
   [[:herlev, (1..5)], [:glostrup,(9..12)]].each do |area,controller_range|
     puts "Calculating offsets for signal controllers in #{area}..."
     controllers = vissimnet.controllers.find_all{|sc|controller_range === sc.number}
@@ -83,12 +85,16 @@ if testqueue.any?{|test|test[:use_calculated_offsets]}
       best_solution = solution_candidates.min
       best_solution.offset.each do |sc,offset|
         calculated_offsets[sc][dogs_level] = offset
+        offset_data << [area.to_s.capitalize,sc.name,dogs_level,offset]
       end
       
       puts "Best offsets found in #{area} was for cycle time #{cycle_time}:", best_solution
     end
   end
+  to_xls(offset_data,'offsets',RESULTS_FILE)
 end
+
+exit
 
 processed = 0
 while parms = testqueue.pop
