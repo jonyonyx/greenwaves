@@ -10,7 +10,7 @@ puts "#{Time.now}: BEGIN"
 thorough = true # false => quick test
 
 if thorough
-  SOLVER_TIME = 10 # seconds
+  SOLVER_TIME = 2 # seconds
   SOLVER_ITERATIONS = 3 # number of times to rerun SA solver, trying to get better solutions
 
   RUNS = 1#0 # number of simulation runs per test
@@ -73,8 +73,8 @@ if testqueue.any?{|test|test[:use_calculated_offsets]}
         
         result = SimulatedAnnealing.new(problem, SOLVER_TIME, 
           :start_temp => 100.0, 
-          :alpha => 0.95, 
-          :no_improvement_action_threshold => 50
+          :alpha => 0.90, 
+          :no_improvement_action_threshold => 75
         ).run
         
         solution_candidates << result[:solution]
