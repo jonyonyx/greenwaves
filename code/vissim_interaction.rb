@@ -10,19 +10,19 @@ puts "#{Time.now}: BEGIN"
 thorough = true # false => quick test
 
 if thorough
-  SOLVER_TIME = 0.2 # seconds
-  SOLVER_ITERATIONS = 1 # number of times to rerun SA solver, trying to get better solutions
+  SOLVER_TIME = 2 # seconds
+  SOLVER_ITERATIONS = 10 # number of times to rerun SA solver, trying to get better solutions
 
-  RUNS = 1#0 # number of simulation runs per test
+  RUNS = 10 # number of simulation runs per test
   SIMULATION_TIME =  2 * MINUTES_PER_HOUR * Seconds_per_minute # simulation seconds  
   RESOLUTION = 10 # steps per simulation second
 else
-  SOLVER_TIME = 2 # seconds
+  SOLVER_TIME = 1 # seconds
   SOLVER_ITERATIONS = 1 # number of times to rerun SA solver, trying to get better solutions
 
   RUNS = 1 # number of simulation runs per test
   SIMULATION_TIME =  1200 
-  RESOLUTION = 3 # steps per simulation second
+  RESOLUTION = 5 # steps per simulation second
 end
 
 testqueue = [
@@ -54,7 +54,6 @@ if testqueue.any?{|test|test[:use_calculated_offsets]}
   offset_data = [['Area','Signal Controller','DOGS Level','Offset']]
   
   [[:herlev, (1..5)], [:glostrup,(9..12)]].each do |area,controller_range|
-    puts "Calculating offsets for signal controllers in #{area}..."
     controllers = vissimnet.controllers.find_all{|sc|controller_range === sc.number}
     
     controllers.each{|sc| calculated_offsets[sc] = {}}
@@ -63,10 +62,11 @@ if testqueue.any?{|test|test[:use_calculated_offsets]}
     
     # precalculate new offsets for each valid dogs level
     (0..DOGS_MAX_LEVEL).each do |dogs_level|
+      print "Calculating offsets in #{area} for DOGS level #{dogs_level}:"
       solution_candidates = []
       cycle_time = BASE_CYCLE_TIME + DOGS_TIME * dogs_level
       SOLVER_ITERATIONS.times do |i| # get a bunch of solutions to choose from for each cycle time
-        puts "Offset calculation run #{i+1} for cycle time #{cycle_time}"        
+        print " #{SOLVER_ITERATIONS - i}"
         
         problem = CoordinationProblem.new(coords, 
           :cycle_time => cycle_time,
@@ -82,19 +82,17 @@ if testqueue.any?{|test|test[:use_calculated_offsets]}
         solution_candidates << result[:solution]
       end
       
+      puts
+      
       best_solution = solution_candidates.min
       best_solution.offset.each do |sc,offset|
         calculated_offsets[sc][dogs_level] = offset
         offset_data << [area.to_s.capitalize,sc.name,dogs_level,offset]
       end
-      
-      puts "Best offsets found in #{area} was for cycle time #{cycle_time}:", best_solution
     end
   end
   to_xls(offset_data,'offsets',RESULTS_FILE)
 end
-
-exit
 
 processed = 0
 while parms = testqueue.pop
@@ -110,7 +108,7 @@ while parms = testqueue.pop
   Dir.chdir Vissim_dir
     
   # copy all relevant files to the instance workdir
-  FileUtils.cp(%w{inp pua knk mdb szp}.map{|ext| Dir["*.#{ext}"]}.flatten, workdir)
+  FileUtils.cp(%w{inp pua knk mdb szp sak}.map{|ext| Dir["*.#{ext}"]}.flatten, workdir)
         
   vissim = WIN32OLE.new('VISSIM.Vissim')
     
@@ -150,6 +148,10 @@ end
 
 puts "PREPARING RESULTS - PLEASE WAIT!"
 
-#to_xls(results.to_a, 'data', RESULTS_FILE)
+to_xls(results.to_a, 'data', RESULTS_FILE)
+
+# take cycle times and link evaluations from the last run of DOGS and mod DOGS
+require 'extract_cycle_times'
+require 'extract_links_evals'
 
 puts "#{Time.now}: END"
