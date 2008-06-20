@@ -1,8 +1,6 @@
 
 require 'const'
 
-SIGNALSQL = 'SELECT link, t, avg(volume__0_) as volume FROM LINK_EVAL GROUP BY link,t'
-
 approach_names = {  
   48131190 => 'Herlev Hovedgade from East',
   48131194 => 'Herlev Bygade to Herlev Hovedgade',
@@ -15,7 +13,8 @@ data = [['Approach', 'Simulation Second','Volume','Test Name']]
 ['DOGS','Modified DOGS','Basic Program'].each do |test_name|
   resdir = File.join(ENV['TEMP'],"vissim#{test_name.gsub(/\s/,'_').downcase}")
  
-  rows = exec_query(SIGNALSQL, "#{CSPREFIX}#{File.join(resdir,'results.mdb')};")
+  rows = exec_query('SELECT link, t, avg(volume__0_) as volume FROM LINK_EVAL GROUP BY link,t', 
+    "#{CSPREFIX}#{File.join(resdir,'results.mdb')};")
   
   for row in rows
     link = row['link'].to_i
@@ -24,8 +23,4 @@ data = [['Approach', 'Simulation Second','Volume','Test Name']]
   end
 end
 
-#for row in data
-#  puts row.inspect
-#end
-
-to_xls(data, 'data', File.join('c:','greenwaves','results','link_evals.xls'))
+to_xls(data, 'link_evals', RESULTS_FILE)
