@@ -405,7 +405,7 @@ class CoordinationProblem
   end
 end
 
-H = (0..160)
+H = (0..100)
 
 def parse_coordinations scs, vissim
   
@@ -425,15 +425,11 @@ def parse_coordinations scs, vissim
   
   coordinations
 end
-def get_dogs_scenarios
-  solutions = numbers(80,20,1).map do |dogs_cycle_time|
-    puts dogs_cycle_time
-    cycle_time = {}
-    scs.each{|sc|cycle_time[sc] = dogs_cycle_time}
-    {:cycle_time => cycle_time}
-  end
+def get_dogs_scenarios scs, vissim, dogs_cycle_time
+  cycle_time = {}
+  scs.each{|sc|cycle_time[sc] = dogs_cycle_time}
     
-  return parse_coordinations(scs, vissim), solutions, H
+  return parse_coordinations(scs, vissim), [:cycle_time => cycle_time], H
 end
 
 def run_simulation_annealing(controllers, vissim, opts = {:cycle_time => 80, :verbose => false})
