@@ -7,13 +7,14 @@ class RoadTimeDiagram < Frame
   def initialize
     super(nil, :size => [800,600])
     vissim = Vissim.new
+    
+    @controllers = vissim.controllers.find_all{|sc|(1..5)===sc.number}
+    
     @coordinations,@solutions,@horizon = 
-      #get_dogs_scenarios
-      run_simulation_annealing(
-        vissim.controllers.find_all{|sc|(1..5) === sc.number},
-        vissim,:verbose => true, :cycle_time => 80)
-      
-    @controllers = @coordinations.map{|coord|[coord.sc1,coord.sc2]}.flatten.uniq
+      get_dogs_scenarios(@controllers,vissim,80)
+    #      run_simulation_annealing(
+    #        vissim.controllers.find_all{|sc|(1..5) === sc.number},
+    #        vissim,:verbose => true, :cycle_time => 80)
     
     set_title "Road-Time Diagram (#{@controllers.size} intersections)"
     
@@ -56,21 +57,25 @@ class RoadTimeDiagram < Frame
   def fetch_next_solution    
     return if @solutions.empty?
     solution = @solutions.shift
-    if solution.offset
-      @offset = solution.offset
+    if solution[:offset]
+      @offset = solution[:offset]
     else
       @offset = {}
       @controllers.each{|sc|@offset[sc] = sc.offset}      
     end    
-    if solution.speed
-      @speed = solution.speed
+    if solution[:speed]
+      @speed = solution[:speed]
     else
       @speed = {}
       @coordinations.each{|coord| @speed[coord] = coord.default_speed}
     end
-    @cycle_time = {}
-    @controllers.each{|sc| @cycle_time[sc] = sc.cycle_time}
-    puts "#{solution}\n"
+    if solution[:cycle_time]
+      @cycle_time = solution[:cycle_time]
+    else
+      @cycle_time = {}
+      @controllers.each{|sc| @cycle_time[sc] = sc.cycle_time}
+    end
+    #puts "#{solution}\n"
   end
   def on_paint
     paint_buffered do | dc |

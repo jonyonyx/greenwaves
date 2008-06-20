@@ -95,7 +95,7 @@ class Vissim
       end
       
       # controller positions relative to first sc in primary direction
-      firstsc = @controllers.find{|sc|sc.number == sc1}
+      firstsc = @controllers.find{|sc|sc.number == sc1} || raise("Could not find first controller with number #{sc1}")
       controllers_with_plans.each do |sc|
         sc.update :position => distance(firstsc,sc)
       end
@@ -132,14 +132,14 @@ class Vissim
     
     scinfo = begin
       DB["SELECT 
-        CLNG(Number) As isnum,
+        CLNG(INSECTS.Number) As isnum,
         CLNG(PROGRAMS.[Cycle Time]) As cycle_time,
         CLNG(offset) as offset
        FROM (([offsets$] As OFFSETS
        INNER JOIN [intersections$] As INSECTS ON INSECTS.Name = OFFSETS.Intersection)
        INNER JOIN [programs$] AS PROGRAMS ON OFFSETS.Program = PROGRAMS.Name)
        WHERE OFFSETS.PROGRAM = '#{PROGRAM}'"].all
-    rescue; []; end # No signal controllers found
+    rescue Exception => e; puts e.message; []; end # No signal controllers found
     
     @controllers = []   
     
