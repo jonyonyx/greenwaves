@@ -8,6 +8,18 @@
 \usepackage{fancyhdr}
 \usepackage{lscape}
 \usepackage[pdftex,bookmarksnumbered,colorlinks,backref, bookmarks, breaklinks, linktocpage]{hyperref}
+\usepackage{listings}
+\lstset{
+  language=ruby, %The programminglanguage to be used
+  showspaces=false, %Leaves spaces blank
+  showstringspaces=false, %Leaves spaces in strings blank
+  breaklines=true, %Break lines that are too long
+  basicstyle=\tiny, %The text style and size of the code
+  extendedchars=true, %Includes danish characters
+  numbers = left, %Shows linenumbers
+  stepnumber = 1, %The interval with which linenumbers are displayed
+  numberstyle=\tiny %The label size
+}
 
 \frenchspacing \setlength{\parindent}{0pt}
 \setlength{\parskip}{1ex plus 0.5ex minus 0.2ex}
@@ -100,5 +112,7 @@ Jesper Larsen, DTU Management\\[3mm]
 \begin{landscape}
 \input{app_signalplans}
 \end{landscape}
+\input{app_vap}
+\input{app_code}
 
 \end{document}

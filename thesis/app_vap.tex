@@ -1,0 +1,75 @@
+\section{VAP Codes}
+\label{app:vap}
+
+Below I have inserted examples of the master and slave VAP codes. As they are automatically generated and hence very similar it is not very interesting - or rain-forest preserving - to reprint them all. The examples I display are from the Herlev area ie. DOGS master in Herlev and for slave I selected Herlev Hovedgade.
+
+The other slaves are generated using the signal plans I received from DRD (non-traffic actuated versions) as seen in appendix \ref{app:signalplans}. 
+
+\subsection{Example: DOGS Master}
+In Table \ref{tab:thvals} are the detector values used.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{l|l|l|l|l}
+\textbf{Area} & \textbf{Detectors} & \textbf{Type} & \textbf{Bound} & \textbf{Thresholds}\\ \hline
+Herlev & 3 4 13 14 & Counting & Lower & 17 28 39 50 61 72 83 94\\
+Herlev & 3 4 13 14 & Counting & Upper & 20 33 46 59 72 85 98 111\\
+Herlev & 3 14 & Occupancy & Lower & 8 17 35 51 65 74 86 94\\
+Herlev & 3 14 & Occupancy & Upper & 11 29 45 58 70 80 92 96\\
+Glostrup & 1 2 5 8 9 10 11 12 13 14 & Counting & Lower & 19 33 47 61 75 89 103 117\\
+Glostrup & 1 2 5 8 9 10 11 12 13 14 & Counting & Upper & 23 38 53 68 83 98 113 128\\
+Glostrup & 1 2 5 8 9 10 11 12 13 14 & Occupancy & Lower & 15 35 44 54 67 76 81 90\\
+Glostrup & 1 2 5 8 9 10 11 12 13 14 & Occupancy & Upper & 20 41 53 62 78 84 90 96\\
+\end{tabular}
+\caption{DOGS detectors and threshold values.}
+\label{tab:thvals}
+\end{table}
+
+Occupancy detector thresholds are in percent and counting thresholds in number of vehicles (per cycle). The threshold values are listed for increasing DOGS levels although (up to 8) although DOGS is level-capped at 5. The activation- and deactivation bounds are coincident with the first upper- and lower bound value resp. The detector id sequence is restarted in each area so although detectors 13 and 14 appear in Glostrup as well as Herlev they are different detectors.
+
+DOGS and modified DOGS are only different in the number of levels which must be maintained before switch to the next. This is enforced by testing a variable \verb|CYCLES_AT_LEVEL| against the required value and thus only the original DOGS master is reprinted here.
+
+\lstinputlisting{DOGS_MASTER_HERLEV.vap}
+
+\subsection{Example: DOGS Slave}
+For the slaves again the only difference between original and modified DOGS is that the offset is set per DOGS level in modified DOGS slaves. In Table \ref{tab:offset_values} are the offset values used in when simulating DOGS and \ref{tab:offset_values_modified} are the per-level offsets used in simulation of modified DOGS.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{l|l|l|l}
+\textbf{Area} & \textbf{\#} & \textbf{Intersection} & \textbf{Offset}\\ \hline
+Herlev & 1 & Herlev Sygehus & 74\\
+Herlev & 2 & Hjortespringvej & 44\\
+Herlev & 3 & Herlev Bygade & 72\\
+Herlev & 4 & Herlev Hovedgade & 50\\
+Herlev & 5 & Mileparken & 20\\ \hline
+Glostrup & 9 & Fabriksparken & 12\\
+Glostrup & 10 & Gammel Landevej & 52\\
+Glostrup & 11 & Kindebjergvej & 65\\
+Glostrup & 12 & Roskildevej & 60\\
+\end{tabular}
+\caption{Morning program offset values from TRANSYT report \cite{transyt}}
+\label{tab:offset_values}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{l|l|l|l|l|l|l|l}
+\textbf{Area} & \textbf{\#} & \textbf{Intersection} & \textbf{1} & \textbf{2} & \textbf{3} & \textbf{4} & \textbf{5}\\ \hline
+Herlev & 1 & Herlev Sygehus & 45 & 55 & 38 & 48 & 58\\
+Herlev & 2 & Hjortespringvej & 72 & 82 & 65 & 75 & 85\\
+Herlev & 3 & Herlev Bygade & 0 & 0 & 83 & 93 & 103\\
+Herlev & 4 & Herlev Hovedgade & 35 & 35 & 8 & 8 & 8\\
+Herlev & 5 & Mileparken & 27 & 27 & 0 & 0 & 0\\ \hline
+Glostrup & 9 & Fabriksparken & 30 & 0 & 0 & 60 & 0\\
+Glostrup & 10 & Gammel Landevej & 0 & 60 & 60 & 0 & 60\\
+Glostrup & 11 & Kindebjergvej & 72 & 42 & 42 & 102 & 42\\
+Glostrup & 12 & Roskildevej & 67 & 37 & 37 & 97 & 37\\
+\end{tabular}
+\caption{Precalculated offset values for morning program in each DOGS level}
+\label{tab:offset_values_modified}
+\end{table}
+
+\clearpage
+
+\lstinputlisting{herlev_hovedgade.vap}
