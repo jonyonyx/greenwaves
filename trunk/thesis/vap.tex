@@ -141,7 +141,7 @@ Along with the detector data described in section \ref{detector_data} TTS suppli
 
 DOGS accumulate detections over a cycle - which is of variable length - and compare to the threshold values. Occupancy is a the percentage of time of which the detector was enabled ie. a vehicle passed over or was in queue over the detector and thus the detection period can be chosen freely. The amount of vehicles which passed over (the 2nd component for threshold matching) is in total numbers and consequently when the cycle time increase so does the number of detected vehicles. TTS informs me that no adjustment - except for the standard exponential smoothening - is performed when comparing detector vehicle count values with the thresholds. I decided to correct this in the VAP code by assuming the counting thresholds matched a 80 seconds cycle and then scale the detected count to this level by using the actual cycle time (which is usually higher, when DOGS is enabled).
 
-When DOGS is active the level is adjusted at most by one for each cycle. Thus when the level is high it will take longer to change between levels and the measuring periods are longer, resulting in more accurate measurements, but less responsiveness.
+When DOGS is active the level is adjusted at most by one for each 2-cycle. Thus when the level is high it will take longer to change between levels and the measuring periods are longer, resulting in more accurate measurements, but less responsiveness.
 
 \subsubsection{Slave}
 The purpose of slave controllers is to obey the cycle second and DOGS level instructions from the master controller.

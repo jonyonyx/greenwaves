@@ -43,7 +43,7 @@ That DOGS only operates during high-congestion levels is an unusual trait for an
 The objective is to keep the load degree (load/capacity) for the most heavily loaded intersection below 90\%.
 To do this the common cycle time and green times are set according to the load level. The adjustments are made with a few seconds per cycle to avoid sudden, major changes in cycle time and temporary loss of coordination.
 
-Coordination is achieved by running the signals on a common cycle time, but offsets are not adjusted when the common cycle time changes so this issue should receive further investigation.
+Coordination is achieved by running the signals on a common cycle time, but offsets are not adjusted when the common cycle time changes - this issue receives further investigation in section \ref{dogs_offset}.
 
 When naming the inflow detectors in the north- and south ends $DN$ and $DS$, respectively, the transition from pretimed control to adaptive control is decided by the constraint:
 \begin{eqnarray*}
@@ -85,6 +85,8 @@ I_{disable,i-1} \leq & \max(Intensity(DN),Intensity(DS)) & < I_{disable,i} \\
 L_{disable,i-1} \leq & \max(Load(DN),Load(DS))  & < L_{disable,i}
 \end{eqnarray*}
 
+DOGS level changes are implemented over 2 cycles during which the level cannot change. The current cycle time is increased by $\pm 5$ seconds until the new level is implemented. Signal controllers thus increase or decrease the green time in the main direction by 4 seconds and minor direction by 1 second twice.
+
 In the DOGS controlled area in Herlev there are 8 different programs to choose from and the enable and disable thresholds for programs respect the ordering implicit in the above equations:
 
 $$\lbrace I,L \rbrace_{enable,i+1} > \lbrace I,L \rbrace_{enable,i}$$
@@ -93,12 +95,12 @@ $$\lbrace I,L \rbrace_{disable,i-1} < \lbrace I,L \rbrace_{disable,i}$$
 To avoid hysteresis between programs the same constraints (equations \ref{eqn:hysteresis_intensity}-\ref{eqn:hysteresis_limits}) as for switching between pretimed and dynamic control applies.
 
 \subsection{Evaluation}
-Tests have shown that the system is indeed capable of increasing the capacity, with reduced queue lengths as a result. When the arterial in Herlev is at or above moderate load DOGS will increase the capacity by 15-25\% compared to the capacity if only the pretimed plans was in use.
+Tests have shown that the system is indeed capable of increasing the capacity \cite{dogs}. When the arterial in Herlev is at or above moderate load DOGS will increase the capacity by 15-25\% compared to the capacity if only the pretimed plans was in use.
 
 \subsection{DOGS and offsets}
 \label{dogs_offset}
 
-DOGS makes use of the basic program for the current period, which in Herlev and Glostrup are TRANSYT\footnote{See section \ref{simulation} for more details on simulation	tools.} optimized. Such programs include an offset for each signal controller in the system, which are optimized for a certain cycle time, however DOGS always use the same offsets. Although DOGS has support for dynamically adjusting the coordination - including prioritizing directions - it is not enabled in either the Glostrup or Herlev sites at the moment.
+DOGS makes use of the basic program for the current period, which in Herlev and Glostrup are found using the well-renown optimization package TRANSYT\footnote{See section \ref{simulation} for more details on simulation	tools.}. Such programs include an offset for each signal controller in the system, which are optimized for a certain cycle time, however DOGS always use the same offsets. Although DOGS has support for dynamically adjusting the coordination - including prioritizing directions - it is not enabled in either the Glostrup or Herlev sites at the moment.
 
 \begin{figure}[htb]
 \centering

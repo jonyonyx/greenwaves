@@ -280,7 +280,9 @@ Tuning is usually done in the generic case where an array of "problems" - in thi
 \label{fig:starttemp-vs-alpha}
 \end{figure}
 
-In Figures (\ref{fig:jumpstart-vs-alpha}-\ref{fig:starttemp-vs-alpha}) are the average fitness values of all 2-combinations of parameters where lower is better. Each parameter combination was tested 10 times and the fitness is the average of the final solution values. The running time of the solver was $0.1$ seconds since convergence was quickly achieved in the small networks available.
+In Figures (\ref{fig:jumpstart-vs-alpha}-\ref{fig:starttemp-vs-alpha}) are the average fitness values of all 2-combinations of parameters where lower is better. Each parameter combination was tested 10 times and the fitness is the average of the final solution values. 
+
+The running time of the solver was $0.1$ seconds since convergence was quickly achieved in the small networks available - Herlev and Glostrup. It was observed that in at most 1 second simulated annealing with any parameter combination would have found almost identical solutions indication an optimum is found.
 
 The parameter, which is most sensitive, seems to be alpha, which must not be too high. In Figures \ref{fig:starttemp-vs-alpha} and {fig:jumpstart-vs-alpha} we see that alpha = $0.99$ gives considerably worse fitness values and taking alpha down to $0.95$ reduces the gap in fitness. The best alpha value is $0.9$ by a minor margin indicating that the best solutions are found by - relatively quickly - decreasing the capability of accepting a worse-than-current solution.
 
@@ -292,7 +294,7 @@ The best starting temperature among the tested values is 100 again supporting th
 \centering
 \includegraphics[scale=0.3]{temp-vs-iter_alpha09_starttemp100.png}
 \caption{Cooling diagram for alpha $0.9$ and starting temperature $100$.}
-\label{fig:starttemp-vs-alpha}
+\label{fig:cooling_scheme}
 \end{figure}
 
 The final results of the parameter tuning, which was used in the final testing, can be seen in Table \ref{tab:saparms}.
