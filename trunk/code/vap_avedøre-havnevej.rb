@@ -82,6 +82,8 @@ STAGES = {
   ]
 }
 
+DEBUG = false
+
 def generate_master
 
   cp = CodePrinter.new
@@ -91,7 +93,7 @@ def generate_master
 
   cp << 'IF NOT INITIALIZED THEN'
   cp << '   INITIALIZED := 1;'
-  cp << '   TRACE(ALL);'
+  cp << '   TRACE(ALL);' if DEBUG
   cp << "   complete_the_cycle := 1;"
   cp.add '   GOTO CLOCK_TICK;'
   cp.add 'END;'
@@ -137,7 +139,7 @@ def generate_slave slave,stages
   cp << "cur_cycle_sec := mget(#{CLOCK_CHANNEL});"
   cp << 'sett(cur_cycle_sec); /* get time from master */'
   
-  cp << 'TRACE(ALL);'
+  cp << 'TRACE(ALL);' if DEBUG
   
   (0...stages.size).each do |i|
     current_stage = stages[i]
@@ -166,7 +168,7 @@ def generate_slave slave,stages
       cp.add "   END;"
     end
     
-    cp << "   IF ((time_in_stage >= #{current_stage.min_time}) AND ((green_time_extension <= 0) OR (time_in_stage >= #{current_stage.max_time}))) THEN"
+    cp << "   IF ((time_in_stage > #{current_stage.min_time}) AND ((green_time_extension <= 0) OR (time_in_stage > #{current_stage.max_time}))) THEN"
     
     if current_stage.wait_for_sync
       cp << "      proceed := mget(#{SWITCH_STAGE_CHANNEL});"

@@ -47,7 +47,7 @@ class Decision < Connector
   end
   def <=>(d2)
     @intersection == d2.intersection ? 
-      (@from == d2.from ? @turning_motion <=> d2.turning_motion : @from <=> d2.from) : 
+      (@from_direction == d2.from_direction ? @turning_motion <=> d2.turning_motion : @from_direction <=> d2.from_direction) : 
       @intersection <=> d2.intersection
   end
   def has_decision_point?; not @dp.nil?; end
