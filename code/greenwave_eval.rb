@@ -101,27 +101,6 @@ class Coordination
   # green start of sc2 under the given offsets and speed (travel time).
   # deviations from default speed are punished
   def eval_fixed o1, o2, s, c
-    #    green_bands = {}
-    #    [ [@sc1,o1 + traveltime(s)], # offset sc1 and project it forward by the expected travel time
-    #      [@sc2,o2] ].each do |sc,o|
-    #      group = sc.arterial_group_from(@from_direction)
-    #      red_end = (group.red_end + o) % c + 1
-    #      green_end = (group.green_end + o) % c + 1
-    #      green_bands[sc] = if red_end < green_end
-    #        [Band.new(red_end,green_end)] # contained within a cycle
-    #      else
-    #        [Band.new(1,green_end), Band.new(red_end,c)] # split in two
-    #      end
-    #    end
-    #    
-    #    sc1_green = green_bands[@sc1].map{|b|b.to_a}.flatten
-    #    sc2_green = green_bands[@sc2].map{|b|b.to_a}.flatten
-    #    res = sc1_green - sc2_green
-    #    
-    #    puts "#{sc1_green.inspect} - \n#{sc2_green.inspect} = \n\t#{res.inspect}"
-    #    puts
-    #    # check how well these bands overlap
-    #    res.size + eval_speed(s)
     red_end = {}
     [[@sc1,o1],[@sc2,o2] ].each do |sc,o|
       group = sc.arterial_group_from(@from_direction)

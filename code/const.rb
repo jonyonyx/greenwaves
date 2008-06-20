@@ -45,6 +45,7 @@ if Project == 'dtu'
   # associated numbers with these vehicle types
   Type_map = {:cars => 1001, :trucks => 1002, :buses => 1003}
   RESULTS_FILE = "#{Base_dir}results\\results.xls"
+  RESULTS_FILE_CS = "#{CSPREFIX}#{RESULTS_FILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\""
 elsif Project == 'cowi'
   Base_dir = "C:\\projects\\62832\\"
   Network_name = "amagermotorvejen_avedore-havnevej.inp"
@@ -118,13 +119,13 @@ def get_from_direction(fromsc,tosc)
   ((fromsc.number < tosc.number) ? ARTERY[:sc1] : ARTERY[:sc2])[:from_direction]  
 end
 def to_tex(table, user_opts = {})
-  default_opts = {:center => true, :sep_cols => true, :col_align => 'l', :row_sep => "\n"}
+  default_opts = {:center => true, :sep_cols => true, :col_align => 'l', :row_sep => "\r"}
   opts = default_opts.merge(user_opts)  
-  lines = ['\begin{table}[!ht]']
+  lines = ['\begin{table}[ht]']
   lines << '\centering' if opts[:center]
   headers = table.first
   lines << "\\begin{tabular}{#{headers.map{opts[:col_align]}.join(opts[:sep_cols] ? '|' : '')}}"
-  headers_in_bold = headers.map{|header| (header.nil? or header.empty?) ? '' : "\\textbf{#{header}}"}
+  headers_in_bold = headers.map{|header| (header.nil? or header.to_s.empty?) ? '' : "\\textbf{#{header}}"}
   lines << headers_in_bold.join(' & ') + '\\\\ \\hline'
   table[1..-1].each{|row| lines << row.join(' & ') + '\\\\'}
   lines << '\end{tabular}'
@@ -272,5 +273,16 @@ end
 class Range
   def overlap? other
     include?(other.first) or other.include?(first)
+  end
+end
+
+class Integer
+  def fact
+    return 1 if self <= 1
+    (1..self).inject { |i,j| i*j }
+  end
+  # all the ways of choosing k different elements from the set (0...self)
+  def choose(k)
+    fact / (k.fact * (self - k).fact)
   end
 end

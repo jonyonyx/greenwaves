@@ -239,7 +239,7 @@ def gen_vap sc, outputdir, offset
   end  
   
   cp << "C := BASE_CYCLE_TIME + #{DOGS_TIME} * DOGS_LEVEL;" if USEDOGS
-  cp << "t_loc := (TIME + OFFSET) % #{USEDOGS ? 'C' : 'BASE_CYCLE_TIME'} + 1;"
+  cp << "t_loc := (TIME - OFFSET) % #{USEDOGS ? 'C' : 'BASE_CYCLE_TIME'} + 1;"
   cp << 'SetT(t_loc);'
   
   if sc.has_bus_priority?
@@ -408,7 +408,7 @@ if Project == 'dtu'
       :name => 'Glostrup', 
       :dn => 14, :ds => 1, 
       :occ_dets => [1,2,5,8,9,10,11,12,13,14], :cnt_dets => [1,2,5,8,9,10,11,12,13,14],
-      :cnt_bounds => {:upper => numbers(45,20,DOGS_LEVELS), :lower => numbers(40,17,DOGS_LEVELS)},
+      :cnt_bounds => {:upper => numbers(23,15,DOGS_LEVELS), :lower => numbers(19,14,DOGS_LEVELS)},
       :occ_bounds => {:upper => [20,41,53,62,78,84,90,96], :lower => [15,35,44,54,67,76,81,90]}
     }
   ]
@@ -456,6 +456,24 @@ def generate_controllers vissim, user_opts = {}, outputdir = Vissim_dir
 end
 
 if __FILE__ == $0
-  vissim = Vissim.new
-  generate_controllers(vissim,:buspriority => false,:dogs_enabled => true)
+  rows = [['Area','Detectors','Type', 'Bound','Thresholds']]
+  typename = {:cnt => 'Counting',:occ => 'Occupancy'}
+  MasterInfo.each do |master|
+    [:cnt,:occ].each do |det_type|
+      [:lower,:upper].each do |bound|
+        rows << [
+          master[:name],
+          master["#{det_type}_dets".to_sym].join(' '),
+          typename[det_type],
+          bound.to_s.capitalize,
+          master["#{det_type}_bounds".to_sym][bound].join(' ')
+        ]
+      end
+    end
+  end
+  
+  puts to_tex(rows,:label => 'tab:thvals', :caption => 'DOGS detectors and threshold values. Occupancy detector thresholds are in percent and counting thresholds in number of vehicles (per cycle).')
+  
+  #  vissim = Vissim.new
+  #  generate_controllers(vissim,:buspriority => false,:dogs_enabled => true)
 end
