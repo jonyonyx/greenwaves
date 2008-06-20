@@ -8,8 +8,11 @@ vissim.controllers_with_plans.each do |sc|
   sc.groups.each do |grp|
     data << [grp.name,grp.red_end,grp.green_end,grp.priority]
   end
-  puts sc.name
-  for row in data
-    puts row.inspect
-  end
+  
+#  for row in data
+#    puts row.inspect
+#  end
+  
+  puts to_tex(data,:caption => "#{sc.name}",:col_align => 'c')
+  puts
 end
