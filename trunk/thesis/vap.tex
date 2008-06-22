@@ -36,7 +36,7 @@ S02Z004:    SetT(cycle_sec_plus1)
 PROG_ENDE:    .
 \end{verbatim}
 
-VAP is unsuited for complex controller logic, such as ones involving predictions and optimization by iteration. This is due to the fact that VAP only has support for basic programming language constructs and the label-based nature of the language, which is detrimental to larger code bases see eg. the statement by Dijkstra \cite{nogoto}. As an example the above VAP code could be simplified into:
+VAP is unsuited for complex controller logic, such as ones involving predictions and optimization by iteration. This is due to the fact that VAP only has support for basic programming language constructs and the label-based nature of the language, which is detrimental to larger code bases see eg. the statement by Dijkstra \cite{nogoto}. As an example the above VAP code could be written in procedural language as:
 
 \begin{verbatim}
 function UpdateController(cycle_second){
@@ -52,16 +52,16 @@ function UpdateController(cycle_second){
 
 VAP is suitable, however, for implementation of DOGS due to its simple decision system as described in section \ref{dogs}. In this section I will describe how the DOGS logic was implementated in VAP.
 
-\subsection{Interstage Definitions - PUA}
+\subsection{Interstage Definitions}
 Before we move on to DOGS in VAP it is fundamental to explain the \verb|Interstage| (abbr. \verb|Is|) concept. Interstage definitions are mandatory in Vissim whenever a VAP program is to control a signal.
 
 An interstage is basically the lighting scheme to be used during stage transition. Usually, when switching from stage A to B the lights of A switch to amber and then red while B switch from red to red and amber and then green.
 
-The amber light of A is a warning that a transition is in progress, the intersection should be cleared and no more entries should be made. To ensure right-of-way consistency during the transition, B will stay red until the moment A switches from amber to red. For all intersections discussed in this project, the amber period is 4 seconds.
+The amber light of A is a warning that a transition is in progress, the intersection should be cleared and no more vehicles should enter the intersection. To ensure right-of-way consistency during the transition, B will stay red until the moment A switches from amber to red. For all intersections discussed in this project, the amber period is 4 seconds.
 
 The red and amber period of B indicates that attentive entry into the intersection is permitted. The red and amber period is 2 seconds for all intersections.
 
-Thus a total stage transition will last 6 seconds. In Figure \ref{fig:lost_time_example} is an example of the interstage lost times for various number of stages and cycle times. Some stages - eg. a through, left and rightgoing stage followed by a left-only stage - will be \textit{compatible} ie. there is no pause during the transition thus the table is pessimistic. However it clearly shows that there is a tradeoff between lost time and cycle time - especially in complex, multistaged intersections.
+Thus a total stage transition will last 6 seconds or more. In Figure \ref{fig:lost_time_example} is an example of the interstage lost times for various number of stages and cycle times. Some stages - eg. a through, left and rightgoing stage followed by a left-only stage - will be \textit{compatible} ie. there is no pause during the transition thus the table is pessimistic. However it clearly shows that there is a tradeoff between lost time and cycle time - especially in complex, multistaged intersections.
 
 \begin{figure}[ht]
 \centering
@@ -112,7 +112,7 @@ For the interstage definitions, in INTERSTAGE1, we have redend for A to be -127,
 
 It is always up to the interstage designer to ensure that no right-of-way conflicts are present in the stage definitions. PTV supplies a support tool, which solves this issue, called CROSSIG. CROSSIG is capable of generating .PUA files; in this project CROSSIG was not available, however, and they were generated automatically from the signal plans, which are listed in appendix \ref{app:signalplans}.
 
-\subsection{Interstage rules}
+\subsection*{Interstage rules}
 The signal plans, for which interstage definitions are to be built, are formatted so that each named signal group (head) has a row with $C$-cells, where $C$ is the cycle time. Each cell can be amber, green, yellow or red. Thus a complete signal timing plan is visually represented as one or more such rows in a stack.
 
 In order to generate the interstage definitions (.PUA files in Vissim) it is necessary with a definition of an interstage itself. A stage is said to \textit{run} while the signal groups of the stage is settled in the green state. We define that when a stage is running an interstage cannot run and vice versa. Thus every cycle second must specify the current stage or interstage.
@@ -124,36 +124,42 @@ It is important to note that, while stages must have a temporal extend to make s
 A safety period, where all heads are red, is sometimes introduced in order to allow the intersection to be cleared. This can be modelled either as a stage with no green signal groups or included into the interstage definition by prolonging red end times and interstage length by the length of the safety period. The latter solution is preferred since it is directly supported in the PUA format and also avoids the introduction of an all-red stage and a number of extra interstages to and from the all-red stage.
 
 \subsection{DOGS}
-As VAP does not permit the writing of a program, which supervise all signal controllers at the same time, it was necessary to dedicate a signal controller as the master controller. To fully separate the master/slave concept it was chosen to install a virtual signal controller, whose only purpose is to run the DOGS program.
+As VAP does not permit the writing of a program, which supervise all signal controllers at the same time, it was necessary to dedicate a signal controller as the master controller. To fully separate the master/slave concept it was chosen to install a virtual signal controller for each DOGS area, whose only purpose is to run the DOGS program.
 
 The master controller, which for the purpose of offset has a virtual location on Herlev Hovedgade, runs the DOGS program and determines the current level by inspecting the northern- and southern detectors according to the specification outlined in section \ref{dogs}. In addition this controller also runs the master clock and the current DOGS level and master cycle second is sent to all slave controllers every cycle second.
 
 The slave signal controller - even the one on Herlev Hovedgade - must listen for communication from the master controller and set the green time of the various stages according to the current dogs level and cycle second as received from the master.
 
-Both master and slave VAP controllers are generated automatically using a script, which takes parameters such as, for the master, the area-specific detectors and activation / level-up / level-down bounds and, for the slave, offset value(s), signal program etc.
+Both master and slave VAP controllers are generated automatically using a script, which takes parameters such as, for the master, the area-specific detectors and activation / level-up / level-down bounds and, for the slave, offset value(s), signal program etc. In appendix \ref{app:vap} are examples of a master and a slave controllers in VAP.
 
 \subsubsection{Master}
-Relevant to master controllers we need to know the northern and southern detector names as these are used to determine if DOGS is enabled or turned off. Once DOGS is enabled another set of detectors (possibly overlapping) are measured upon to determine the appropriate level of DOGS. Note that, depending on threshold values, DOGS may be \textit{enabled} but not perform adjustments to the base-program - this is by design.
+Relevant to master controllers we need to know the northern and southern detector names as these are used to determine if DOGS is enabled or turned off. Once DOGS is enabled another set of detectors (possibly overlapping) are measured upon to determine the appropriate level of DOGS. Note that, depending on threshold values for vehicle count and occupancy rates, DOGS may be \textit{enabled} but not perform adjustments to the base-program - this is by TTS design.
 
-These threshold values are also parameters which is fed into the generator routine (see section \ref{dogs} for a description). 
-Due to variations between the traffic, which TTS used to tune the threshold values, and the traffic which is observed in the simulation, it was decided to manually retune the vehicle count thresholds while keeping the thresholds for occupancy. 
+The threshold values, which are parameters that must be fed into the generator script, were indicated by the DOGS reference material for each area, however due to variations between the traffic, which TTS used to tune the threshold values, and the traffic which is observed in the simulation, it was decided to manually retune them. 
 Along with the detector data described in section \ref{detector_data} TTS supplied the selected DOGS levels in the same period. By a manual, iterative process the levels selected by DOGS in the simulator was fitted to the levels of the detector data set during the morning period. The main fixpoints used was the maximum and the average levels chosen.
 
-DOGS accumulate detections over a cycle - which is of variable length - and compare to the threshold values. Occupancy is a the percentage of time of which the detector was enabled ie. a vehicle passed over or was in queue over the detector and thus the detection period can be chosen freely. The amount of vehicles which passed over (the 2nd component for threshold matching) is in total numbers and consequently when the cycle time increase so does the number of detected vehicles. TTS informs me that no adjustment - except for the standard exponential smoothening - is performed when comparing detector vehicle count values with the thresholds. I decided to correct this in the VAP code by assuming the counting thresholds matched a 80 seconds cycle and then scale the detected count to this level by using the actual cycle time (which is usually higher, when DOGS is enabled).
+DOGS accumulate detections over a cycle - which is of variable length - and compare them to the threshold values. Occupancy is the percentage of time of which the detector was enabled ie. a vehicle passed over or was in queue over the detector and thus the detection period can be chosen freely. The amount of vehicles which passed over (the 2nd component for threshold matching) is in total numbers and consequently when the cycle time increase so does the number of detected vehicles. TTS informs me that no adjustment - except for the standard exponential smoothening - is performed when comparing detector vehicle count values with the thresholds. I decided to correct this in the VAP code by assuming the counting thresholds matched a 80 seconds cycle and then scale the detected count to this level by using the actual cycle time (which is usually higher, when DOGS is enabled).
 
-When DOGS is active the level is adjusted at most by one for each 2-cycle. Thus when the level is high it will take longer to change between levels and the measuring periods are longer, resulting in more accurate measurements, but less responsiveness.
+Another observation, though not compensated for as for vehicle counts, is that when DOGS is active the level is adjusted at most by one for each 2-cycle. Thus when the level is high it will take longer to change between levels and the measuring periods are longer. This results in more accurate measurements, but less responsiveness. I do not have a suggestion for an alternative to this approach, which solves the problem of keeping the controllers synchronized as well.
+
+The modified version of the master controller differ only from the unmodified version in how long the cycle time must be allowed to run before changing to the next - thus changing between the versions, for the master, is a matter of adjusting a single variable.
 
 \subsubsection{Slave}
 The purpose of slave controllers is to obey the cycle second and DOGS level instructions from the master controller.
 
 The first step for a slave is to calculate the local cycle second, which due to controller offset will usually differ from the master cycle second. An exception is the slave controller, which controls the intersection in which the master controller is physically positioned - the distance between them is 0 and likewise the offset.
 
-Consider stage A which is active while the master controller lowers the DOGS level by 1. In this case the end time is lowered if stage A receives priority from DOGS and it may happen that the end time for stage A is now lower then the current cycle second. Stage A will then have received more green time than it was supposed to and the slave will immediately make the transition from stage A to the next stage, B. In case B is not the stage which was supposed to be active (a rare case - stage B is short indeed) we allow stage A to carry over to the next cycle as we can only make stage transitions between subsequent stages - not in arbitrary order.
+The modified DOGS version of the slave will also select its offset depending on the requested DOGS level from the master.
+
+Given the local time, current DOGS level (and offset) the slave will implement the associated signal timing plan (see appendix \ref{app:signalplans}) by making interstage transitions.
+
+An issue I discovered during implementation can be described accordingly:
+consider that stage A is active while the master controller lowers the DOGS level by 1. In this case the end time is lowered if stage A receives priority from DOGS and it may happen that the end time for stage A is now lower then the current cycle second. Stage A will then have received more green time than it was supposed to and the I have solved this issue by causing the slave to immediately make the transition from stage A to the next stage, B. In case B is not the stage which was supposed to be active (a rare case - stage B is short indeed) we allow stage A to carry over to the next cycle as we can only make stage transitions between subsequent stages - not in arbitrary order.
 
 \subsection{Bus priority}
-Three intersections in the Glostrup area - Fabriksparken, Gammel Landevej and Kindebjergvej - operate with bus priority on the arterial direction. 
+Three intersections in the Glostrup area - Fabriksparken, Gammel Landevej and Kindebjergvej - operate with bus priority on the arterial direction. Bus priority is effectuated solely by the corresponding slave controller as follows:
 
-If a bus arrives from north or south during the stage which belongs to the arterial green time of up to 10 seconds is distributed from the minor road stage to this stage. The effect is that buses might just make it across before the next stage is started rather than being cut off. In the next cycle the main stage is shortened by the same amount of time and the minor stage is lengthened accordingly.
+If a bus arrives from north or south during the stage which gives green to the bus, up to 10 seconds extra green time is distributed from the minor road stage to this stage. The effect is that buses might just make it across before the next stage is started rather than being cut off. In the next cycle the main stage is shortened by the same amount of time and the minor stage is lengthened accordingly.
 
 This is implemented by associating detectors for north- and southgoing buses for each of these intersections. The autogenerated VAP code will then check for bus detections in each cycle second and perform bus prioritization if:
 
@@ -165,4 +171,6 @@ This is implemented by associating detectors for north- and southgoing buses for
 
 When bus prioritization is activated under these conditions the stage end times will be adjusted as mentioned and the next cycle (compensation) will perform likewise adjustments albeit inversed.
 
-In case that a bus arrives and activates bus prioritization but make it across the intersection before the green time for the stage has been extended, bus prioritization is cancelled.
+In case that a bus arrives and activates bus prioritization but make it across the intersection before the green time for the stage has been extended, bus prioritization is cancelled and no changes are made to the green time distribution.
+
+Such iterations of borrowing and compensation will not affect coordination very much since only the green-end times are changed and the cycle time remains in sync with the common cycle time set by DOGS. Hence the performance degradation for non-bus traffic becomes a mere matter of capacity redistribution. This is changed if the aggresiveness of bus priority is increased and the next green stage for the bus is expedited, however only the above described bus priority technique was tested.
