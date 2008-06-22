@@ -1,17 +1,19 @@
 \section{Simulation}
 \label{simulation}
-By observing the number of models which have been suggested for traffic signal optimization - and how diverse the approaches are, ranging from client-server to stochastic inventory model - it is reasonable to assume that no closed-form solution exist to solve all signal setting problems. 
+Traffic simulation is the emulation of traffic on a computer and is done to gain insight in road user behaviour and observe various effects eg. what happens to the minor-road traffic when we increase the cycle time to 100 seconds.
 
-The main issue is that of how to evaluate solutions. Fitness determination of a solution is a major issue, especially in metaheuristic search, which is prevalent in the litterature and in this project, that put "blind faith" in the evaluation procedure. This is to be understand such that metaheuristic search routines do not necessarily search the solution space in manner in which each step a better solution is obtained, but rather by trial-and-error. 
+It becomes obvious that simulation is important in traffic signal optimization by observing the number of models which have been suggested - and how diverse the approaches are, ranging from client-server to stochastic inventory model.
+
+A main issue of traffic signal optimization is that of how to evaluate solutions. Fitness determination of a solution is a major issue, especially in metaheuristic search, which is prevalent in the litterature and in this project, that put "blind faith" in the evaluation procedure. This is to be understand such that metaheuristic search routines do not necessarily search the solution space in manner in which each step a better solution is obtained, but rather by trial-and-error. 
 Furthermore the metaheuristic must evaluate a certain amount of solutions before confidence in the final solution is established, thus each evaluation must be fast, if the search is a part of an adaptive system rather than an offline optimization that has no strict deadline.
 
 Simulation handles the complexity issues of modelling the bilevel system of mutually responsive road user behaviour versus traffic signal settings and allows the optimization routine to rely on the simulation results as a black box for fitness evaluation. 
 
-The primary use of simulators are for infrastructure expansions. In traffic signal optimization they are almost always used to establish confidence in performance for some signal optimization procedure. This confidence comes from observing the actions of the system during the simulation but also by comparing aggregated fitness values with those coming from some other, well-known approach. In this regard the TRANSYT offline traffic signal optimization package is often used as a baseline. 
+The primary use of simulators are for infrastructure expansions and testing various signal timing plans, of course. In traffic signal optimization they are almost always used to establish confidence in performance for some signal optimization procedure. This confidence comes from observing the actions of the system during the simulation but also by comparing aggregated fitness values with those coming from some other, well-known approach. In this regard the TRANSYT offline traffic signal optimization package is often used as a baseline. 
 
 This form of testing favors quality of the simulation over execution speed, unlike search routines, which must have results quickly. 
 In Table \ref{tab:convergespeed} are the names of three major simulators, which are used by traffic engineers to produce realistic traffic simulations. 
-In denmark the de-facto simulation tool for final testing of signal settings and infrastructure changes has become Vissim by PTV. For obtaining signal settings TRANSYT is highly regarded by DRD though the results will often be adjusted and confirmed in Vissim.
+In Denmark the de-facto simulation tool for final testing of signal settings and infrastructure changes has become Vissim by PTV. For obtaining signal settings TRANSYT is highly regarded by DRD though the results will often be adjusted and confirmed in Vissim.
 
 There are three types of simulators, the main difference being the level of detail in the underlying model. They are micro-, meso- and macrosimulators. Microsimulators model the behaviour of each vehicle and driver, mesosimulators regard the movements of platoons of vehicles and macrosimulators search for equilibriums between signal settings and road user response (route choice), considering origins (input links) and destinations (output links).
 
@@ -33,14 +35,6 @@ Previous studies have shown that the CORSIM microsimulator is superior to the me
 Microsimulation will not scale as well as meso- and macrosimulation since the number of vehicles in the network will grow in proportion with the total length of the roads. In mesosimulation the number of platoons need not grow as fast since some arteries traverse the entire network and a single platoon is regarded. The headway threshold for platoon definition could also be increased to compensate for the extra cars. Macrosimulators will scale in proportion with the size of the OD-matrices, which is the minimal level of detail and complexity for realistic results. 
 Meso- and macro simulators, using deterministic principles, have another advantage since they can execute heuristic procedures to skip past much of the initial population of roads, which is mandatory in microsimulation when traffic begins to flow into the empty network. Since most simulations will be stopped whenever convergence is reached this is a very useful attribute.
 
-Aside from the commercial simulator packages, such as the ones listed in Table \ref{tab:convergespeed}, there are several examples of researchees implementing their own simulation tools. Such tools are tightly coupled to the test network and the results are questionable thus it is important that the industry agrees upon a common simulation platform, but also that common standards are used \textit{within} the agreed upon tool. Such a project has recently been undertaken by DRD to improve the comparability of results from different consulting firms.
-
-Vissim, being a microsimulator, is capable of extracting numerous informations for the purpose of comparing solutions to signal settings and infrastructure changes. These include: 
-
-\begin{enumerate}
-\item Delay: the difference between the best-case travel time ie. no intersections and travel at free flow speeds (no other road users). The delay from point A to B when there are no intermediate intersections is an indication of the congestion
-\item Travel time is measured as the raw time spent by road users getting from A to B in a network. Travel time sections can be placed anywhere and, like delay, can be filtered on vehicle type eg. car, truck and bus
-\item Average queue lengths are correlated with delays especially when measuring delays for vehicles crossing an intersection
-\end{enumerate}
+Aside from the commercial simulator packages, such as the ones listed in Table \ref{tab:convergespeed}, there are several examples of researchers implementing their own simulation tools. Such tools are tightly coupled to the test network and the results are questionable thus it is important that the industry agrees upon a common simulation platform, but also that common standards are used \textit{within} the agreed upon tool. Such a project has recently been undertaken by DRD to improve the comparability of results from different consulting firms.
 
 \input{vissim}

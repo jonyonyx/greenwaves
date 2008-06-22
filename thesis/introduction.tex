@@ -1,18 +1,18 @@
 \section{Introduction}
 
-The ringroads sorrounding the city of Copenhagen serve to route traffic from east and west around the city. As such they are part of the collection of arteries in Denmark.
+The ringroads sorrounding the city of Copenhagen serve to route traffic around the city to offload the urban road networks and provide an alternative to going through the city. As such they are part of the collection of arteries in Denmark.
 
-The DOGS system by Technical Traffic Solution (TTS) was chosen to adjust the capacity of ringroad 3 due to the rebuilding of the nearby motorring 3, which was expected to cause increased deman on ringroad 3.
+The DOGS system by Technical Traffic Solution (TTS) was chosen to adjust the capacity of ringroad 3 due to the rebuilding of the nearby motorring 3, which was expected to cause increased traffic on ringroad 3.
 
-DOGS increases capacity by simultaneously increasing cycle times in all signal controllers, when certain traffic conditions arise. These criteria are determined statically by so as to alleviate the most heavily loaded intersection in the DOGS area.
+DOGS increases capacity by simultaneously increasing cycle times in all signal controllers, when certain traffic conditions arise. These criteria are determined statically so as to alleviate the most heavily loaded intersection in the DOGS area.
 
-The purpose of this study is to simulate DOGS to discover the true effects of the system. In previous analysis by the Danish Road Directory (DRD) certain analytical observations have been made, which indicate that DOGS is capable of disrupting coordination on ringroad 3.
+The purpose of this study is to simulate DOGS to discover the true effects of the system. In previous analyses by the Danish Road Directory (DRD) certain analytical observations have been made, which indicate that DOGS is capable of disrupting coordination on ringroad 3.
 
-The simulation tool is chosen to be Vissim, which is the de-facto microsimulation tool in denmark. Ringroad 3 consist of two DOGS areas, which are separated by three intersections, and due to the combined size of the network tools are developed to insert link inputs and route choices.
+The simulation tool is chosen to be Vissim, which is the de-facto microsimulation tool in Denmark. Ringroad 3 consist of two DOGS areas, which are separated by three intersections, and due to the combined size of the network a library of tools are developed for Vissim to perform tasks such as inserting link inputs and route choices from traffic counts and running tests with data extraction.
 
 To test the issue of disrupted coordination during DOGS operation an offset optimization tool was developed to provide precalculated offsets for each signal controller for each cycle time. This tool also integrates closely with Vissim to extract informations such as distances and signal controller plans. 
 
-The report is structured as follows. In section \ref{dogs} I formally describe how DOGS work and what the intentions behind DOGS are. Section \ref{simulation} introduces the Vissim microsimulator and I describe how Vissim structures its data and how I can take advantage of the plain text property of the Vissim network file to automatically insert traffic data for link inputs and route choice. In section \ref{vap} I describe the Vehicle Actuated Programming language (VAP) of Vissim and how I use it to emulate DOGS in a master-slave scheme. For the purpose of adjusting the simulation I received detailed traffic data from both the Danish Road Directorate (traffic counts and signal layouts) and from TTS detector data. These data are analysed in section \ref{data} where I show the arterial properties of ringroad 3 and the direction bias. The Vissim network I use in this project was started by COWI and later inherited and improved by many students at Technical University of Denmark. In the next section \ref{modelling} I discuss how I expanded and modified the network using automatic procedures, which work directly on the data structures described in section \ref{simulation}. Section \ref{optimization} is where I discuss optimization of coordination and how I designed my own system based on simulated annealing. The last section \ref{test} compares the performance of original DOGS and DOGS with offsets from the optimizer to the basic program. Finally in section \ref{conclusion} I bring my conclusions and suggestions for future works based on the results of section \ref{test}.
+The report is structured as follows. After introducing traffic signal optimization system in section \ref{systems} I describe how DOGS work and what the intentions behind DOGS are in section \ref{dogs}. Section \ref{simulation} introduces the Vissim microsimulator and I describe how Vissim structures its data and how I can take advantage of the plain text property of the Vissim network file to automatically insert traffic data for link inputs and route choice. In section \ref{vap} I describe the Vehicle Actuated Programming language (VAP) of Vissim and how I use it to emulate DOGS in a master-slave scheme. For the purpose of adjusting the simulation I received detailed traffic data from both the Danish Road Directorate (traffic counts and signal layouts) and from TTS detector data. These data are analysed in section \ref{data} where I show the arterial properties of ringroad 3 and the direction bias. The Vissim network I use in this project was started by COWI and later inherited and improved by many students at Technical University of Denmark. In the next section \ref{modelling} I discuss how I expanded and modified the network using automatic procedures, which work directly on the data structures described in section \ref{simulation}. Section \ref{optimization} is where I discuss optimization of coordination and how I designed my own system based on simulated annealing. The last section \ref{test} compares the performance of original DOGS and DOGS with offsets from the optimizer to the basic program. Finally in section \ref{conclusion} I bring my conclusions and suggestions for future works based on the results of section \ref{test}.
 
 \subsection{Terms}
 \label{vocabulary}
@@ -26,36 +26,41 @@ This section attempts to extract the most important terms and give solid descrip
 
 \item[Artery] A main-path, the major road, through a traffic network. It will generally face higher demand than minor roads adjoining the artery.
 			
-\item[Coordination] Especially relevant to arteries, the quality of coordination between signal controllers determines how road users perceive a journey through an artery. With good coordination, the platoons of vehicles will experience a sequence of green lighths whenever they approach the next intersection, this is also known as the \textit{green wave}.
+\item[Coordination] Especially relevant to arteries, the quality of coordination between signal controllers determines how road users perceive a journey through an artery. With good coordination, the platoons of vehicles will experience a sequence of green lighths whenever they approach the next intersection, this is also known as the \textit{green wave} or \textit{progression band}.
 			
-\item[Cycle time] The turnaround time for all phases of a traffic signal to complete ie. the time it takes from the start of green time for a phase until it becomes green again. A \textit{common} cycle time is especially relevant for the signal controllers in an artery.
+\item[Cycle time] The turnaround time for all phases of a traffic signal to complete ie. the time it takes from the start of green time for a phase until it becomes green again. A \textit{common} cycle time is especially relevant for the signal controllers in an artery in combination with proper offsets.
 
 \item[Interphase green] Also known as lost time, is a small amount of time inserted as a buffer between two phases. During the lost time the lights can be either red in all directions or, as in Denmark, amber lights can be used to introduce a buffer. The purpose of the buffer is to allow vehicles, which entered during the last phase, to exit the intersection before it is flooded by vehicles from the next phase.
 
 \item[MOE] An abbreviation for Measure Of Effectiveness and also referred to as the performance index (PI) or fitness. MOE is some metric on which the performance of a traffic signal network is assessed .
 	Most often used is the average delay, also common is the travel time through the network and number of stops or some combination.
 	
-\item[Offset] Only relevant under cycle-time-based programs, the offset is the delay with which to start the execution of the program. Offsets are chosen for each signal controller in a way such that good coordination is acheived. The cycle time must be common to all signal controllers otherwise the offset only provide the expected coordination in the first cycle and periodically in the later cycles.
+\item[Offset] Only relevant under cycle-time-based programs, the offset is the delay with which to start the execution of the program, relative to the master controller. Offsets are chosen for each signal controller in a way such that good coordination is acheived. The cycle time must be common to all signal controllers otherwise the offset only provide the expected coordination in the first cycle and periodically in the later cycles.
 	
 	\item[Phase] Sometimes referred to as \textit{stage}, corresponds to a particular state of the red and green lights of the traffic lights in an intersection.
 	For instance there may be a green phase in the north and south direction for a two-way intersection (which implies red phase in the east-west direction). Usually when \textit{a phase} is mentioned it is implicit that it is the green phase.
 	
 	\item[Platoon] A group of vehicles travelling together. A platoon can be detected by observing the time between a vehicle and the next and applying a threshold in time units known as the critical headway.
 Platoons are formed both as a consequence of car-following behaviour, which is used in simulation frameworks such as \cite{treiber-2000-62}, but also due to the batch-like nature which is imposed on the traffic by traffic signals.
+Platoons are \textit{dispersed} ie. split up over time into multiple platoons due to the individual behaviourial elements of road users.
 
 \item[Queue spillback] This phenomenon occurs when a queue reaches from a downstream intersection to the preceding intersection, effectively preventing traffic from leaving the upstream intersection.
 
-\item[Saturation flow rate] The number of vehicles that can flow on a link at the maximum allowed speed (free-flow) during a period of time.
+\item[Signal Controller] A means for controlling the right-of-way of conflicting traffic motions in an intersection between two or more roads. Right-of-way is periodically shifted between incompatible traffic flows by choosing one signal group after another.
+
+\item[Signal Group] A collection of signal heads which show identical colors at all times.
+
+\item[Signal Head] A traffic light, which constitute a signal group itself is a part of a signal group (more common).
 
 \item[Time horizon] The amount of time, which is taken into consideration while optimizing signal settings or making predictions. Since predictions of the future traffic becomes more and more fuzzy the deeper one looks a paradox arises: using a short time horizon the optimizations might prove to be flawed when it fails to see a clever decision, but with longer time horizons the predictions themselves become flawed and may mislead the optimization.
 
-\item[Traffic assignment] Also known as flow assignment, is the determination of vehicular flow along origin-destination (OD) paths and, consequently, along links in a traffic network. 
+\item[Traffic assignment] Also known as flow assignment, is the determination of vehicular flow along origin-destination (OD) paths and, consequently, along links in a traffic network. Traffic is in contrast to static assignment, when link inputs and routes are fixed before the simulation starts.
 
 \item[Traffic network] A graph $G(V,E)$ where $V$ is a set of intersections controlled by a traffic signal and $E$ is the set of roads connecting the intersections. A path is thus a route through the network crossing a least one signalized intersection.
 
 \end{description}
 
 \subsection{Software versions}
-The Vissim network was developed first under Vissim 4.00-06 and later in the newly released Vissim 5.00 using the latest service packs as they were released. All tests were performed in Vissim version 5.00-08. 
+The Vissim network was developed first under Vissim 4.00-06 and later in the newly released Vissim 5.00 using the latest service packs as they were released. All tests were performed in Vissim version 5.00-08, however. 
 
-The support and optimization programs were written in Ruby, targeting version 1.8.6.
+Libraries for Vissim manipulation, support and optimization were written in Ruby, targeting version 1.8.6.

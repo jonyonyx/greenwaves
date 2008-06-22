@@ -5,7 +5,7 @@ The DOGS system for arterial traffic optimization was implemented in the Herlev 
 
 DOGS was developed by danish Technical Traffic Solution and basically uses threshold values to determine a proper common cycle time so that increase in load on arterial automatically causes the capacity to increase when the extra green is primarily given to the stages accomodating arterial traffic.
 
-However DOGS was never tested in a simulation environment, such as the (in Denmark) de-facto Vissim simulation tool. Vissim is a microsimulator well-suited for testing complex situations and signal controller configurations.
+However DOGS was never tested in a simulation environment, such as the (in Denmark) de-facto Vissim simulation tool - a microsimulator well-suited for testing complex situations and signal controller configurations.
 The Danish Road Directorate (DRD) suggested that DOGS be tested in Vissim to discover if the system delivers the necessary offload, when traffic is diverted onto ringroad 3.
 
 In this report are the results of such a test performed for the morning period in the two disjoint DOGS areas, Herlev and Glostrup, consisting of 5 and 4 intersections, respectively. 
@@ -41,13 +41,17 @@ It is my hope that existing and future DOGS installations will incorporate some 
 
 The studies presented in this report tests a busy albeit normal morning situation and does not include an investigation of the DOGS "panic function" ie. the capability of DOGS to adopt very high cycle times when eg. an accident occurs on motorring 3. It is expected that the benefit of DOGS will increase greatly, compared to the basic morning program, when such situations occur.
 
-The optimization routine was implemented in the interpreted language Ruby. Although the implemention will try more than 1000 combinations per second on a 2 GHz CPU, it is expected that an implementation in a faster language, such as C\# will lead to even better solutions.
+The optimization routine was implemented in the interpreted language Ruby. Although the implemention will try more than 1000 combinations per second on a $2.0$ GHz CPU, it is expected that an implementation in a compiled language, such as C\# or Java will lead to even better solutions.
 
 As mentioned the implemented system is capable of optimizing coordinations by changing speeds as well as offsets. Dynamic speed signs are becoming more and more widespread with the introduction of LED technology, for instance on motorring 3, and simulation studies should be performed to test wether road users will be able to respond to such speed signs indicating \textit{recommended speed for green wave}.
+
+During an interview with DRD and TTS it was explained that the traffic from minor roads is neglected in the determination of the correct DOGS level. Interest was expressed in seeing the effect of increasing the number of detectors used so that the system is not "blind" to minor road traffic, as the downstream intersections on the minor road approaches are usually close by and the approaches easily spill back.
 
 \subsection{Perspective}
 In this report I mostly discussed signal optimization for arterials. For a city such as Copenhagen it makes sense to expand the area of optimization such that whole grids were optimized for greens and coordination simultaneously.
 
-A benefit of considering very large networks at the same time is the possibility of traffic redirection. This is in part possible for small-scale arterial optimization by denying procession at the upstream intersection until the downstream controllers have clear the queues. In larger scale networks, if it is detected - or predicted - that an artery is, or will be, congested under current flow conditions it is sensible to redirect some traffic onto alternative routes. 
+A benefit of considering very large networks at the same time is the possibility of traffic redirection. This is in part possible for small-scale arterial optimization by denying progression at the upstream intersection until the downstream controllers have cleared their queues. In larger scale networks, if it is detected - or predicted - that an artery is, or will be, congested under current flow conditions it is sensible to redirect some traffic onto alternative routes. 
 
 Redirecting traffic using traffic signals is a subtle technique which has not received much research yet, though it could pose more efficient than current traffic information systems, which inform road users of congestions and alternative routes, but allows them to ignore the advice.
+
+When choosing an adaptive signal control system for a large area I believe it is important to select something preexisting rather than developing it anew. In this project I was given the opportunity to develop a system to find offsets for good coordinations, though for non-educational purposes one should always prefer well-known tested off-the-shelf products, such as TRANSYT of Utopia/Spot - something the Danish has a history of not being good at, even though our traffic problems are very similar to those abroad.

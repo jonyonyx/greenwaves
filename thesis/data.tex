@@ -6,7 +6,7 @@ This period is generally accepted as the beginning of the winter season and as s
 
 This is a supplement to the traffic counts, which were given by DRD. Since the detector data is anonymous with respect to vehicles types, for links in the ends of the arterial (Herlev Sygehus from north and Roskildevej from east, west and south) the data from the corresponding detectors was used in the project to scale the input sizes of the traffic counts.
 
-The format of the data is:
+The format of the data from TTS is:
 
 \begin{table}[ht]
 \centering
@@ -21,7 +21,7 @@ The format of the data is:
 
 Thus each detector, named D\textit{N}, has a column where the numbers are the detected vehicles since last detection. The detections are made once for every cycle thus there will be some variations in the time between measurements due to the adjustments to cycle time, which are made by DOGS.
 
-It was agreed with DRD that the temporal resolution be fixed at 15 minutes. This accumulation was performed by indexing time within the data period into 15 minute bins and summing detections from the last 15 minutes.
+It was agreed with DRD that the temporal resolution for link inputs and route decisions was to be fixed at 15 minutes, which corresponds to the resolution of the traffic counts. Accumulation was performed on the DOGS data by indexing time within the data period into 15 minute bins and summing detections from the last 15 minutes.
 
 Multiple data files - for different sets of detectors - was received for each area. Since the data period was not identical over the data files it was necessary to perform some cleanup in order to generate accumulated data in which all detectors were represented.
 
@@ -131,7 +131,7 @@ The next graph (Figure \ref{fig:detector_directions}) show how detections are al
 
 One notable conclusions that can be drawn from these detector data is that there is a slight overweight of traffic north-going traffic in both areas, in the worst case around 3:2, so the direction biased is not profound.
 
-We can also conclude that ringroad 3 in Glostrup and Herlev face heavy commuter traffic by the classical increases in traffic from 7-9 and 15-17 but also from slightly around 12 due to lunch traffic. The background traffic through the workdays is heavy as well, starting around 6 and leveling off around 18.
+We can also conclude that ringroad 3 in Glostrup and Herlev face heavy commuter traffic by the classical increases in traffic from 7-9 and 15-17 but also from slightly around 12 due to lunch traffic. The background traffic (ie. traffic not directly caused by commuters) through the workdays is heavy as well, starting around 6 and leveling off around 18. Morning and afternoon traffic appears to be quite similar.
 
 \subsection{Traffic Count Analysis}
 \label{traffic_count_analysis}
@@ -166,9 +166,9 @@ For some of the most important intersections (Mileparken, Jyllingevej, Roskildev
 \label{tab:traffic_counts}
 \end{table}
 
-The main advantage of traffic counts is that the ratio of cars to trucks is obtain. In Figure \ref{fig:cars2trucks} we see that there there is about the same amount of traffic in each direction, however there are more trucks from south (ie. northgoing) supporting the results on direction bias from the DOGS detector data. Furthermore we are confirmed again on the clear arterial nature of the involved intersections due to the relative volumes of north-south going traffic to traffic from east-west.
+The main feat of traffic counts is that the ratio of cars to trucks is available. In Figure \ref{fig:cars2trucks} we see that - in total - there is about the same amount of traffic in each direction, however there are more trucks from south (ie. northgoing) supporting the results on direction bias from the DOGS detector data. Furthermore we are confirmed again on the clear arterial nature of the involved intersections due to the relative volumes of north-south going traffic to traffic from east-west.
 
-The columns E and W indicate the total load of trucks and vehicles coming from east and west respectively, in which we see that the traffic from west, which is travelling towards the city of copenhagen, is somewhat heavier than the traffic coming from east, travelling away from the city. 
+The columns E and W indicate the total load of trucks and vehicles coming from east and west respectively, in which we see that the traffic from west, which is travelling towards the city of copenhagen, is somewhat heavier than the traffic coming from east, travelling away from the city.
 
 \begin{figure}[!ht]
 \centering
@@ -213,4 +213,4 @@ The final two figures (\ref{fig:insect_herlev}-\ref{fig:insect_glostrup}) show, 
 
 In all cases the vehicle demand by far outweighs truck demand; the intersections facing the most truck demand in Herlev are Herlev Hovedgade (from all directions), Herlev Bygade (from north and south) and also Herlev Sygehus from the arterial directions. 
 
-In Glostrup we see that Fabriks has far more northgoing traffic and fair amounts of trucks and both arterial directions. Roskildevej has almost as much traffic from the sideroads as does Herlev Hovedgade, emphasizing the fact that ringroad 3 is not exclusively an artery in the north-south directions.
+In Glostrup we see that Fabriks has far more northgoing traffic and fair amounts of trucks and both arterial directions. Roskildevej has almost as much traffic from the sideroads as does Herlev Hovedgade, emphasizing the fact that ringroad 3 is not exclusively an artery in the north-south directions for several intersections.
