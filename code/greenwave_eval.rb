@@ -1,8 +1,14 @@
+# Classes and methods for evaluation of and search for offset values 
+# for vissim signal controllers
+
 require 'vissim'
 require 'const'
 
+# A band is an integer sequence of seconds used to indicate
+# A band is an integer sequence of seconds used to indicate
+# the temporal extend of eg. the green time of a stage
 class Band
-  attr_reader :tstart, :tend, :width
+  attr_reader :tstart, :tend
   def initialize tstart, tend 
     raise "A waveband must start before it ends, received tstart = #{tstart} and tend = #{tend}" if tstart > tend
     raise "Only integer values are accepted, received tstart = #{tstart} and tend = #{tend}" unless [tstart,tend].all?{|n|Integer===n}
@@ -26,33 +32,43 @@ class Band
       raise "Should not get here. Attempted #{self} - #{other}"
     end
   end
+  # offsets the band in time in place
   def shift!(offset); @tstart += offset ; @tend += offset; @as_range = nil end
   def to_s; "(#{to_r})"; end
   def to_r; @as_range ||= (@tstart..@tend); end
   def to_a; to_r.to_a; end
   def copy; Band.new(@tstart,@tend); end
 end
+
+# A coordination is an abstraction of the road segment(s) between two adjacent intersections.
+# Contains various evaluation methods, which are used in optimization, which differ in complexity
+# Note that a coordination is directed.
 class Coordination
   attr_reader :sc1, :sc2, :distance, :from_direction, :left_to_right, :default_speed
   def initialize sc1, sc2, speed, distance
-    @sc1, @sc2 = sc1, sc2
-    @default_speed = speed
-    @from_direction = get_from_direction(@sc1,@sc2)
+    @sc1, @sc2 = sc1, sc2 # coordination from sc1 to sc2
+    @default_speed = speed # the speed by which vehicles may close the distance
+    @from_direction = get_from_direction(@sc1,@sc2) # traffic direction
     @left_to_right = sc1.number < sc2.number ? true : false
     @tt = {} # cache for travel times, keys are speeds
     
     # simplify things and visualization by always taking the distance
     # in the primary direction
     @distance = distance.to_f
-    [@sc1,@sc2].each{|sc|sc.member_coordinations << self} # notify controllers
+    # notify controllers that they are now part of this coordination
+    [@sc1,@sc2].each{|sc|sc.member_coordinations << self}
   end
   ACCELERATION = 2.5 # m/s^2 uniform acceleration
+  # Calculates the travel time from sc1 to sc2
+  # s:: the allowed travel speed
   def traveltime(s)
     return @tt[s] if @tt[s] # cache hit
     
     tacc = s / ACCELERATION # s
     dist_final_speed_reached = 0.5 * ACCELERATION * (tacc ** 2) # m (assume initial speed = 0)
     
+    # cache and return the result of this calculation. will be needed
+    # multiple times when used by the optimization routine
     @tt[s] = if dist_final_speed_reached > @distance
       # we accelerated all the way to the next intersection (very close!)
       Math.sqrt(0.5 * ACCELERATION / @distance)
@@ -61,7 +77,8 @@ class Coordination
       tacc + (@distance - dist_final_speed_reached) / s
     end.round
   end
-  # returns times where there is a mismatch between sc1 and sc2 ie.
+  
+  # returns the seconds where there is a mismatch between sc1 and sc2 ie.
   # when traffic emitted from sc1 is not received by green light at sc2
   # respecting the current offsets of these controllers and the traveltime
   # from stop-light to stop-light
@@ -118,7 +135,9 @@ class Coordination
     
     (green_time_displacement - traveltime(s)).abs + eval_speed(s)
   end
-  def to_s; "Coordination between #{@sc1.number} #{@sc1.name} and #{@sc2.number} #{@sc2.name}"; end  
+  def to_s
+    "Coordination between #{@sc1.number} #{@sc1.name} and #{@sc2.number} #{@sc2.name}"
+  end
   def <=>(other)
     if @sc1 == other.sc1
       @sc2 <=> other.sc2
@@ -128,6 +147,8 @@ class Coordination
   end
 end
 
+# A simulated annealing algorithm for optimizing offsets (and speeds, if allowed)
+# for coordinations
 class SimulatedAnnealing
   def initialize problem, time_limit, params
     @problem = problem
@@ -215,6 +236,7 @@ class SimulatedAnnealing
   end
 end
 
+# A set of coordinations, which must be optimized for offsets and speeds (possibly)
 class CoordinationProblem
   attr_reader :current_value,:encumbent_value,:statistics
   def initialize coords, opts

@@ -1,9 +1,9 @@
+# Scripts for cleaning detector data from technical traffic solution
+
 require 'csv'
 require 'time'
 require 'const'
 
-
-##
 # returns a Time object given
 # an tuple with the date (eu fmt) and time (24h) resp.
 def parse_time eu_datetime_tuple

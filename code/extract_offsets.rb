@@ -35,12 +35,7 @@ end
 
 
 puts to_tex(transyt_offsets,:label => 'tab:offset_values',:caption => 'Morning program offset values from TRANSYT report \\cite{transyt}')
-puts
 
 rows = exec_query('SELECT area,[Signal Controller] as name, clng([dogs level]) as dogs_level, clng(offset) as offset FROM [offsets$] where [dogs level] > 0',RESULTS_FILE_CS)
-
-#for row in precalc_offsets
-#  puts row.inspect
-#end
 
 puts to_tex(precalc_offsets,:label => 'tab:offset_values_modified',:caption => 'Precalculated offset values for morning program in each DOGS level')

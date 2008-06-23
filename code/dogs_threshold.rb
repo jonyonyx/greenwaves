@@ -1,5 +1,6 @@
 # scripts for finding suitable dogs threshold values
 # for vehicle counts and possibly detector load percentages
+# INCOMPLETE
  
 require 'const'
 

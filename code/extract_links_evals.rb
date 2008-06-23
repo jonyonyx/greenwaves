@@ -1,3 +1,4 @@
+# Script for extraction of link evaluations from a vissim run
 
 require 'const'
 
