@@ -1,3 +1,4 @@
+# Script for extraction of cycle times from a vissim test run
 
 require 'const'
 
