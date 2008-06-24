@@ -1,12 +1,11 @@
-##
 # Classes which describe the physical vissim network
-# 
 
 require 'vissim_elem'
 
 class RoadSegment < VissimElem  
   attr_reader :lanes,:closed_to, :over_points,
-    :arterial_from # if set, indicates this road is part of the artery direction and from which direction
+    :arterial_from # if set, indicates this road is part of the artery 
+    #direction and from where
   def closed_to_any?(veh_types)
     raise "Vehicle lanes closure was not defined for #{self}!" if @closed_to.nil?
     not (@closed_to & veh_types).empty?
@@ -75,10 +74,13 @@ class Link < RoadSegment
     super(number)
     @outgoing_connectors = [] # a list of outgoing connectors from this link
   end
-  def calculate_length; @from_point.distance(@to_point); end
+  
   # is this link an exit (from the network) link?
   def exit?; @outgoing_connectors.empty?; end
+  # input links can be detected but we need to be able to filter
+  # them out
   def input?; @link_type == 'IN'; end
+  # returns a list of decisions for which this link is the drop-off link
   def drop_for
     return @drop_for if @drop_for
     @drop_for = if @name =~ /drop (.+)/
@@ -91,6 +93,10 @@ class Link < RoadSegment
     str
   end
 end
+
+# A decision point is point on a link where a decision
+# must be made about which way to go from here ie. which
+# of the possible decisions to take.
 class DecisionPoint
   attr_reader :from_direction,:intersection,:decisions
   def initialize from,intersection
@@ -114,9 +120,12 @@ class DecisionPoint
     return @link if @link # cache hit
     
     # check if this decision point routes traffic directly from an input link
-    # if so, place the decision point there
+    # if so, place the decision point there to assign the decision
+    # as early as possible
     
-    input_link = vissim.links.find{|l| l.intersection_number == @intersection and l.from_direction == @from_direction}
+    input_link = vissim.links.find do |l| 
+      l.intersection_number == @intersection and l.from_direction == @from_direction
+    end
     
     return @link = input_link if input_link
     
@@ -141,16 +150,10 @@ class DecisionPoint
       not @decisions.all?{|dec|routes.any?{|route|route.decisions.include?(dec)}}
     end
     
-#    puts "drop links:", drop_links,""
-#    for link,routes in link_routes
-#      puts "From #{link}:",routes
-#    end
-    
     # We now have a number of candidates. We want the one closest 
     # to the decisions. Exploit that we *know* these links have routes to
     # all drop links.    
     shortest_route = link_routes.values.flatten.min
-#    puts "Shortest route: #{shortest_route}"
     @link = shortest_route.start
     
     @link || raise("No link found from which #{drop_links.join(', ')} can be reached")

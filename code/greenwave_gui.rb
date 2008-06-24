@@ -1,3 +1,4 @@
+# A GUI written to display green wave bands in a time horizon
 
 require 'wx'
 include Wx
@@ -8,7 +9,8 @@ class RoadTimeDiagram < Frame
     super(nil, :size => [800,600])
     vissim = Vissim.new
     
-    @controllers = vissim.controllers.find_all{|sc|(1..5)===sc.number}
+    @controllers = vissim.controllers.find_all{|sc|(1..5)===sc.number} # Herlev
+    #@controllers = vissim.controllers.find_all{|sc|(9..12)===sc.number} # Glostrup
     
     @coordinations,@solutions,@horizon = 
       get_dogs_scenarios(@controllers,vissim,80)
@@ -217,5 +219,3 @@ if __FILE__ == $0
   require 'greenwave_eval'
   App.run{RoadTimeDiagram.new}
 end
-
-  

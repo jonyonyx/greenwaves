@@ -1,7 +1,5 @@
-##
 # This file can enumerate the possible routes between
-# a list of links and generate Vissim output. Useful for 
-# generating relative flows.
+# a list of links and generate Vissim output
 
 # facts:
 # - connectors always connect two links denoted the from- and to link
@@ -37,6 +35,8 @@ class Vissim
     def to_s; "#{start} > ... (#{@road_segments.size-2}) > #{exit}"; end  
     def <=>(other); @road_segments.size <=> other.road_segments.size; end
   end
+  
+  # route finding routine working directly on vissim network objects
   def discover start, exits, path = [], &on_route_found
     return if not start.allows_private_vehicles?
     return if path.include?(start) # avoid loops
@@ -52,7 +52,9 @@ class Vissim
       end
     end
   end
-  # arterial optimization: prune "identical" routes ie same start and end 
+  
+  # arterial optimization: prune "identical" routes ie same start and end
+  # not needed currently - but code may become valuable later on
   def prune_identical routes  
     exiting_at = {}
     routes.map{|r| r.exit}.uniq.each do |exit_link|
@@ -71,12 +73,8 @@ class Vissim
   
     routes - routes_to_remove
   end
-  def route_exist? start,dest
-    for exit_link in [dest].flatten
-      return false if find_routes(start,exit_link).empty?
-    end
-    return true
-  end
+  
+  # helper method for the discovery routine to find multiple routes
   def find_routes start,dest  
     routes = []
     discover(start,[dest].flatten) do |r|
@@ -94,9 +92,8 @@ class Vissim
     routes.first
   end
 
-  # finds all full ie. start-to-end routes
-  # in the given vissim network
-  def get_full_routes  
+  # finds all full ie. end-to-end routes in the vissim network
+  def get_full_routes
     routes = []
     for start in input_links
       discover(start, exit_links) do |route|
@@ -114,9 +111,5 @@ if __FILE__ == $0
   vissim = Vissim.new
   #require 'profile'
   routes = vissim.get_full_routes
-  puts "Found #{routes.length} routes"
-  
-  #  for route in routes.find_all{|r|  r.exit.number == 5}
-  #    puts "#{route} over #{route.decisions.join(', ')}"
-  #  end  
+  puts "Found #{routes.length} routes"  
 end
