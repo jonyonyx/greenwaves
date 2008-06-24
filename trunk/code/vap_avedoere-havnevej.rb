@@ -65,26 +65,9 @@ SLAVES = [
   )
 ]
 
-# north and south junction has 3 stages
-# A is north-south going
-# Av is for left-turning down on highway
-# B is for traffic coming off the highway and up from the ramp
-STAGES = {
-  'nord' => [
-    ExtendableStage.new!(:name => 'A1',  :number => 1, :min_time => 12, :max_time => 30),
-    ExtendableStage.new!(:name => 'At1', :number => 2, :min_time => 22 - 12, :max_time => 44 - 30, :wait_for_sync => true),
-    ExtendableStage.new!(:name => 'B1',  :number => 3, :min_time => 10, :max_time => 23)
-  ],
-  'syd' => [
-    ExtendableStage.new!(:name => 'A2',  :number => 1, :min_time => 21 - 12, :max_time => 38 - 21),
-    ExtendableStage.new!(:name => 'At2', :number => 2, :min_time => 12, :max_time => 21, :wait_for_sync => true),
-    ExtendableStage.new!(:name => 'B2',  :number => 3, :min_time => 10, :max_time => 29)
-  ]
-}
-
 DEBUG = false
 
-def generate_master
+def generate_master output_dir
 
   cp = CodePrinter.new
 
@@ -126,11 +109,11 @@ def generate_master
 
   cp.add_verb 'PROG_ENDE:    .'
 
-  cp.write(File.join(Vissim_dir,'master.vap'))
+  cp.write(File.join(output_dir,'master.vap'))
   puts 'Generated master controller'
 end
 
-def generate_slave slave,stages
+def generate_slave slave,stages,program
   
   cp = CodePrinter.new
 
@@ -168,7 +151,7 @@ def generate_slave slave,stages
       cp.add "   END;"
     end
     
-    cp << "   IF ((time_in_stage > #{current_stage.min_time}) AND ((green_time_extension <= 0) OR (time_in_stage > #{current_stage.max_time}))) THEN"
+    cp << "   IF ((time_in_stage > #{current_stage.greentime[program].min}) AND ((green_time_extension <= 0) OR (time_in_stage > #{current_stage.greentime[program].max}))) THEN"
     
     if current_stage.wait_for_sync
       cp << "      proceed := mget(#{SWITCH_STAGE_CHANNEL});"
@@ -198,9 +181,4 @@ def generate_slave slave,stages
 
   cp.write(File.join(Vissim_dir,"#{slave.name}.vap"))
   puts "Generated slave controller '#{slave.name}'"
-end
-
-if __FILE__ == $0
-  generate_master
-  SLAVES.each{|slave|generate_slave slave,STAGES[slave.name]}
 end

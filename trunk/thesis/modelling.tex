@@ -6,7 +6,7 @@ COWI's version included ringroad 3 from Jyllingevej to the intersection with hig
 
 The network which is modelled in this project is somewhat large. Vissim maintains a \textit{.inp} file, which contains the most relevant informations necessary to run a simulation including information on links, connectors and routes. This file is plain text and can be modified using simple file input-output operations. To properly insert and manage the traffic data necessary to obtain a correct simulation, the inp file is manipulated by scripts - how I do this is explained below.
 
-\subsection{Modifications \& Additions to Existing Model}
+\subsection{Modifications and additions to existing model}
 
 As such the network was missing four intersections of O3 from Jyllingevej to Roskildevej. To establish this section satellite photos from Google Earth was combined with intersection layouts, kindly provided by DRD.
 
@@ -16,7 +16,7 @@ To prevent side-effects all links not connected to O3 from Herlev Sygehus to Jyl
 
 A number of mistakes were corrected in the definition of the intersections. This was done using layout plans for the intersections from DRD. Most mistakes were related to non-existent turning-lanes (and even turning possibilities) and the placement of bus-only lanes. 
 
-\subsection{Link Inputs}
+\subsection{Link inputs}
 The original network generated traffic load and route choices from OD matrices. For my simulations I had decided to use static inputs and routes from the traffic counts and detector data, analysed in section \ref{data}. 
 
 Link inputs are created on the basis of the detector data from TTS and the traffic counts from DRD. First the traffic counts is used to establish the proportion of cars to trucks for all approaches, except Ejby Torvevej. Then, for the approaches, which were measured upon in the TTS data, I apply detector values rather than traffic count values. This is done using detectors north of Herlev Sygehus in Herlev and from south for the east-, west- and southern approaches to Roskildevej.
@@ -115,7 +115,7 @@ The \verb|Route.new| invocation, which is performed when an exit link is found, 
 
 \clearpage
 
-\subsection{Right-of-Way}
+\subsection{Right-of-way}
 The purpose of a traffic signal is to fairly distribute the right-of-way for conflicting traffic motions.  In spite of this traffic signals cannot overcome all situations and rely on road users to enforce themselves some right-of-way rules. This especially becomes relevant when the capacity of the intersection is reached and vehicles become trapped due to a stage change.
 
 Vissim per default allows "collisions" since overlapping links and connectors must be manually prioritized or marked as a conflict area. The existing network was built using previous versions of Vissim, which only supported priority rules (see Figure \ref{fig:priority_rules}). 
@@ -158,8 +158,7 @@ A number of additional situations arise for which the following rules were used:
 \item Buses leaving bus stops are always prioritized
 \end{enumerate}
 
-
-\subsection{Signal Plans}
+\subsection{Signal plans}
 Signal plans define the stage sequence, green duration and how changes between adjacent stages should happen with respect to colors in the from and to stages. For cycle-based signal plans the cycle time must be equal to the sum of green and interstage time from the beginning of the first stage until it begins again.
 
 A single stage defines the signal head colors of one or more signal group, which, in turn, is a group of signal heads operating synchronously.
@@ -185,7 +184,7 @@ The final plans, which are used in the simulation, can be seen in appendix \ref{
 
 The actual implementation was done in VAP by running the interstages at the cycle second according to the signal plan, for more details refer to section \ref{vap}.
 
-\subsection{Signal Controllers}
+\subsection{Signal controllers}
 \label{signal_details}
 The optimization system (see Section \ref{eval_coord}) needs some additional information on the signal controllers, the distances between intersections and which stages are arterial. This is not immediately available in the Vissim network file but can be deduced.
 

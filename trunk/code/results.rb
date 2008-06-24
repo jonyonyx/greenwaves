@@ -19,7 +19,9 @@ class NodeEvaluation
 end
 class NodeEvals < Array
   
-  def initialize vissim
+  # NodeEvaluation requires a vissim network instance to obtain 
+  # the node evaluation and combine results with the decisions, which are passed
+  def initialize vissim = Vissim.new
     @vissim = vissim
   end
   

@@ -3,6 +3,8 @@ require 'const'
 require 'vap'
 require 'results'
 require 'measurements'
+require 'turningprob'
+require 'vissim_input'
 
 puts "#{Time.now}: BEGIN"
 
@@ -28,118 +30,90 @@ require "#{Project}_tests" # file must define a TESTQUEUE constant list
 
 seeds = numbers(rand(100) + 1, rand(100) + 1, TESTQUEUE.size*RUNS)
 
-calculated_offsets = {} # controller => dogs level => offset
-
-if TESTQUEUE.any?{|test|test[:buspriority]}
-  insert_measurements # bus traveltime measurements
-end
-
-puts "Loading Vissim..."
-
 vissimnet = Vissim.new
 results = NodeEvals.new(vissimnet)
 
-# check if any test needs precalculated offsets
-if TESTQUEUE.any?{|test|test[:use_calculated_offsets]}
-  require 'greenwave_eval'
-  
-  offset_data = [['Area','Signal Controller','DOGS Level','Offset']]
-  
-  [[:herlev, (1..5)], [:glostrup,(9..12)]].each do |area,controller_range|
-    controllers = vissimnet.controllers.find_all{|sc|controller_range === sc.number}
-    
-    controllers.each{|sc| calculated_offsets[sc] = {}}
-          
-    coords = parse_coordinations(controllers, vissimnet)
-    
-    # precalculate new offsets for each valid dogs level
-    (0..DOGS_MAX_LEVEL).each do |dogs_level|
-      print "Calculating offsets in #{area} for DOGS level #{dogs_level}:"
-      solution_candidates = []
-      cycle_time = BASE_CYCLE_TIME + DOGS_TIME * dogs_level
-      SOLVER_ITERATIONS.times do |i| # get a bunch of solutions to choose from for each cycle time
-        print " #{SOLVER_ITERATIONS - i}"
-        
-        problem = CoordinationProblem.new(coords, 
-          :cycle_time => cycle_time,
-          :direction_bias => nil, 
-          :change_probability => {:speed => 0.0, :offset => 1.0})    
-        
-        result = SimulatedAnnealing.new(problem, SOLVER_TIME, 
-          :start_temp => 100.0, 
-          :alpha => 0.90, 
-          :no_improvement_action_threshold => 75
-        ).run
-        
-        solution_candidates << result[:solution]
-      end
-      
-      puts
-      
-      best_solution = solution_candidates.min
-      best_solution.offset.each do |sc,offset|
-        calculated_offsets[sc][dogs_level] = offset
-        offset_data << [area.to_s.capitalize,sc.name,dogs_level,offset]
-      end
-    end
-  end
-  to_xls(offset_data,'offsets',RESULTS_FILE)
-end
-
 processed = 0
-while parms = TESTQUEUE.pop
-  simname = parms[:testname]
-  workdir = File.join(Tempdir, "vissim#{simname.downcase.gsub(/\s+/, '_')}")
-  begin
-    Dir.mkdir workdir
-  rescue
-    # workdir already exists, clear it
-    FileUtils.rm Dir[File.join(workdir,'*')]
-  end
-  
-  Dir.chdir Vissim_dir
-    
-  # copy all relevant files to the instance workdir
-  FileUtils.cp(%w{inp pua knk mdb szp sak}.map{|ext| Dir["*.#{ext}"]}.flatten, workdir)
-        
-  vissim = WIN32OLE.new('VISSIM.Vissim')
-    
-  # load the instance copy of the network
-  tempnet = Dir[File.join(workdir, '*.inp')].first.gsub('/',"\\") # Vissim => picky
-  vissim.LoadNet tempnet
-  vissim.LoadLayout "#{Vissim_dir}speed.ini"
-
-  sim = vissim.Simulation
-
-  sim.Period = SIMULATION_TIME
-  sim.Resolution = RESOLUTION
-  sim.Speed = 0 # maximum speed
-  
-  # creates vap and pua files respecting the simulation parameters
-  generate_controllers vissimnet, parms + 
-    {:verbose => false, :offset => (parms[:use_calculated_offsets] ? calculated_offsets : nil)}, 
-    workdir 
-  
-  print "Vissim running #{RUNS} simulation#{RUNS != 1 ? 's' : ''} of '#{simname}'... "
-  
-  RUNS.times do |i|
-    print "#{i+1} "
-    
-    # setting and incrementing RunIndex causes vissim to store
-    # the results of the consecutive runs in the same table
-    sim.RunIndex = i 
-    sim.RandomSeed = seeds.pop
-    sim.RunContinuous
-  end
-  
-  puts "done"
-  
-  # the results from all runs in this test scenario can now be extracted
-  results.extract_results simname, workdir
+while test = TESTQUEUE.shift
   
   processed += 1
+  
+  # for each time-of-day program in the test
+  test[:programs].each do |program|
+  
+    simname = test[:name]
+    workdir = File.join(Tempdir, "vissim_test_#{processed}_#{program}")
+  
+    begin
+      Dir.mkdir workdir
+    rescue
+      # workdir already exists, clear it
+      FileUtils.rm Dir[File.join(workdir,'*')]
+    end
+    
+    # move into the default vissim directory for this project
+    # or the directory of the requested vissim network in order to copy it to
+    # a temporary location
+    vissim_dir = program.network_dir ? File.join(Base_dir,program.network_dir) : Vissim_dir
+    Dir.chdir(vissim_dir)
+    
+    # copy all relevant files to the instance workdir
+    FileUtils.cp(%w{inp pua knk mdb szp sak}.map{|ext| Dir["*.#{ext}"]}.flatten, workdir)
+    
+    inpfilename = Dir['*.inp'].first # Vissim => picky
+    inppath = File.join(workdir,inpfilename)
 
-  vissim.Exit
+    if not program.network_dir
+      # generate link inputs and routes using the time frame of the test program
+      # write them to the vissim file in the workdir
+      #
+      # its ok to use the vissimnet we loaded previously
+      # as we only change items such as routes and link inputs
+      get_inputs(vissimnet).write(inppath)
+      get_decisions_with_fractions(vissimnet).write(inppath)
+    end
+    
+    vissim = WIN32OLE.new('VISSIM.Vissim')
+    
+    # load the instance copy of the network
+    tempnet = inppath.gsub('/',"\\") # Vissim => picky
+    vissim.LoadNet tempnet
+    #vissim.LoadLayout "#{Vissim_dir}speed.ini"
+
+    sim = vissim.Simulation
+
+    sim.Period = program.duration
+    sim.Resolution = RESOLUTION
+    sim.Speed = 0 # maximum speed
+  
+    if Project == 'dtu'
+      # creates vap and pua files respecting the simulation parameters
+      generate_controllers vissimnet, test + 
+        {:offset => (test[:use_calculated_offsets] ? calculated_offsets : nil)}, 
+        workdir
+    else
+      generate_controllers1 vissimnet, test[:traffic_actuated], program, workdir
+    end
+    
+    print "Vissim running #{RUNS} simulation#{RUNS != 1 ? 's' : ''} of '#{simname}'... "
+    
+    RUNS.times do |i|
+      print "#{i+1} "
+    
+      # setting and incrementing RunIndex causes vissim to store
+      # the results of the consecutive runs in the same table
+      sim.RunIndex = i 
+      sim.RandomSeed = seeds.pop
+      sim.RunContinuous
+    end
+  
+    puts "done"
+  
+    # the results from all runs in this test scenario can now be extracted
+    results.extract_results "#{simname} #{program.name}", workdir
+
+    vissim.Exit
+  end # end for each test program (eg. morning, afternoon)
 end
 
 puts "PREPARING RESULTS - PLEASE WAIT!"
