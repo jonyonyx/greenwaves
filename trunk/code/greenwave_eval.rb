@@ -192,7 +192,8 @@ class SimulatedAnnealing
         iters_with_no_improvement += 1
         if Math.exp(-(neighborval - currentval) / temp) > rand 
           # and maybe even if its not!
-          # (retain neighbor solution as current)
+          # retain neighbor solution as current working solution even though it
+          # is not an overall improvement
           result[:accepted] += 1
         else # undo the change we made / return to previous "current" solution          
           @problem.undo_changes
@@ -209,6 +210,7 @@ class SimulatedAnnealing
           @problem.focus
           action = :focus
         else
+          action = :random_restart
           @problem.random_restart
         
           if @problem.current_value < @problem.encumbent_value
@@ -217,7 +219,6 @@ class SimulatedAnnealing
             @problem.store_encumbent
             result[:action_success][action] += 1
           end
-          action = :random_restart
         end
         
         result[:action_count][action] += 1
@@ -275,6 +276,10 @@ class CoordinationProblem
   SPEED_INCREMENT = 5 / 3.6 # 5KM/H
   SPEED_CHANGE_OPTIONS = [-SPEED_INCREMENT, SPEED_INCREMENT]
   SPEED_CHANGE_OPTIONS_WITH_ZERO = SPEED_CHANGE_OPTIONS + [0]
+  
+  # Random restart: controllers are assigned a random offset
+  # in the current cycle time and allowed speeds for coordinations
+  # are set to the default speed pm 5
   def random_restart
     @controllers.each{|sc| @current_offset[sc] = rand(@current_cycle_time || sc.cycle_time)}
     if @change_probability[:speed].nonzero?
@@ -282,7 +287,7 @@ class CoordinationProblem
         @current_speed[coord] = coord.default_speed + SPEED_CHANGE_OPTIONS_WITH_ZERO.rand
       end
     end
-    full_evaluation
+    full_evaluation # all coordinations change, must do full reevaluation
   end
   # returns focus to encumbent solution
   def focus
@@ -427,8 +432,9 @@ class CoordinationProblem
   end
 end
 
-H = (0..100)
+H = (0..100) # horizon in seconds
 
+# parse all coordinations between the given signal controllers
 def parse_coordinations scs, vissim
   
   # adjust the position of controllers such the left-most one

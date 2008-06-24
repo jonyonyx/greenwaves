@@ -1,9 +1,10 @@
+# scripts used in the parameter tuning of simulated annealing
+
 require 'const'
 require 'greenwave_eval'
-require 'drb'
 require 'ruby_test_server'
 
-TIME = [0.5] # second
+TIME = [0.5] # seconds
 
 ALPHA = [0.9] #[0.8,0.85,0.9,0.95,0.98] # cooldown factors
 TEMP = [100]#,200,300,400,500] # starting temperatures

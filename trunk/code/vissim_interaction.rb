@@ -1,6 +1,5 @@
 
 require 'const'
-require 'win32ole'
 require 'vap'
 require 'results'
 require 'measurements'
@@ -14,7 +13,7 @@ if thorough
   SOLVER_ITERATIONS = 10 # number of times to rerun SA solver, trying to get better solutions
 
   RUNS = 10 # number of simulation runs per test
-  SIMULATION_TIME =  2 * MINUTES_PER_HOUR * Seconds_per_minute # simulation seconds  
+  SIMULATION_TIME = END_TIME - START_TIME # simulation seconds  
   RESOLUTION = 10 # steps per simulation second
 else
   SOLVER_TIME = 1 # seconds
@@ -25,20 +24,13 @@ else
   RESOLUTION = 5 # steps per simulation second
 end
 
-testqueue = [
-  #{:testname => 'DOGS with bus priority', :dogs_enabled => true, :buspriority => true},
-  {:testname => 'DOGS', :dogs_enabled => true},
-  #{:testname => 'Basic program with bus priority', :buspriority => true},
-  {:testname => 'Basic program'},
-  #{:testname => 'Modified DOGS with bus priority', :dogs_enabled => true, :use_calculated_offsets => true, :bus_priority => true},
-  {:testname => 'Modified DOGS', :dogs_enabled => true, :use_calculated_offsets => true}
-]
+require "#{Project}_tests" # file must define a TESTQUEUE constant list
 
-seeds = numbers(rand(100) + 1, rand(100) + 1, testqueue.size*RUNS)
+seeds = numbers(rand(100) + 1, rand(100) + 1, TESTQUEUE.size*RUNS)
 
 calculated_offsets = {} # controller => dogs level => offset
 
-if testqueue.any?{|test|test[:buspriority]}
+if TESTQUEUE.any?{|test|test[:buspriority]}
   insert_measurements # bus traveltime measurements
 end
 
@@ -48,7 +40,7 @@ vissimnet = Vissim.new
 results = NodeEvals.new(vissimnet)
 
 # check if any test needs precalculated offsets
-if testqueue.any?{|test|test[:use_calculated_offsets]}
+if TESTQUEUE.any?{|test|test[:use_calculated_offsets]}
   require 'greenwave_eval'
   
   offset_data = [['Area','Signal Controller','DOGS Level','Offset']]
@@ -95,7 +87,7 @@ if testqueue.any?{|test|test[:use_calculated_offsets]}
 end
 
 processed = 0
-while parms = testqueue.pop
+while parms = TESTQUEUE.pop
   simname = parms[:testname]
   workdir = File.join(Tempdir, "vissim#{simname.downcase.gsub(/\s+/, '_')}")
   begin
@@ -132,13 +124,17 @@ while parms = testqueue.pop
   
   RUNS.times do |i|
     print "#{i+1} "
-    sim.RunIndex = i
+    
+    # setting and incrementing RunIndex causes vissim to store
+    # the results of the consecutive runs in the same table
+    sim.RunIndex = i 
     sim.RandomSeed = seeds.pop
     sim.RunContinuous
   end
   
   puts "done"
   
+  # the results from all runs in this test scenario can now be extracted
   results.extract_results simname, workdir
   
   processed += 1

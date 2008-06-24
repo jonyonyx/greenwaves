@@ -1,10 +1,8 @@
-# 
 # collect results from vissim results .mdb file
 
 require 'const'
 require 'vissim'
 require 'vissim_routes'
-require 'win32ole'
 
 class NodeEvaluation
   attr_reader :testname, :node, :results, :fromlink, :tolink, :tstart, :tend
@@ -45,9 +43,10 @@ class NodeEvals < Array
             WHERE MOVEMENT <> 'All'
             GROUP BY NODE, FROMLINK, TOLINK, TSTART, TEND"
   
-  def extract_results name, resdir
+  # called after each vissim test has been repeated a number of times
+  def extract_results testname, testdir
     
-    for row in exec_query(NODEEVALSQL, "#{CSPREFIX}#{File.join(resdir,'results.mdb')};")
+    for row in exec_query(NODEEVALSQL, "#{CSPREFIX}#{File.join(testdir,'results.mdb')};")
     
       # find the traveltime entry in order to gain additional insight
       node = @vissim.nodes.find{|n| n.number == row['NODE']}
@@ -58,7 +57,7 @@ class NodeEvals < Array
       results = {}
       COLS_TO_HEADERS.each{|k,h| results[k] = row[k]}
       
-      self << NodeEvaluation.new(name, node, fromlink, tolink, row['TSTART'], row['TEND'], results)
+      self << NodeEvaluation.new(testname, node, fromlink, tolink, row['TSTART'], row['TEND'], results)
     end
   end
   def to_a
@@ -86,6 +85,8 @@ class NodeEvals < Array
       intersection = insect_info.find{|r| r[:number] == decision.intersection}[:name]
             
       # 'arterial' traffic exits in either end of the arterial
+      # 'minor road' traffic comes from the minor roads and cross or turn in on
+      # the artery
       traffic_type = if ARTERY_DIRECTIONS.include?(decision.from_direction) and decision.turning_motion == 'T'
         'Arterial'
       else

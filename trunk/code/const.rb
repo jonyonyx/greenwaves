@@ -44,6 +44,7 @@ ENABLE_VAP_TRACING = {:master => false, :slave => false} # write trace statement
 #PERIOD_START, PERIOD_END = '15:15', '17:00'
 PERIOD_START, PERIOD_END = '7:15', '9:00'
 START_TIME = Time.parse('7:00') # for counting seconds
+END_TIME = Time.parse('9:00')
 
 require 'dbi'
 require 'fileutils'
