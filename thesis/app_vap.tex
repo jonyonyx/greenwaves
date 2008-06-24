@@ -5,7 +5,7 @@ Below I have inserted examples of the master and slave VAP codes. As they are au
 
 The other slaves are generated using the signal plans I received from DRD (non-traffic actuated versions) as seen in appendix \ref{app:signalplans}. 
 
-\subsection{Example: DOGS Master}
+\subsection{Example: DOGS master}
 In Table \ref{tab:thvals} are the detector values used.
 
 \begin{table}[ht]
@@ -31,7 +31,7 @@ DOGS and modified DOGS are only different in the number of levels which must be 
 
 \lstinputlisting{DOGS_MASTER_HERLEV.vap}
 
-\subsection{Example: DOGS Slave}
+\subsection{Example: DOGS slave}
 For the slaves again the only difference between original and modified DOGS is that the offset is set per DOGS level in modified DOGS slaves. In Table \ref{tab:offset_values} are the offset values used in when simulating DOGS and \ref{tab:offset_values_modified} are the per-level offsets used in simulation of modified DOGS.
 
 \begin{table}[ht]
@@ -73,3 +73,8 @@ Glostrup & 12 & Roskildevej & 67 & 37 & 37 & 97 & 37\\
 \clearpage
 
 \lstinputlisting{herlev_hovedgade.vap}
+
+\subsection{Example: bus priority}
+Finally here is an example of the basic program for Fabriksparken with bus priority.
+
+\lstinputlisting{fabriksparken.vap}

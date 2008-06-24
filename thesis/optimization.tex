@@ -122,7 +122,7 @@ When the distance from an intersection to the upstream intersection is short (eg
 
 To favorize good coordination between closely distanced intersection I have chosen to use weights.  I have opted to not statically classify what is close and what is not but rather rank the distances of all coordinations between adjacent intersections and set the weight of imperfections accordingly. The effect is that flaws in coordinations between close intersections adds more to the total solution value than for the same flaws at widely spaced intersections and thus the minimization problem solver is guided toward favorizing coordination between close intersections.
 
-\subsection{Metaheuristic Search}
+\subsection{Metaheuristic search}
 DRD has traditionally used TRANSYT to obtain coordination. TRANSYT employs a genetic algorithm to finds its solutions but often it is necessary to manually adjust the offsets in order to obtain a good two-way coordination or to give preference to some direction. 
 
 This manual process involves creating good two-way green waves by compromise, which could be either some sacrifice in the quality of the green waves. 

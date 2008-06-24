@@ -126,9 +126,8 @@ class Vissim
         CLNG([Red End]) As red_end, 
         CLNG([Green End]) As green_end
        FROM [plans$] As PLANS
-       INNER JOIN [intersections$] As INSECTS ON PLANS.Intersection = INSECTS.Name
-       WHERE PLANS.PROGRAM = '#{PROGRAM}'"].all      
-    rescue; []; end # No signal plans found
+       INNER JOIN [intersections$] As INSECTS ON PLANS.Intersection = INSECTS.Name"].all      
+    rescue Exception => e; puts e.message; []; end # No signal plans found
     
     scinfo = begin
       DB["SELECT 
@@ -189,9 +188,10 @@ class Vissim
       scrow = scinfo.find{|r| r[:isnum] == sc.number}      
       sc.update(scrow.retain_keys!(:cycle_time, :offset)) if scrow
       
-      for row in plans.find_all{|r| r[:isnum] == sc.number}
+      for row in plans.find_all{|r| r[:isnum] == sc.number}      
+        grp.update(:program => {}) if not grp.respond_to?(:program)
         grp = sc.group(row[:grpnum])
-        grp.update(row.retain_keys!(:red_end, :green_end, :priority))
+        grp.program[row[:program]] = row.retain_keys!(:red_end, :green_end, :priority)        
       end
       
       @controllers << sc
@@ -343,7 +343,7 @@ if __FILE__ == $0
   rows = [['#','Name','Date Counted']]
   DB['SELECT name, CLNG(number) as num, count_date FROM [intersections$] ORDER BY number'].each do |row|
     rows << [row[:num], row[:name], row[:count_date] ?
-      Time.parse(row[:count_date].split(' ').first).strftime("%d-%m-%Y") : '-']
+        Time.parse(row[:count_date].split(' ').first).strftime("%d-%m-%Y") : '-']
   end
   
   #puts rows.inspect  

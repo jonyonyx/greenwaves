@@ -4,12 +4,11 @@
 require 'rubygems'
 require 'sequel'
 
-require "#{ARGV.first || 'thesis'}_settings" # load project specific constants
-
 CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source="
 
+require "#{ARGV.first || 'thesis'}_settings" # load project specific constants
+
 Tempdir = ENV['TEMP'].gsub("\\",'/')
-Data_dir = "#{Base_dir}data\\"
 Default_network = "#{Vissim_dir}#{Network_name}"
   
 Time_fmt = '%H:%M:%S'
@@ -31,12 +30,8 @@ Cars_and_trucks = Type_map.map{|k,v| Cars_and_trucks_str1.include?(k) ? v : nil}
 EPS = 0.01
 ANNUAL_INCREASE = 1.005 # used in input generation for scaling
 BASE_CYCLE_TIME = 80 # seconds
-DATAFILE = "#{Data_dir}data.xls" # main data file containing counts, sgp's, you name it
+DATAFILE = File.join(Base_dir,'data',"data.xls") # main data file containing counts, sgp's, you name it
 CS = "#{CSPREFIX}#{DATAFILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\""
-CSVCS = "#{CSPREFIX}#{Data_dir};Extended Properties=\"Text;HDR=YES;FTM=Delimited\""
-CSRESDB = "#{CSPREFIX}#{Vissim_dir}results.mdb"
-Accname = "acc_#{Res}m.csv"
-ACCFILE = "#{Data_dir}#{Accname}"
 ENABLE_VAP_TRACING = {:master => false, :slave => false} # write trace statements in vap code?
 
 # the following is used in input and route generation
@@ -197,4 +192,8 @@ class Integer
     return 1 if self <= 1
     (1..self).inject { |i,j| i*j }
   end
+end
+
+if __FILE__ == $0
+  puts Project
 end

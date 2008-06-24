@@ -299,17 +299,19 @@ def gen_vap sc, outputdir, offset
       end
     end
     cp.add '   END'
-    cp.add "END;"
+    cp.add "END"
   end
   
-  # checks for missed interstage runs due to dogs level downshifts
-  # note this will cause unexpected signal changes (red/amber -> red)
-  # if the simulation resolution is 1 step per sim second or worse (less)
-  for i in (1...uniq_stages.length)
-    prev, cur =  uniq_stages[i-1], uniq_stages[i]
-    cp << "IF stga(#{prev}) AND (T > (stage#{prev}_end + isl(#{prev},#{cur}))) AND ((T + #{MIN_STAGE_LENGTH}) < stage#{cur}_end) THEN"
-    cp.add "  GOTO IS#{prev}_#{cur};"
-    cp.add "END#{(i < uniq_stages.length-1) ? ';' : ''}"
+  if Project == 'dtu'
+    # checks for missed interstage runs due to dogs level downshifts
+    # note this will cause unexpected signal changes (red/amber -> red)
+    # if the simulation resolution is 1 step per sim second or worse (less)
+    for i in (1...uniq_stages.length)
+      prev, cur =  uniq_stages[i-1], uniq_stages[i]
+      cp << "#{i == 1 ? ';' : ''}IF stga(#{prev}) AND (T > (stage#{prev}_end + isl(#{prev},#{cur}))) AND ((T + #{MIN_STAGE_LENGTH}) < stage#{cur}_end) THEN"
+      cp.add "  GOTO IS#{prev}_#{cur};"
+      cp.add "END#{(i < uniq_stages.length-1) ? ';' : ''}"
+    end
   end
   cp.add_verb 'PROG_ENDE:    .'
   

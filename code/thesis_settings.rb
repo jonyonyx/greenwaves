@@ -36,10 +36,8 @@ Type_map = {:cars => 1001, :trucks => 1002, :buses => 1003}
 RESULTS_FILE = "#{Base_dir}results\\results.xls"
 RESULTS_FILE_CS = "#{CSPREFIX}#{RESULTS_FILE};Extended Properties=\"Excel 8.0;HDR=Yes;IMEX=1\""
   
-  
 Project = 'dtu'
 
-
-Herlev_dir = "#{Data_dir}DOGS Herlev 2007\\"
-Glostrup_dir = "#{Data_dir}DOGS Glostrup 2007\\"
+Herlev_dir = File.join(Base_dir,'data',"DOGS Herlev 2007")
+Glostrup_dir = File.join(Base_dir,'data',"DOGS Glostrup 2007")
 MIN_STAGE_LENGTH = 6 # used when DOGS changes level and a stage jump maybe be considered

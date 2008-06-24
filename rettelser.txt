@@ -3,4 +3,4 @@ perspektiv: forhindring af spillback
 speed-flow og offset hastigheder
 dogs går aldrig over level 5
 dogs enable threshold under først niveau
-eksempel på vap med busprioritet
+OK eksempel på vap med busprioritet
