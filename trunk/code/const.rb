@@ -9,7 +9,7 @@ CSPREFIX = "DBI:ADO:Provider=Microsoft.Jet.OLEDB.4.0;Data Source="
 require "#{ARGV.first || 'thesis'}_settings" # load project specific constants
 
 Tempdir = ENV['TEMP'].gsub("\\",'/')
-Default_network = "#{Vissim_dir}#{Network_name}"
+Default_network = File.join(Vissim_dir,Network_name)
   
 Time_fmt = '%H:%M:%S'
 EU_date_fmt = '%d-%m-%Y'
@@ -80,6 +80,11 @@ def linspace(from,step,limit)
   from.step(limit,step){|x| a << x}
   a
 end
+class Time
+  def to_hm
+    strftime "%H:%M"
+  end
+end
 def numbers(from,step,count)
   linspace(from,step,(count - 1) * step + from)
 end
@@ -105,7 +110,7 @@ def to_xls rows, sheetname, xlsfile
     
     wb.Save
   rescue Exception => e
-    raise(e, "Failed to write #{rows.size} rows and #{rows.first.size} columns")
+    raise(e, "Failed to write #{rows.size} rows and #{rows.first.size} columns to sheet '#{sheetname}' of excel file '#{xlsfile}'")
   ensure
     excel.DisplayAlerts = false # avoid excel nag to save book
     excel.Quit

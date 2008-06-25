@@ -4,6 +4,7 @@ require 'signal'
 require 'vissim_elem'
 require 'vissim_distance'
 require 'vissim_routes'
+require 'vissim_input'
 
 # vissim element names. match anything that isn't the last quotation mark
 NAMEPATTERN = '\"([^\"]*)\"'
@@ -16,11 +17,12 @@ SECTION_PARSERS = {
   'Links' => :parse_links, 
   'Connectors' => :parse_connectors, 
   'Signal Controllers (SC)' => :parse_controllers,
-  'Nodes' => :parse_nodes
+  'Nodes' => :parse_nodes,
+  'Inputs' => :parse_inputs
 }
 
 class Vissim
-  attr_reader :connectors,:decisions,:controllers,:nodes
+  attr_reader :connectors,:decisions,:controllers,:nodes,:inputs
   def initialize inpfile = Default_network
     inp = IO.readlines(inpfile).map!{|link| link.strip}.delete_if{|link| link.empty?}
       
@@ -189,7 +191,6 @@ class Vissim
       sc_program = {}
       for program in scrows.map{|r|r[:program]}.uniq
         settings = scrows.find{|r|r[:program] == program}
-        #puts "#{program}: #{settings.inspect}"
         sc_program[program] = settings.retain_keys!(:cycle_time,:offset)
       end
       
@@ -199,10 +200,7 @@ class Vissim
         grp_program = {} # 
         for row in plans.find_all{|r| r[:isnum] == sc.number and r[:grpnum] == grp.number}
           grp_program[row[:program]] = row.retain_keys!(:red_end, :green_end, :priority)
-        end
-        
-        #puts "#{sc.name} #{grp.name}: #{grp_program.inspect}"
-         
+        end         
         grp.update(:program => grp_program) unless grp_program.empty?
       end
       
@@ -325,8 +323,11 @@ class Vissim
     
     # enrich the existing link objects with data from the database
     DB[link_is_sql].each do |row|
-      link = link(row[:number]) || 
-        raise("Link number #{row[:number]} was marked as an input link, but could not be found!")
+      link = link(row[:number])
+      if not link
+        puts("Warning: link number #{row[:number]} was marked as an input link, but could not be found!")
+        next
+      end
       link.update(row.retain_keys!(:from_direction, :intersection_number, :link_type))
     end
     
@@ -348,15 +349,28 @@ class Vissim
     str << "Total knots (over-points): #{(@connectors+links).map{|rs|rs.over_points.size}.sum}"
     str
   end
+  def parse_inputs inp
+    @inputs = Inputs.new
+    while line = inp.shift
+      next unless line =~ /INPUT (\d+)/
+      inp.shift # skip NAME, LABEL line
+      inp.shift =~ /LINK (\d+) Q (\d+\.\d+) COMPOSITION (\d+)/
+      linknum = $1.to_i
+      quantity = $2.to_f
+      comp = $3.to_i
+      inp.shift =~ /TIME FROM (\d+)\.0 UNTIL (\d+)\.0/
+      @inputs << Input.new(link(linknum),$1.to_i,$2.to_i,comp => quantity)
+    end
+  end
 end
 
 if __FILE__ == $0
   vissim = Vissim.new
-  vissim.controllers_with_plans.each do |sc|
-    for grp in sc.groups
-      puts grp.program
-    end
-  end
+  #  vissim.controllers_with_plans.each do |sc|
+  #    for grp in sc.groups
+  #      puts grp.program
+  #    end
+  #  end
   #  rows = [['#','Name','Date Counted']]
   #  DB['SELECT name, CLNG(number) as num, count_date FROM [intersections$] ORDER BY number'].each do |row|
   #    rows << [row[:num], row[:name], row[:count_date] ?

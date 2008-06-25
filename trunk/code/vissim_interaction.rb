@@ -8,21 +8,19 @@ require 'vissim_input'
 
 puts "#{Time.now}: BEGIN"
 
-thorough = true # false => quick test
+thorough = false # false => quick test
 
 if thorough
   SOLVER_TIME = 2 # seconds
   SOLVER_ITERATIONS = 10 # number of times to rerun SA solver, trying to get better solutions
 
   RUNS = 10 # number of simulation runs per test
-  SIMULATION_TIME = END_TIME - START_TIME # simulation seconds  
   RESOLUTION = 10 # steps per simulation second
 else
   SOLVER_TIME = 1 # seconds
   SOLVER_ITERATIONS = 1 # number of times to rerun SA solver, trying to get better solutions
 
   RUNS = 1 # number of simulation runs per test
-  SIMULATION_TIME =  1200 
   RESOLUTION = 5 # steps per simulation second
 end
 
@@ -42,7 +40,7 @@ while test = TESTQUEUE.shift
   test[:programs].each do |program|
   
     simname = test[:name]
-    workdir = File.join(Tempdir, "vissim_test_#{processed}_#{program}")
+    workdir = File.join(Tempdir, "vissim_scenario#{processed}_#{program.to_s.downcase}")
   
     begin
       Dir.mkdir workdir
@@ -58,27 +56,17 @@ while test = TESTQUEUE.shift
     Dir.chdir(vissim_dir)
     
     # copy all relevant files to the instance workdir
-    FileUtils.cp(%w{inp pua knk mdb szp sak}.map{|ext| Dir["*.#{ext}"]}.flatten, workdir)
+    FileUtils.cp(%w{inp pua knk mdb szp sak fzi}.map{|ext| Dir["*.#{ext}"]}.flatten, workdir)
     
     inpfilename = Dir['*.inp'].first # Vissim => picky
     inppath = File.join(workdir,inpfilename)
-
-    if not program.network_dir
-      # generate link inputs and routes using the time frame of the test program
-      # write them to the vissim file in the workdir
-      #
-      # its ok to use the vissimnet we loaded previously
-      # as we only change items such as routes and link inputs
-      get_inputs(vissimnet).write(inppath)
-      get_decisions_with_fractions(vissimnet).write(inppath)
-    end
     
     vissim = WIN32OLE.new('VISSIM.Vissim')
     
     # load the instance copy of the network
     tempnet = inppath.gsub('/',"\\") # Vissim => picky
     vissim.LoadNet tempnet
-    #vissim.LoadLayout "#{Vissim_dir}speed.ini"
+    vissim.LoadLayout File.join(Vissim_dir,'speed.ini') # speed AND evaluation conf
 
     sim = vissim.Simulation
 
@@ -92,7 +80,7 @@ while test = TESTQUEUE.shift
         {:offset => (test[:use_calculated_offsets] ? calculated_offsets : nil)}, 
         workdir
     else
-      generate_controllers1 vissimnet, test[:traffic_actuated], program, workdir
+      setup_test vissimnet, test[:traffic_actuated], program, workdir
     end
     
     print "Vissim running #{RUNS} simulation#{RUNS != 1 ? 's' : ''} of '#{simname}'... "
