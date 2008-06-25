@@ -142,16 +142,16 @@ end
 Replacement = {221 => 'ae', 248 => 'oe', 206 => 'aa'} # be sure to use character codes for non-ascii chars
   
 # Below is code for generating a DOGS SLAVE controller in VAP
-def gen_vap sc, outputdir, offset
+def gen_vap sc, outputdir, program_name, offset = nil
   cp = CodePrinter.new
   
   cp.add_verb get_generated_info  
   
   name = sc.name.downcase.gsub(' ','_')
-  cp.add_verb "PROGRAM #{name.gsub(/[^a-z]/){ |match| Replacement[match.to_s[0]]}}; /* #{sc.program} */"
+  cp.add_verb "PROGRAM #{name.gsub(/[^a-z]/){ |match| Replacement[match.to_s[0]]}}; /* #{program_name} */"
   cp.add_verb ''
   
-  stages = sc.stages
+  stages = sc.stages(program_name)
   
   uniq_stages = stages.uniq.find_all{|s| s.instance_of? Stage}
   
@@ -178,7 +178,8 @@ def gen_vap sc, outputdir, offset
   end
   # unless there are cycle times per dogs level, use the transyt cycle times, which are
   # stored in the signal controller
-  cp.add_verb "\tBASE_CYCLE_TIME = #{sc.cycle_time}" + (Hash === offset ? '' : ",\n\tOFFSET = #{offset}") + ";"
+  cp.add_verb "\tBASE_CYCLE_TIME = #{sc.program[program_name][:cycle_time]}" + 
+    (Hash === offset ? '' : ",\n\tOFFSET = #{sc.program[program_name][:offset]}") + ";"
   cp.add_verb ''
   
   if USEDOGS    
@@ -299,7 +300,7 @@ def gen_vap sc, outputdir, offset
       end
     end
     cp.add '   END'
-    cp.add "END"
+    cp.add "END" + ((Project != 'dtu' and i < uniq_stages.length-1) ? ';' : '')
   end
   
   if Project == 'dtu'
@@ -318,7 +319,7 @@ def gen_vap sc, outputdir, offset
   cp.write File.join(outputdir, "#{name}.vap")
 end
 
-def gen_pua sc, outputdir
+def gen_pua sc, outputdir, program_name
   cp = CodePrinter.new
   cp.add_verb '$SIGNAL_GROUPS'
   cp.add_verb '$'
@@ -330,7 +331,7 @@ def gen_pua sc, outputdir
   cp.add_verb '$STAGES'
   cp.add_verb '$'
   
-  stages = sc.stages
+  stages = sc.stages program_name
   uniq_stages = stages.uniq.find_all{|s| s.instance_of? Stage}
   
   for stage in uniq_stages
@@ -345,7 +346,7 @@ def gen_pua sc, outputdir
   cp.add_verb ''  
   
   isnum = 0
-  for t in (2..sc.cycle_time)
+  for t in (2..sc.program[program_name][:cycle_time])
     next unless stages[t-1] != stages[t] and stages[t-1].instance_of?(Stage)
     isnum += 1
     cp.add_verb "$INTERSTAGE#{isnum}"
@@ -372,7 +373,7 @@ def gen_pua sc, outputdir
       for grp in sc.groups
         # compare the colors of the previous and current heads
         tp = t + it
-        case [grp.color(tp),grp.color(tp+1)]
+        case [grp.color(tp,program_name),grp.color(tp+1,program_name)]
         when [AMBER,AMBER]
           # this is the 2nd amber second, red ended 2 secs ago
           cp.add_verb "#{grp.name}\t#{it - 1}\t127"

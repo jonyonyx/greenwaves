@@ -13,6 +13,7 @@ end
 MORNING = TestPrograms.new! :name => 'Morgen', :from => Time.parse('7:00'), :to => Time.parse('9:00')
 DAY = TestPrograms.new! :name => 'Dag', :from => Time.parse('12:00'), :to => Time.parse('13:00'), :network_dir => 'dagstrafik'
 AFTERNOON = TestPrograms.new! :name => 'Eftermiddag', :from => Time.parse('15:00'), :to => Time.parse('17:00')
+FIXED_TIME_PROGRAM_NAME = {'Morgen' => 'M80', 'Dag' => 'D60', 'Eftermiddag' => 'E80'}
 
 TESTQUEUE = [
   {
@@ -35,9 +36,8 @@ TESTQUEUE = [
     :programs => [MORNING,AFTERNOON], 
     :signal_scheme => 1
   }, {
-    :name => 'Højere omløbstid (100s)', 
-    :programs => [MORNING,AFTERNOON], 
-    :signal_scheme => 1
+    :name => 'Fast tidsstying med højere omløbstid (100s)', 
+    :programs => [MORNING,AFTERNOON]
   }, {
     :name => 'Længere grøntid til venstresving', 
     :programs => [MORNING,AFTERNOON], 
@@ -82,12 +82,13 @@ def generate_controllers1(vissim, is_traffic_actuated, program, output_dir)
     SLAVES.each{|slave|generate_slave(slave,STAGES[slave.name],program)}
   else
     vissim.controllers_with_plans.each do |sc|
-      gen_vap sc, output_dir, sc.offset
-      gen_pua sc, output_dir
+      puts "#{sc.name}"
+      gen_vap sc, output_dir, FIXED_TIME_PROGRAM_NAME[program.name]
+      gen_pua sc, output_dir, FIXED_TIME_PROGRAM_NAME[program.name]
     end
   end
 end
 
 if __FILE__ == $0
-  generate_controllers1(Vissim.new, false, AFTERNOON, Vissim_dir)
+  generate_controllers1(Vissim.new, true, AFTERNOON, Vissim_dir)
 end

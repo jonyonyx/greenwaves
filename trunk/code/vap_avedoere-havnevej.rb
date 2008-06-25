@@ -1,7 +1,7 @@
 require 'vap'
 
 class ExtendableStage
-  attr_reader :name, :number, :time, :min_time, :max_time, :wait_for_sync, :shares_time_with_previous
+  attr_reader :name, :number, :time, :min_time, :max_time, :wait_for_sync, :greentime
   def extendable?
     not [@min_time,@max_time].any?{|t|t.nil?}
   end
@@ -151,7 +151,14 @@ def generate_slave slave,stages,program
       cp.add "   END;"
     end
     
-    cp << "   IF ((time_in_stage > #{current_stage.greentime[program].min}) AND ((green_time_extension <= 0) OR (time_in_stage > #{current_stage.greentime[program].max}))) THEN"
+    adjust_cur_isl = (current_stage.wait_for_sync ? " - isl(#{current_stage.number-1},#{current_stage.number})" : '')
+    tmin,tmax = current_stage.greentime[program].min, current_stage.greentime[program].max
+    
+    cp << "   IF (time_in_stage > " + 
+      (adjust_cur_isl.empty? ? tmin.to_s : "(#{tmin}#{adjust_cur_isl})") + ') ' +
+      "AND ((green_time_extension <= 0) OR " +
+      "(time_in_stage > " +       
+      (adjust_cur_isl.empty? ? tmax.to_s : "(#{tmax}#{adjust_cur_isl})") + ')) THEN'
     
     if current_stage.wait_for_sync
       cp << "      proceed := mget(#{SWITCH_STAGE_CHANNEL});"
@@ -164,12 +171,10 @@ def generate_slave slave,stages,program
       cp << "         mput(#{slave.in_stage_channel},#{WAITING_FOR_SYNC}); /* waiting for synchronization */"
       cp.add "      END;"
       cp.add "      GOTO PROG_ENDE;"
-    else    
+    else
       cp << "      is(#{current_stage.number},#{next_stage.number});"    
       cp << "      green_time_extension := 0;"
-      unless next_stage.shares_time_with_previous
-        cp << "      time_in_stage := 0;"
-      end
+      cp << "      time_in_stage := 0;"
       cp.add "      GOTO PROG_ENDE;"
     end
     

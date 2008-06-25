@@ -131,13 +131,13 @@ class Vissim
     
     scinfo = begin
       DB["SELECT 
+        OFFSETS.program,
         CLNG(INSECTS.Number) As isnum,
         CLNG(PROGRAMS.[Cycle Time]) As cycle_time,
         CLNG(offset) as offset
        FROM (([offsets$] As OFFSETS
        INNER JOIN [intersections$] As INSECTS ON INSECTS.Name = OFFSETS.Intersection)
-       INNER JOIN [programs$] AS PROGRAMS ON OFFSETS.Program = PROGRAMS.Name)
-       WHERE OFFSETS.PROGRAM = '#{PROGRAM}'"].all
+       INNER JOIN [programs$] AS PROGRAMS ON OFFSETS.Program = PROGRAMS.Name)"].all
     rescue Exception => e; puts e.message; []; end # No signal controllers found
     
     @controllers = []   
@@ -185,13 +185,25 @@ class Vissim
       end
       
       # enrich this signal controller with signal plans, if any            
-      scrow = scinfo.find{|r| r[:isnum] == sc.number}      
-      sc.update(scrow.retain_keys!(:cycle_time, :offset)) if scrow
+      scrows = scinfo.find_all{|r| r[:isnum] == sc.number} # row for sc for each program (cycle time, ...)
+      sc_program = {}
+      for program in scrows.map{|r|r[:program]}.uniq
+        settings = scrows.find{|r|r[:program] == program}
+        #puts "#{program}: #{settings.inspect}"
+        sc_program[program] = settings.retain_keys!(:cycle_time,:offset)
+      end
       
-      for row in plans.find_all{|r| r[:isnum] == sc.number}      
-        grp.update(:program => {}) if not grp.respond_to?(:program)
-        grp = sc.group(row[:grpnum])
-        grp.program[row[:program]] = row.retain_keys!(:red_end, :green_end, :priority)        
+      sc.update :program => sc_program unless sc_program.empty?      
+      
+      for grp in sc.groups
+        grp_program = {} # 
+        for row in plans.find_all{|r| r[:isnum] == sc.number and r[:grpnum] == grp.number}
+          grp_program[row[:program]] = row.retain_keys!(:red_end, :green_end, :priority)
+        end
+        
+        #puts "#{sc.name} #{grp.name}: #{grp_program.inspect}"
+         
+        grp.update(:program => grp_program) unless grp_program.empty?
       end
       
       @controllers << sc
@@ -340,12 +352,15 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new
-  rows = [['#','Name','Date Counted']]
-  DB['SELECT name, CLNG(number) as num, count_date FROM [intersections$] ORDER BY number'].each do |row|
-    rows << [row[:num], row[:name], row[:count_date] ?
-        Time.parse(row[:count_date].split(' ').first).strftime("%d-%m-%Y") : '-']
+  vissim.controllers_with_plans.each do |sc|
+    for grp in sc.groups
+      puts grp.program
+    end
   end
-  
-  #puts rows.inspect  
-  puts to_tex(rows,:row_sep => "\r", :caption => 'Groups for main traffic direction as perceived by traffic signal designer', :label => 'tab:traffic_counts')
+  #  rows = [['#','Name','Date Counted']]
+  #  DB['SELECT name, CLNG(number) as num, count_date FROM [intersections$] ORDER BY number'].each do |row|
+  #    rows << [row[:num], row[:name], row[:count_date] ?
+  #        Time.parse(row[:count_date].split(' ').first).strftime("%d-%m-%Y") : '-']
+  #  end
+  #  puts to_tex(rows,:row_sep => "\r", :caption => 'Groups for main traffic direction as perceived by traffic signal designer', :label => 'tab:traffic_counts')
 end
