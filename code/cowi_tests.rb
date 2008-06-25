@@ -1,7 +1,9 @@
 require 'const'
+require 'vissim_input'
+require 'turningprob'
 
 class TestPrograms
-  attr_reader :name,:from,:to
+  attr_reader :name,:from,:to, :network_dir
   def duration
     @to - @from
   end
@@ -10,9 +12,9 @@ class TestPrograms
   end
 end
 
-MORNING = TestPrograms.new! :name => 'Morgen', :from => Time.parse('7:00'), :to => Time.parse('9:00')
-DAY = TestPrograms.new! :name => 'Dag', :from => Time.parse('12:00'), :to => Time.parse('13:00'), :network_dir => 'dagstrafik'
-AFTERNOON = TestPrograms.new! :name => 'Eftermiddag', :from => Time.parse('15:00'), :to => Time.parse('17:00')
+MORNING = TestPrograms.new! :name => 'Morgen', :from => Time.parse('6:45'), :to => Time.parse('9:00')
+DAY = TestPrograms.new! :name => 'Dag', :from => Time.parse('11:00'), :to => Time.parse('13:00'), :network_dir => 'dagstrafik'
+AFTERNOON = TestPrograms.new! :name => 'Eftermiddag', :from => Time.parse('14:45'), :to => Time.parse('17:00')
 FIXED_TIME_PROGRAM_NAME = {'Morgen' => 'M80', 'Dag' => 'D60', 'Eftermiddag' => 'E80'}
 
 TESTQUEUE = [
@@ -76,13 +78,25 @@ STAGES = {
   ]
 }
 
-def generate_controllers1(vissim, is_traffic_actuated, program, output_dir)
+# prepare link inputs, routing decisions and signal controllers before the test is run
+def setup_test(vissim, is_traffic_actuated, program, output_dir)  
+  Dir.chdir output_dir
+  inpname = Dir['*.inp'].first  
+  raise "INP file not found in '#{output_dir}'" unless inpname
+  inppath = File.join(output_dir,inpname)
+  
+  # generate link inputs and routes using the time frame of the test program
+  # write them to the vissim file in the workdir
+  get_inputs(vissim,program).write(inppath)
+  get_routing_decisions(vissim,program).write(inppath)
+  
   if is_traffic_actuated 
     generate_master output_dir
     SLAVES.each{|slave|generate_slave(slave,STAGES[slave.name],program)}
   else
+    # copy 'a' master program to avoid a nag - it is not used
+    FileUtils.cp(File.join(Vissim_dir,'master.vap'), output_dir) 
     vissim.controllers_with_plans.each do |sc|
-      puts "#{sc.name}"
       gen_vap sc, output_dir, FIXED_TIME_PROGRAM_NAME[program.name]
       gen_pua sc, output_dir, FIXED_TIME_PROGRAM_NAME[program.name]
     end
@@ -90,5 +104,5 @@ def generate_controllers1(vissim, is_traffic_actuated, program, output_dir)
 end
 
 if __FILE__ == $0
-  generate_controllers1(Vissim.new, true, AFTERNOON, Vissim_dir)
+  setup_test(Vissim.new, true, DAY, Vissim_dir)
 end

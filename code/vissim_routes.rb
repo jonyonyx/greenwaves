@@ -87,8 +87,8 @@ class Vissim
   # routes are found or there are multiple routes
   def find_route start,dest
     routes = find_routes(start,dest)
-    raise "No route from #{from} to #{to}!" if routes.empty?
-    raise "Multiple routes from #{from} to #{to}!" if routes.size > 1
+    raise "No route from #{start} to #{dest}!" if routes.empty?
+    raise "Multiple routes from #{start} to #{dest}!" if routes.size > 1
     routes.first
   end
 

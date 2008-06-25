@@ -52,6 +52,9 @@ class RoutingDecision
   end
 end
 
+# SQL for extracting traffic count information for turning ratios
+# note there are two placeholders: PERIOD_START and PERIOD_END, which 
+# must be substituted by a time-of-day value such as 7:00 or 15:00
 TURNING_SQL = "SELECT clng(INTSECT.number) as intersection_number,
                   from_direction, to_direction,
                   [Turning Motion] As turn, 
@@ -61,7 +64,7 @@ TURNING_SQL = "SELECT clng(INTSECT.number) as intersection_number,
                 FROM [counts$] As COUNTS
                 INNER JOIN [intersections$] As INTSECT
                 ON COUNTS.Intersection = INTSECT.Name
-                WHERE [Period End] BETWEEN \#1899/12/30 #{PERIOD_START}:00\# AND \#1899/12/30 #{PERIOD_END}:00\#"
+                WHERE [Period End] BETWEEN \#1899/12/30 PERIOD_START:00\# AND \#1899/12/30 PERIOD_END:00\#"
 class Stream
   attr_reader :from, :to, :intersection, :traffic # eg N / S / E / W
   
@@ -97,9 +100,9 @@ class Stream
   end
 end
 
-def get_streams
+def get_streams program
   streams = []
-  DB[TURNING_SQL].each do |row|
+  DB[TURNING_SQL.gsub('PERIOD_START',program.from.to_hm).gsub('PERIOD_END', program.to.to_hm)].each do |row|
     from = row[:from_direction][0..0]
     to = row[:to_direction][0..0]
     intersection = row[:intersection_number]
@@ -110,8 +113,8 @@ def get_streams
       streams << stream
     end
     stream.add_fraction(
-      Time.parse(row[:tstart][-8..-1]) - START_TIME, 
-      Time.parse(row[:tend][-8..-1]) - START_TIME, 
+      Time.parse(row[:tstart][-8..-1]) - program.from, 
+      Time.parse(row[:tend][-8..-1]) - program.from, 
       row[:cars], row[:trucks])
   end
   
@@ -144,9 +147,11 @@ class Fraction
   def to_vissim; "FRACTION #{@quantity}";end
 end
 
-def get_routing_decisions vissim  
+def get_routing_decisions vissim, program
   
-  streams = get_streams
+  streams = get_streams(program)
+  
+  raise "No traffic streams found in program '#{program}'. Is your data source OK?" if streams.empty?
   
   vissim.decisions.sort.each do |dec|
     
@@ -170,11 +175,10 @@ def get_routing_decisions vissim
         request_vehicles = quantity_stream.traffic[period][veh_type]
         vehicles = donor_stream.get_traffic(period, veh_type,request_vehicles)
       
-        puts "Received only #{vehicles} of #{request_vehicles} #{veh_type} for stream #{quantity_stream} from #{donor_stream}" if request_vehicles != vehicles
+        #puts "Received only #{vehicles} of #{request_vehicles} #{veh_type} for stream #{quantity_stream} from #{donor_stream}" if request_vehicles != vehicles
         dec.add_fraction(period, veh_type, vehicles)
       end
     end
-    
   end
   
   decisions = vissim.decisions.find_all{|dec|not dec.fractions.empty?}
@@ -185,7 +189,6 @@ def get_routing_decisions vissim
   # to the point where the vehicles are dropped off downstream of intersection
   decisions.map{|dec|dec.decision_point}.uniq.sort.each do |dp|
     decision_link = dp.link(vissim)
-    #puts dp if dp.from_direction == 'N' and dp.intersection == 2
     
     for veh_type in [:cars,:trucks]
       rd = RoutingDecision.new!(:input_link => decision_link, :veh_type => veh_type, :time_intervals => dp.time_intervals)
@@ -215,7 +218,7 @@ if __FILE__ == $0
   
   vissim = Vissim.new
   
-  rds =  get_routing_decisions vissim
+  rds = get_routing_decisions vissim
   #puts rds.to_vissim
   rds.write
     

@@ -1,6 +1,6 @@
-Base_dir = "C:\\projects\\62832\\"
+Base_dir = File.join('C:','projects','62832')
 Network_name = "amagermotorvejen_avedore-havnevej.inp"
-Vissim_dir = "#{Base_dir}network\\"
+Vissim_dir = File.join(Base_dir,'network')
   
 PROGRAM = 'M80'
   
