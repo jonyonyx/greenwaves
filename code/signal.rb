@@ -26,7 +26,7 @@ class SignalController < VissimElem
       
   # check if all groups have a signal plan plus
   # generel checks
-  def has_plans?; not [@cycle_time,@offset].any?{|e|e.nil?} and @groups.all?{|grp| grp.has_plan?}; end  
+  def has_plans?; not [@program].any?{|e|e.nil?} and @groups.all?{|grp| grp.has_plan?}; end  
   def add_group(number, opts); @groups << SignalGroup.new!(number,opts); end
   def group(number); @groups.find{|grp|grp.number == number}; end
   def arterial_groups
@@ -41,12 +41,12 @@ class SignalController < VissimElem
     raise "Expected exactly one group from #{from_direction}" if groups.size != 1
     groups.first
   end
-  def interstage_active?(cycle_sec)
+  def interstage_active?(cycle_sec,program_name)
     # all-red phases are considered interstage
-    return true if @groups.all?{|grp| grp.color(cycle_sec) == RED}
+    return true if @groups.all?{|grp| grp.color(cycle_sec,program_name) == RED}
     
     # check for ordinary interstages
-    @groups.any?{|grp| [YELLOW,AMBER].include? grp.color(cycle_sec)}
+    @groups.any?{|grp| [YELLOW,AMBER].include? grp.color(cycle_sec,program_name)}
   end
   def priority stage
     return NONE unless stage.instance_of?(Stage) # interstages are fixed length
@@ -91,13 +91,13 @@ class SignalController < VissimElem
     end
     waves
   end
-  def stages
+  def stages program_name
     return @stagear if @stagear # cache hit
     last_stage = nil
     last_interstage = nil
     @stagear = []
-    for t in (1..@cycle_time)
-      if interstage_active?(t)
+    for t in (1..@program[program_name][:cycle_time])
+      if interstage_active?(t,program_name)
         if last_interstage
           last_interstage = last_interstage.succ unless @stagear.last == last_interstage
         else
@@ -106,11 +106,11 @@ class SignalController < VissimElem
         @stagear << last_interstage
       else
         # check if any colors have changed
-        if @groups.all?{|grp| grp.color(t) == grp.color(t-1)}
+        if @groups.all?{|grp| grp.color(t,program_name) == grp.color(t-1,program_name)}
           @stagear << last_stage
         else
           last_stage = Stage.new!((last_stage ? last_stage.number+1 : 1),
-            :groups => @groups.find_all{|grp| grp.active_seconds === t})
+            :groups => @groups.find_all{|grp| grp.active_seconds(program_name) === t})
           @stagear << last_stage
         end
       end
@@ -135,21 +135,24 @@ class SignalController < VissimElem
     42
   end
   class SignalGroup < VissimElem
-    attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads,:priority
+    attr_reader :red_end,:green_end,:tred_amber,:tamber,:heads,:priority,:program
     def initialize(number)
       super(number)
       @heads = [] # signal heads in this group
       @color = {}
     end
     def add_head number, opts; @heads << SignalHead.new!(number,opts); end
-    def has_plan?; not [@red_end,@green_end,@tred_amber,@tamber].any?{|e|e.nil?}; end
-    def color cycle_sec
-      @color[cycle_sec] ||= case cycle_sec
-      when active_seconds
+    #def has_plan?; not [@red_end,@green_end,@tred_amber,@tamber].any?{|e|e.nil?}; end
+    def has_plan?; not [@program].any?{|e|e.nil?}; end
+    def color cycle_sec, program_name
+      red_end = @program[program_name][:red_end]
+      green_end = @program[program_name][:green_end]
+      case cycle_sec
+      when active_seconds(program_name)
         GREEN 
-      when (@red_end+1..@red_end+@tred_amber)
+      when (red_end+1..red_end+@tred_amber)
         AMBER
-      when (@green_end..@green_end+@tamber)
+      when (green_end..green_end+@tamber)
         YELLOW
       else
         RED
@@ -157,14 +160,15 @@ class SignalController < VissimElem
     end
     # returns a range of seconds in a cycle in vehicles are permitted
     # to cross the stop lines of the group
-    def active_seconds
-      return @active_seconds if @active_seconds
-      green_start = @red_end + @tred_amber + 1
-      @active_seconds = if green_start < @green_end
-        (green_start..@green_end)
+    def active_seconds program_name
+      red_end = @program[program_name][:red_end]
+      green_end = @program[program_name][:green_end]
+      green_start = red_end + @tred_amber + 1
+      if green_start < green_end
+        (green_start..green_end)
       else
         # (green_end+1..green_start) defines the red time
-        (1..@green_end) # todo: handle the case of green time which wraps around
+        (1..green_end) # todo: handle the case of green time which wraps around
       end
     end
     def serves_artery?; @serves_artery ||= @heads.any?{|h| h.serves_artery?}; end
