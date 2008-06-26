@@ -28,6 +28,7 @@ Cars_and_trucks_str1 = [:cars,:trucks]
 Cars_and_trucks = Type_map.map{|k,v| Cars_and_trucks_str1.include?(k) ? v : nil} - [nil]
 
 EPS = 0.01
+INPUT_SCALING = 1.20
 ANNUAL_INCREASE = 1.005 # used in input generation for scaling
 BASE_CYCLE_TIME = 80 # seconds
 DATAFILE = File.join(Base_dir,'data',"data.xls") # main data file containing counts, sgp's, you name it

@@ -1,9 +1,15 @@
 require 'vap'
 
 class ExtendableStage
-  attr_reader :name, :number, :time, :min_time, :max_time, :wait_for_sync, :greentime
+  attr_reader :name, :number, :detectors, :wait_for_sync, :greentime
   def extendable?
     not [@min_time,@max_time].any?{|t|t.nil?}
+  end
+  def detectors(detector_scheme)
+    DETECTORS.find_all do |det|
+      @detectors.include?(det.number) and
+        DETECTORS_IN_SCHEME[detector_scheme].include?(det.number)
+    end
   end
 end
 
@@ -12,11 +18,6 @@ class Slave
   # the channel this slaves communicates its current stage to the master
   def to_s
     "IN_STAGE_#{@name.upcase} = #{@in_stage_channel}" 
-  end
-  def detectors(stage)
-    dets = []
-    ObjectSpace.each_object(Detector){|det| dets << det if @detectors_for_stage[stage].include?(det.number)}
-    dets.uniq
   end
 end
 
@@ -37,13 +38,25 @@ DETECTOR_EXTENSION_INTERVAL = {
   9 => 3.6,
   10 => 2.1,
   11 => 4.0,
-  12 => 2.0
+  12 => 2.0, 
+  17 => 2.0,
+  20 => 4.3,
+  21 => 2.0  
+}
+
+PRESENCE_DETECTORS = [14,15,18,19,22,23]
+
+ALL_DETECTORS = DETECTOR_EXTENSION_INTERVAL.keys + PRESENCE_DETECTORS
+
+DETECTORS_IN_SCHEME = {
+  1 => ALL_DETECTORS - [17,21],
+  2 => ALL_DETECTORS
 }
 
 class Detector
-  attr_reader :number, :extension_time
-  def detects_occupancy?
-    @extension_time.nil?
+  attr_reader :number, :extension_time, :detector_type
+  def in_scheme?(detector_scheme)
+    DETECTORS_IN_SCHEME[detector_scheme].include?(@number)
   end
   def <=>(other)
     @number <=> other.number
@@ -52,16 +65,18 @@ end
 
 # passage and precense detectors
 DETECTORS = DETECTOR_EXTENSION_INTERVAL.map do |number,time|
-  Detector.new!(:number => number,:extension_time => time)
-end + [20,21,30,31].map{|number|Detector.new! :number => number}
+  Detector.new!(:number => number,:extension_time => time, :detector_type => :passage)
+end + PRESENCE_DETECTORS.map{|number|Detector.new!(:number => number,:detector_type => :presence)}
+
+#for det in DETECTORS
+#  puts "#{det.number} #{det.detector_type}"
+#end
 
 SLAVES = [
   Slave.new!(
-    :name => 'nord', :in_stage_channel => 4, 
-    :detectors_for_stage => {1 => [7,8,9,10,30], 2 => [20], 3 => [11,12]}
+    :name => 'nord', :in_stage_channel => 4
   ), Slave.new!(
-    :name => 'syd',  :in_stage_channel => 5,
-    :detectors_for_stage => {1 => [3,4,31,5,6], 2 => [21], 3 => [1, 2]}
+    :name => 'syd',  :in_stage_channel => 5
   )
 ]
 
@@ -110,10 +125,9 @@ def generate_master output_dir
   cp.add_verb 'PROG_ENDE:    .'
 
   cp.write(File.join(output_dir,'master.vap'))
-  puts 'Generated master controller'
 end
 
-def generate_slave slave,stages,program
+def generate_slave slave,stages,program,detector_scheme
   
   cp = CodePrinter.new
 
@@ -136,19 +150,23 @@ def generate_slave slave,stages,program
     cp << "   time_in_stage := time_in_stage + 1;"
     cp << "   green_time_extension := green_time_extension - 1;"
     
-    occupancy_detectors = slave.detectors(current_stage.number).find_all{|det|det.detects_occupancy?}
-    unless occupancy_detectors.empty?
+    detectors = current_stage.detectors(detector_scheme).group_by{|det|det.detector_type}
+    
+    presence_detectors = detectors[:presence]
+    unless presence_detectors.nil? or presence_detectors.empty?
       cp << "   IF green_time_extension < 1 THEN"
-      cp << "      green_time_extension := #{occupancy_detectors.map{|occdet|"(occt(#{occdet.number}) > 0)"}.join(' OR ')};"
+      cp << "      green_time_extension := #{presence_detectors.map{|occdet|"(occt(#{occdet.number}) > 0)"}.join(' OR ')};"
       cp.add "   END;"
     end
     
-    slave.detectors(current_stage.number).find_all{|det|not det.detects_occupancy?}.sort_by{|d1| d1.extension_time}.each do |passagedet|
-      cp << "   IF det(#{passagedet.number}) THEN"
-      cp << "      IF green_time_extension < #{passagedet.extension_time} THEN"
-      cp << "         green_time_extension := #{passagedet.extension_time};"
-      cp.add "      END;"
-      cp.add "   END;"
+    if passage_detectors = detectors[:passage]    
+      passage_detectors.sort_by{|d1| d1.extension_time}.each do |passagedet|
+        cp << "   IF det(#{passagedet.number}) THEN"
+        cp << "      IF green_time_extension < #{passagedet.extension_time} THEN"
+        cp << "         green_time_extension := #{passagedet.extension_time};"
+        cp.add "      END;"
+        cp.add "   END;"
+      end
     end
     
     adjust_cur_isl = (current_stage.wait_for_sync ? " - isl(#{current_stage.number-1},#{current_stage.number})" : '')
@@ -185,5 +203,4 @@ def generate_slave slave,stages,program
   cp.add_verb 'PROG_ENDE:    .'
 
   cp.write(File.join(Vissim_dir,"#{slave.name}.vap"))
-  puts "Generated slave controller '#{slave.name}'"
 end
