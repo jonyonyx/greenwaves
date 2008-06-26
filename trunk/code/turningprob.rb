@@ -31,9 +31,10 @@ class RoutingDecision
     str = "ROUTING_DECISION #{i} NAME \"#{@desc ? @desc : (@veh_type)} from #{@input_link}\" LABEL  0.00 0.00\n"
     # AT must be AFTER the input point
     # place decisions as early as possibly to give vehicles time to changes lanes
+    tbegin = @time_intervals.min.tstart
     
     str << "     LINK #{@input_link.number} AT #{@input_link.length * 0.1 + 10}\n"
-    str << "     TIME #{@time_intervals.sort.map{|int|int.to_vissim}.join(' ')}\n"
+    str << "     TIME #{@time_intervals.sort.map{|int|int.to_vissim(tbegin)}.join(' ')}\n"
     str << "     NODE 0\n"
     str << "      VEHICLE_CLASSES #{Type_map[@veh_type]}\n"
     
@@ -81,7 +82,6 @@ class Stream
   end
   
   def add_fraction tstart, tend, cars, trucks
-    raise "Interval start must be zero or greater, received #{tstart}" if tstart < 0
     period = Interval.new(tstart,tend)
     @traffic[period][:cars] = cars
     @traffic[period][:trucks] = trucks
@@ -106,17 +106,8 @@ end
 def get_streams program
   streams = []
   sql = TURNING_SQL.gsub('PERIOD_START',program.from.to_hm).gsub('PERIOD_END', program.to.to_hm)
-  rows = DB[sql].all
   
-  if rows.empty?
-    # the rows in this query do not define a direction ie they
-    # can *only* be used for input. use drop the period start and ends and take the average
-    # of whatever is in the database
-    sql = TURNING_SQL.gsub('PERIOD_START','00:00').gsub('PERIOD_END', '23:59')
-    rows = DB[sql].all
-  end
-  
-  rows.each do |row|
+  DB[sql].each do |row|
     from = row[:from_direction][0..0]
     to = row[:to_direction][0..0]
     intersection = row[:intersection_number]
@@ -127,10 +118,27 @@ def get_streams program
       streams << stream
     end
     stream.add_fraction(
-      Time.parse(row[:tstart][-8..-1]) - program.from, 
-      Time.parse(row[:tend][-8..-1]) - program.from, 
+      Time.parse(row[:tstart][-8..-1]), 
+      Time.parse(row[:tend][-8..-1]), 
       row[:cars], row[:trucks])
   end
+  #puts "Size before: #{streams.size}"
+  if program.repeat_first_interval
+    time_offset = program.resolution * 60
+    
+    streams.each do |stream|
+      first_period = stream.traffic.keys.min
+      
+      #puts "copying stream #{stream} in period #{first_period}"
+      veh_flow_map = stream.traffic[first_period]
+      stream.add_fraction(
+        first_period.tstart - time_offset,
+        first_period.tend - time_offset,
+        veh_flow_map[:cars],veh_flow_map[:trucks]
+      )
+    end
+  end
+  #puts "Size after: #{streams.size}"
   
   streams
 end
@@ -150,8 +158,8 @@ class Interval
   end
   def hash; @tstart.hash + @tend.hash; end
   def eql?(other); @tstart == other.tstart and @tend == other.tend; end
-  def to_vissim; "FROM #{@tstart} UNTIL #{@tend}"; end
-  def to_s; "#{@tstart} to #{@tend}"; end
+  def to_vissim(tbegin); "FROM #{@tstart - tbegin} UNTIL #{@tend - tbegin}"; end
+  def to_s; "#{@tstart.to_hm} to #{@tend.to_hm}"; end
   def <=>(i2); @tstart <=> i2.tstart; end
 end
 class Fraction
@@ -164,6 +172,7 @@ end
 def get_routing_decisions vissim, program
   
   streams = get_streams(program)
+  #print_streams streams
   
   raise "No traffic streams found in program '#{program}'. Is your data source OK?" if streams.empty?
   

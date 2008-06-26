@@ -6,7 +6,8 @@ class TestPrograms
   attr_reader :name,
     :from,:to, # start- and end times of the simulation
   :network_dir, # alternative network directory to copy from
-  :resolution # the resolution of traffic is minutes
+  :resolution, # the resolution of traffic is minutes
+  :repeat_first_interval # use for sim heating
   def duration
     @to - @from
   end  
@@ -20,9 +21,9 @@ class TestPrograms
   end
 end
 
-MORNING = TestPrograms.new! :name => 'Morgen', :resolution => 15, :from => Time.parse('6:45'), :to => Time.parse('9:00')
+MORNING = TestPrograms.new! :name => 'Morgen', :resolution => 15, :from => Time.parse('7:00'), :to => Time.parse('9:00'), :repeat_first_interval => true
 DAY = TestPrograms.new! :name => 'Dag', :resolution => 60, :from => Time.parse('11:00'), :to => Time.parse('13:00')
-AFTERNOON = TestPrograms.new! :name => 'Eftermiddag', :resolution => 15,:from => Time.parse('14:45'), :to => Time.parse('17:00')
+AFTERNOON = TestPrograms.new! :name => 'Eftermiddag', :resolution => 15,:from => Time.parse('15:00'), :to => Time.parse('17:00'), :repeat_first_interval => true
 FIXED_TIME_PROGRAM_NAME = {'Morgen' => 'M80', 'Dag' => 'D60', 'Eftermiddag' => 'E80'}
 
 TESTQUEUE = [
@@ -98,7 +99,7 @@ STAGES = {
 def setup_test(detector_scheme, program, output_dir)  
   puts "Preparing '#{detector_scheme ? "Trafikstyring #{detector_scheme}" : FIXED_TIME_PROGRAM_NAME[program.name]}' #{program}"
   Dir.chdir output_dir
-  inpname = Dir['*.inp'].first  
+  inpname = Dir['*.inp'].first
   raise "INP file not found in '#{output_dir}'" unless inpname
   inppath = File.join(output_dir,inpname)
   
@@ -107,18 +108,20 @@ def setup_test(detector_scheme, program, output_dir)
   # generate link inputs and routes using the time frame of the test program
   # write them to the vissim file in the workdir
   get_inputs(vissim,program).write(inppath)
-  get_routing_decisions(vissim,program).write(inppath)
+  
+  # there are no traffic counts for traffic
+  get_routing_decisions(vissim, program).write(inppath)
   
   if detector_scheme # => traffic actuated, otherwise fixed signal timing 
     generate_master output_dir
     SLAVES.each do |slave|
       generate_slave(slave,STAGES[slave.name],program,detector_scheme)
       
-      # copy a PUA file for the traffic actuation scheme
+      # copy a PUA file tailored for the traffic actuation scheme
       name = slave.name.downcase
       FileUtils.cp(File.join(Vissim_dir,"slave_#{name}.pua"),
         File.join(output_dir,"#{name}.pua"))
-    end    
+    end
   else
     # copy 'a' master program to avoid a nag - it is not used
     FileUtils.cp(File.join(Vissim_dir,'master.vap'), output_dir) unless output_dir == Vissim_dir
@@ -131,5 +134,5 @@ end
 
 if __FILE__ == $0
   #puts AFTERNOON.interval_count
-  setup_test(2, MORNING, Vissim_dir)
+  setup_test(nil, MORNING, Vissim_dir)
 end

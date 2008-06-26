@@ -105,6 +105,14 @@ def get_inputs vissim,program
     inputs << Input.new(input_link, tstart, tend, veh_flow_map)
   end
   
+  if program.repeat_first_interval
+    # heating of the simulator
+    time_offset = program.resolution * 60
+    inputs.find_all{|i|i.tstart == program.from}.each do |input|    
+      inputs << Input.new(input.link,input.tstart - time_offset, input.tend - time_offset,input.veh_flow_map)
+    end
+  end
+  
   # for northern end (by herlev sygehus) and roskildevej
   # use the dogs detector data and take the cars-to-truck ratios from the
   # traffic counts  
