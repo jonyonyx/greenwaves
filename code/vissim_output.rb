@@ -12,6 +12,6 @@ module VissimOutput
       file << "\n#{section_contents}\n"
       file << inp[section_end..-1]
     end
-    puts "Wrote#{respond_to?(:length) ? " #{length}" : ''} #{self.class} to '#{inpfile}'"
+    #puts "Wrote#{respond_to?(:length) ? " #{length}" : ''} #{self.class} to '#{inpfile}'"
   end
 end

@@ -24,7 +24,7 @@ class RoutingDecision
              from the input link of the routing decision(#{@input_link})!" unless route.start == @input_link
       
     raise "Wrong vehicle types detected among fractions, expecting only #{@veh_type}" if fractions.any?{|f| f.veh_type != @veh_type}
-    raise "Wrong number of fractions, #{fractions.size}, expected #{@time_intervals.size}\n#{fractions.sort.join("\n")}" unless fractions.size == @time_intervals.size
+    raise "Wrong number of fractions, #{fractions.size}, expected #{@time_intervals.size}\n#{fractions.sort.join("\n")}\n#{route}" unless fractions.size == @time_intervals.size
     @routes << [route, fractions]
   end
   def to_vissim i
@@ -64,7 +64,9 @@ TURNING_SQL = "SELECT clng(INTSECT.number) as intersection_number,
                 FROM [counts$] As COUNTS
                 INNER JOIN [intersections$] As INTSECT
                 ON COUNTS.Intersection = INTSECT.Name
-                WHERE [Period End] BETWEEN \#1899/12/30 PERIOD_START:00\# AND \#1899/12/30 PERIOD_END:00\#"
+                WHERE [Period End] BETWEEN \#1899/12/30 PERIOD_START:00\# AND \#1899/12/30 PERIOD_END:00\#
+                AND NOT IsNull(to_direction)"
+
 class Stream
   attr_reader :from, :to, :intersection, :traffic # eg N / S / E / W
   
@@ -79,6 +81,7 @@ class Stream
   end
   
   def add_fraction tstart, tend, cars, trucks
+    raise "Interval start must be zero or greater, received #{tstart}" if tstart < 0
     period = Interval.new(tstart,tend)
     @traffic[period][:cars] = cars
     @traffic[period][:trucks] = trucks
@@ -102,7 +105,18 @@ end
 
 def get_streams program
   streams = []
-  DB[TURNING_SQL.gsub('PERIOD_START',program.from.to_hm).gsub('PERIOD_END', program.to.to_hm)].each do |row|
+  sql = TURNING_SQL.gsub('PERIOD_START',program.from.to_hm).gsub('PERIOD_END', program.to.to_hm)
+  rows = DB[sql].all
+  
+  if rows.empty?
+    # the rows in this query do not define a direction ie they
+    # can *only* be used for input. use drop the period start and ends and take the average
+    # of whatever is in the database
+    sql = TURNING_SQL.gsub('PERIOD_START','00:00').gsub('PERIOD_END', '23:59')
+    rows = DB[sql].all
+  end
+  
+  rows.each do |row|
     from = row[:from_direction][0..0]
     to = row[:to_direction][0..0]
     intersection = row[:intersection_number]
@@ -185,9 +199,24 @@ def get_routing_decisions vissim, program
  
   routing_decisions = RoutingDecisions.new
   
+  decision_points = []
+  decisions.each do |dec|
+    dp = decision_points.find do |dp|
+      dp.from_direction == dec.decide_from_direction and 
+        dp.intersection == dec.decide_at_intersection
+    end
+    
+    # create new dp, if no other decision created it before
+    if dp.nil?
+      dp = DecisionPoint.new(dec.decide_from_direction,dec.decide_at_intersection)
+      decision_points << dp
+    end
+    dp.decisions << dec
+  end
+    
   # find the local routes from the decision point
   # to the point where the vehicles are dropped off downstream of intersection
-  decisions.map{|dec|dec.decision_point}.uniq.sort.each do |dp|
+  decision_points.sort.each do |dp|
     decision_link = dp.link(vissim)
     
     for veh_type in [:cars,:trucks]
@@ -201,7 +230,7 @@ def get_routing_decisions vissim, program
         local_routes = vissim.find_routes(decision_link,dest)
         local_route = local_routes.find{|r| r.decisions.include?(dec)}
         raise "No routes from #{decision_link} to #{dest} over #{dec} among these routes:
-               #{local_routes.map{|lr|lr.to_vissim}.join("\n")}" if local_route.nil?
+               \n#{local_routes.map{|lr|lr.to_vissim}.join("\n")}" if local_route.nil?
                 
         rd.add_route(local_route, 
           dec.fractions.find_all{|f| f.veh_type == veh_type})

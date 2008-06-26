@@ -97,7 +97,7 @@ def get_inputs vissim,program
       # link inputs in Vissim is defined in veh/h
       # also scale the input according to the time which has passed
       resolution_in_minutes = (tend-tstart) / 60
-      scaled_flow = flow * (MINUTES_PER_HOUR/resolution_in_minutes) * (ANNUAL_INCREASE ** years_passed) 
+      scaled_flow = flow * INPUT_SCALING * (MINUTES_PER_HOUR/resolution_in_minutes) * (ANNUAL_INCREASE ** years_passed) 
       #puts "#{input_link}: #{flow} -> #{scaled_flow} #{scaled_flow/flow} from #{tstart} to #{tend}"
       veh_flow_map[veh_type] = scaled_flow
     end

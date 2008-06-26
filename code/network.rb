@@ -5,7 +5,7 @@ require 'vissim_elem'
 class RoadSegment < VissimElem  
   attr_reader :lanes,:closed_to, :over_points,
     :arterial_from # if set, indicates this road is part of the artery 
-    #direction and from where
+  #direction and from where
   def closed_to_any?(veh_types)
     raise "Vehicle lanes closure was not defined for #{self}!" if @closed_to.nil?
     not (@closed_to & veh_types).empty?
@@ -33,6 +33,7 @@ end
 class Decision < Connector
   attr_reader :from_direction,:intersection,:turning_motion,:fractions,:weight,:drop_link,
     :decide_from_direction, :decide_at_intersection
+  @@decision_points = []
   def initialize(number)
     super(number)
     # the numbered option for this turning motion, when altertives for the
@@ -48,20 +49,6 @@ class Decision < Connector
     @intersection == d2.intersection ? 
       (@from_direction == d2.from_direction ? @turning_motion <=> d2.turning_motion : @from_direction <=> d2.from_direction) : 
       @intersection <=> d2.intersection
-  end
-  def has_decision_point?; not @dp.nil?; end
-  def decision_point
-    return @dp if @dp # cache hit
-    ObjectSpace.each_object(DecisionPoint) do |dp|
-      if dp.from_direction == @decide_from_direction and dp.intersection == @decide_at_intersection
-        @dp = dp
-        break
-      end
-    end
-    # create new dp, if no other decision created it before
-    @dp = DecisionPoint.new(@decide_from_direction,@decide_at_intersection) unless @dp
-    @dp.decisions << self
-    @dp
   end
 end
 class Link < RoadSegment
