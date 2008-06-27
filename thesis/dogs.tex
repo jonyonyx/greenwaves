@@ -1,19 +1,27 @@
 \section{The DOGS System for Arterial Optimization}
 \label{dogs}
-DOGS is an extension of the DOG system, which was developed for the importen intersection of Herlev Hovedgade and ringroad 3. The first 3 letters can be directly translated from danish to \textit{dynamic optimization of greens} and the appended S of the herein regarded system means \textit{coordination}. Thus DOG is an traffic actuated optimizer for single intersections and DOGS add coordination.
+
+DOGS is a hybrid somewhere between adaptive and traditional pretimed systems for arterial signal control, making adjustments to cycle time and splitting the extra green time in favor of the arterial traffic. DOGS has no prediction capabilities, but relies on detector values, and is thus lacking a key component of other adaptive systems. 
+
+This, however, gives DOGS a clear advantage in implementation since no heavy calculations of prediction are needed and the only decision to make is whether to remain at the current level (ie. common cycle time) or to change the level by one ie. increasing or decreasing the common cycle time. This decision does not require much computational effort (see section \ref{dogs}) and this, along with the immediate adoption of the preexisting signal timing plans, makes DOGS a simple and easily implemented - and understood - arterial optimization system.
+
+DOGS has been implemented on several arteries in Denmark and relies on site specific knowledge for definition of criteria parameters, which must be gathered in a manual process and reevaluated over time and thus does not liberate the system owners from continuous supervision and periodic parameter tuning.
+DOGS is different from other adaptive systems by the fact that it only operates under medium to heavy traffic loads under which the problem of choosing signal settings reduce to the proper setting of capacity on the major road and coordination by offsets.
+
+DOGS is an extension of the DOG system, which was developed for the important intersection of Herlev Hovedgade and ringroad 3. The first 3 letters can be directly translated from Danish to \textit{dynamic optimization of greens} and the appended S of the herein regarded system means \textit{coordination}. Thus DOG is a traffic actuated optimizer for single intersections and DOGS add coordination between intersections.
 
 DOGS is a criteria-based system which relies on a common cycle time for coordination. The intended area of application is traffic signals along arterials, which see a high fluctuation in demand. 
 
-Two of the sites where DOGS currently operate are the Glostrup and Herlev sites along the important ringroad 3. They see high increases in demand in the morning and afternoons with commuters. Normally such fluctuations can be handled well by a small number of timing plans, which are changed according to the time of day, but the area also see more unpredictable types of fluctuations when accidents occur on the nearby highway, M3, or when M3 lanes are closed due to expansions. For these reasons DRD decided implement a system which could handle such situations.
+Two of the sites where DOGS currently operate are the Glostrup and Herlev sites along the important ringroad 3. They see high increases in demand in the morning and afternoons with commuters. Normally such fluctuations can be handled well by a small number of timing plans, which are changed according to the time of day, but the area also see more unpredictable types of fluctuations when accidents occur on the nearby highway, M3, or when M3 lanes are closed due to the current expansion program. For these reasons DRD decided implement a system which could handle such situations.
 
 The purpose of DOGS is to increase the capacity of the arterial in the above mentioned cases and revert to offline-optimized, pretimed plans in low traffic situations. The capacity increase comes by increasing the common cycle time and allocate the extra green time per cycle to the stages, which phase the artery. This will cause increased delays for the minor roads, but may prevent queues from reaching the previous intersection - or even prevent queues in cases of light congestion - on ringroad 3.
 DOGS is also capable of providing priority to buses by extending the green time when buses are near an intersection. This feature is currently only used in Glostrup.
 
 At present the system must be tailored to the environment in which it operates. For this reason the following sections will use the Herlev area as a reference area in order to explain certain concepts. In Figure \ref{fig:dogs_herlev} is a layout of this network.
 
-\begin{figure}[!ht]
+\begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.5]{dogs_herlev.png} 
+\includegraphics[scale=0.5,angle=90]{dogs_herlev.png} 
 \caption{Layout of the partial ringroad 3 artery in Herlev, which is under DOGS control. The arrows and numbers indicate flow direction and examples of vehicle loads.}
 \label{fig:dogs_herlev}
 \end{figure}
@@ -34,16 +42,17 @@ In spite of the intended flexibility of the system this is a point which puts hi
 An alleviating point to the lack of prediction is the fact that the current arterials under DOGS control are relatively small and static predictions can be made by an experienced traffic engineer. Furthermore, since DOGS only operate under high load conditions, predictions become less valuable - or superfluous, even - because all that can be said about the arterial in this case is that it is heavily loaded with traffic.
 
 \subsection{Optimization}
-Since DOGS only kicks in under congested or near-congested conditions (for the Herlev area when the load exceeds 60\%) it is simple to optimize the throughput since any increase in green time will just allow more vehicles to pass.
+Since DOGS only kicks in under congested or near-congested conditions (for the Herlev area when the load exceeds 60\% of the capacity) it is simple to optimize the throughput since any increase in green time will just allow more vehicles to pass.
 
-That DOGS only operates during high-congestion levels is an unusual trait for an adaptive system since they usually excel in optimization under \textit{normal} ie. uncongested load conditions. This can be explained from the lack of an explicitly defined objective function and optimization routine.
+That DOGS only operate during high-congestion levels is an unusual trait for an adaptive system since they usually excel in optimization under \textit{normal} ie. uncongested load conditions when the signal controllers can be adjusted to cater for scarce vehicles or platoons.
+DOGS will not be able to make good decisions on signal settings for low-to-medium traffic volumes due to the lack of an explicitly defined objective function and optimization routine. This explains why DOGS remain at the pretimed signal programs during most of a normal day and adjustments are only made for high loads.
 
 The objective is to keep the load degree (load/capacity) for the most heavily loaded intersection below 90\%.
 To do this the common cycle time and green times are set according to the load level. The adjustments are made with a few seconds per cycle to avoid sudden, major changes in cycle time.
 
 Coordination is achieved in one direction by running the signals on a common cycle time, but offsets are not adjusted when the common cycle time changes - this issue receives further investigation in section \ref{dogs_offset}.
 
-When naming the inflow detectors in the north- and south ends $DN$ and $DS$, respectively, the transition from pretimed control to adaptive control is decided by the constraint:
+Naming the inflow detectors in the north- and south ends $DN$ and $DS$, respectively, the transition from pretimed control to adaptive control is decided by the constraint:
 \begin{eqnarray*}
 Intensity(DN) > I_{enable} & \vee & Intensity(DS) > I_{enable} \\
 & or & \\
@@ -65,7 +74,7 @@ I_{\varepsilon},L_{\varepsilon} & > & 0 \label{eqn:hysteresis_limits}
 \label{eqn:hysteresis}
 \end{eqnarray}
 
-DOGS exhibits a dynamic behaviour because the permitted cycle time extensions are divided into \textit{programs} according to the intensity and load levels in the ends of the artery. These program constraints take a form which is similar to the enable- and disable constraints.
+DOGS exhibits a dynamic behaviour because the permitted cycle time extensions are divided into \textit{programs} according to the intensity and load levels in the ends of the artery. These programs include constraints that take a form which is similar to the enable- and disable constraints.
 
 When deciding whether to remain in the current program, $i-1$, or switch to a program for higher demand, $i$, the following relation must be satisfied:
 
@@ -83,7 +92,7 @@ I_{disable,i-1} \leq & \max(Intensity(DN),Intensity(DS)) & < I_{disable,i} \\
 L_{disable,i-1} \leq & \max(Load(DN),Load(DS))  & < L_{disable,i}
 \end{eqnarray*}
 
-DOGS level changes are implemented over 2 cycles during which the level cannot change again. The current cycle time is increased by $\pm 5$ seconds until the new level is implemented. All signal controllers thus increase or decrease the green time in the main direction by 4 seconds and minor direction by 1 second in two consecutive stages until the new level is enabled.
+DOGS level changes are implemented over 2 cycles during which the level cannot change again. The current cycle time is increased or decreased by 5 seconds until the new level is implemented. All signal controllers thus increase or decrease the green time in the main direction by 4 seconds and minor direction by 1 second in two consecutive stages until the new level is enabled.
 
 In the DOGS controlled area in Herlev there are 8 different programs to choose from and the enable and disable thresholds for programs respect the ordering implicit in the above equations:
 
@@ -93,27 +102,27 @@ $$\lbrace I,L \rbrace_{disable,i-1} < \lbrace I,L \rbrace_{disable,i}$$
 To avoid hysteresis between programs the same constraints (equations \ref{eqn:hysteresis_intensity}-\ref{eqn:hysteresis_limits}) as for switching between pretimed and dynamic control applies.
 
 \subsection{Evaluation}
-Tests have shown that the system is indeed capable of increasing the capacity \cite{dogs}. When the arterial in Herlev is at or above moderate load DOGS will increase the capacity by 15-25\% compared to the capacity if only the pretimed plans was in use. Apparently there has been no previous simulations of DOGS and as such it is difficult to generate reproducible data for analysis. This is where this project comes in.
+Tests by DRD \cite{dogs} have shown that the system is indeed capable of increasing the capacity. When the arterial in Herlev is at or above moderate load DOGS will increase the capacity by 15-25\% compared to the capacity if only the pretimed plans was in use. Apparently there has been no previous simulations of DOGS and as such it is difficult to generate reproducible data for analysis. This is where this project comes in.
 
 \subsection{DOGS and offsets}
 \label{dogs_offset}
 
-For a basic program DOGS makes use of static signal plans which are tailored to the respective time of day eg. morning. In Herlev and Glostrup such plans have been generated using the well-renown optimization package TRANSYT\footnote{See section \ref{simulation} for more details on simulation	tools.}. Such programs include an offset for each signal controller in the system, which are optimized for a certain cycle time, however DOGS always use the same offsets. Although DOGS has support for dynamically adjusting the coordination to prioritize for the current direction bias it is not enabled in either the Glostrup or Herlev sites at the moment.
+For a basic program DOGS makes use of static signal plans which are tailored to the respective time of day eg. morning. In Herlev and Glostrup such plans have been generated using the well-renown optimization package TRANSYT. Such programs include an offset for each signal controller in the system, which are optimized for a certain cycle time, however DOGS always use the same offsets. Although DOGS has support for dynamically adjusting the coordination to prioritize for the current direction bias it is not enabled in either the Glostrup or Herlev sites at the moment.
 
-\begin{figure}[htb]
+This optimization of offsets include aligning green starts so that the road users travelling through the arterial at a certain speed will experience green lights as they approach the next intersection. The green time displacement $\Delta f$ is the time from green start at the first intersection to green start at the next and should match the travel time, $tt$, between the intersections (see Figure \ref{fig:green_time_displacement_concept}). 
+
+\begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.5]{green_time_displacement_and_cycle_time.png} 
+\includegraphics[scale=0.35]{green_time_displacement_and_cycle_time.png}
 \caption{Green time displacement concept}
 \label{fig:green_time_displacement_concept}
 \end{figure}
 
-This optimization of offsets include aligning green starts so that the road users travelling through the arterial at a certain speed will experience green lights as they approach the next intersection. The green time displacement $\Delta f$ is the time from green start at the first intersection to green start at the next and should match the travel time, $tt$, between the intersections (see Figure \ref{fig:green_time_displacement_concept}). 
-
 If $\Delta f > tt$ road users from the upstream intersection must stop at the next intersection and wait for green. If $\Delta f < tt$ there is a risk of wasted green time since the downstream intersection starts its green time before vehicles from the upstream intersection has a chance to reach it. These concepts are visualized in Figure \ref{fig:green_time_displacement}.
 
-\begin{figure}[htb]
+\begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.5]{green_time_displacement.png} 
+\includegraphics[scale=0.30]{green_time_displacement.png} 
 \caption{Green time displacement scenarios}
 \label{fig:green_time_displacement}
 \end{figure}

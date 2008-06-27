@@ -3,7 +3,7 @@
 
 The DOGS system for arterial traffic optimization was implemented in the Herlev and Glostrup sections of ringroad 3 in response to the expansion of the nearby motorring 3 due to expected traffic increases as an effect of the work.
 
-DOGS was developed by danish Technical Traffic Solution and basically uses threshold values to determine a proper common cycle time so that increase in load on arterial automatically causes the capacity to increase when the extra green is primarily given to the stages accomodating arterial traffic.
+DOGS was developed by Danish Technical Traffic Solution and basically uses threshold values to determine a proper common cycle time so that increase in load on arterial automatically causes the capacity to increase when the extra green is primarily given to the stages accomodating arterial traffic.
 
 However DOGS was never tested in a simulation environment, such as the (in Denmark) de-facto Vissim simulation tool - a microsimulator well-suited for testing complex situations and signal controller configurations.
 The Danish Road Directorate (DRD) suggested that DOGS be tested in Vissim to discover if the system delivers the necessary offload, when traffic is diverted onto ringroad 3.
@@ -23,8 +23,11 @@ Modified DOGS & Glostrup & 88 & 91
 \label{tab:result_summary}
 \end{table}
 
-The results show that DOGS, although capable of smoothening the peak traffic periods, does not convicingly improve on arterial traffic conditions when compared to the preexisting, pretimed signal plans. We also see that there is a major performance difference in Glostrup and Herlev.
-The reason, as previously speculated by DRD, is traced back to the uncontrolled of change green time displacement, when the cycle time is increased without choosing new offsets. This result is found by comparing DOGS with a modified version, which does implement optimized offsets for each common cycle time.
+The results show that DOGS, although capable of smoothening the peak traffic periods and increase the througput, does not convicingly improve on arterial traffic conditions when compared to the preexisting, pretimed signal plans. We also see that there is a major performance difference in Glostrup and Herlev.
+
+The reason for the poor performance in Herlev, as previously speculated by DRD, is traced back to the uncontrolled change in green time displacements, when the cycle time is increased without choosing new offsets. This result is found by comparing DOGS with a modified version, which does implement optimized offsets for each common cycle time. 
+
+Original DOGS, however, outperforms the modified version in Glostrup. Modified DOGS performs well in Glostrup for Kindebjergvej and Roskildevej, but is outperformed even by the pretimed signal program on Fabriksparken and Gammel Landevej, indicating that the offset optimizer may have chosen offsets that favors coordination between some controllers over others, undermining the overall performance.
 
 The optimization routine used to generate these offsets is based on the metaheuristic optimization scheme simulated annealing, a hill climber with the ability to escape local optima. The evaluation criterion is directly derived from the same analysis, which raised questions concerning the coordination properties of DOGS ie. the green time displacement.
 
@@ -37,11 +40,13 @@ In addition to testing DOGS, the bus priority, which is present for the three no
 \subsection{Future works}
 I strongly believe per-level offsets should be further considered in the next revision of DOGS. In conjunction average speeds between intersections and hence travel times used in the optimization should be considered. It is safe to assume that the traffic conditions, which trigger each DOGS level, can be mapped upon a certain set of travel times. I expect the travel time to increase in some proportion to the proper DOGS level and this information can be used to further improve coordination, as the results of this study assumed fixed travel times.
 
-It is my hope that existing and future DOGS installations will incorporate some of the suggestions for improvement, which I have presented in this report. DOGS is good mix of pretimed and adaptive signal control, allowing much infrastructure and signal design to remain unchanged while enabling an artery to respond to changing traffic demands during medium to heavy loads.
+The selection of per-level offsets can be done by any optimization tool, including TRANSYT. However should the simulated annealing approach of this project be selected, it is recommended that the issue of decreased performance in Glostrup (compared to original DOGS) be investigated and solved. I believe the issue could possibly be solved by introducing a punishment in the evaluation method so that solutions that have great coordination among some intersections, while sacrificing others, cannot become the encumbent.
+
+It is my hope that existing and future DOGS installations will incorporate some of the suggestions for improvement, which I have presented in this report. DOGS is a good mix of pretimed and adaptive signal control, allowing much infrastructure and signal design to remain unchanged while enabling an artery to respond to changing traffic demands during medium to heavy loads.
 
 The studies presented in this report tests a busy albeit normal morning situation and does not include an investigation of the DOGS "panic function" ie. the capability of DOGS to adopt very high cycle times when eg. an accident occurs on motorring 3. It is expected that the benefit of DOGS will increase greatly, compared to the basic morning program, when such situations occur.
 
-The optimization routine was implemented in the interpreted language Ruby. Although the implemention will try more than 1000 combinations per second on a $2.0$ GHz CPU, it is expected that an implementation in a compiled language, such as C\# or Java will lead to even better solutions.
+The optimization routine was implemented in the interpreted language Ruby. Although the implemention will try more than 1000 combinations per second on a $2.0$ GHz CPU, it is expected that an implementation in a compiled language, such as C\# or Java will lead to even better solutions with regards to CPU time.
 
 As mentioned the implemented system is capable of optimizing coordinations by changing speeds as well as offsets. Dynamic speed signs are becoming more and more widespread with the introduction of LED technology, for instance on motorring 3, and simulation studies should be performed to test wether road users will be able to respond to such speed signs indicating \textit{recommended speed for green wave}.
 
@@ -54,4 +59,6 @@ A benefit of considering very large networks at the same time is the possibility
 
 Redirecting traffic using traffic signals is a subtle technique which has not received much research yet, though it could pose more efficient than current traffic information systems, which inform road users of congestions and alternative routes, but allows them to ignore the advice.
 
-When choosing an adaptive signal control system for a large area I believe it is important to select something preexisting rather than developing it anew. In this project I was given the opportunity to develop a system to find offsets for good coordinations, though for non-educational purposes one should always prefer well-known tested off-the-shelf products, such as TRANSYT of Utopia/Spot - something the Danish has a history of not being good at, even though our traffic problems are very similar to those abroad.
+When choosing an adaptive signal control system for a large area I believe it is important to choose among the preexisting systems (eg. SCOOT, Utopia/Spot, OPAC) rather than developing a new system, tailored for Danish road conditions. 
+In this project I was given the opportunity to develop a system to find offsets for good coordinations, though for non-educational purposes one should always prefer well-known tested off-the-shelf products. The reason is that such systems have seen much action in actual implementations abroad and there are no "development costs" that may run amok nor any incalculable time frame.
+The DRD should be an information hub for municipalities and road committees and make analyses and recommendations on adaptive systems such that at most a handful intelligent traffic light management systems are used in Denmark.

@@ -2,34 +2,34 @@
 \label{systems}
 The systems that mandate road use by signal controllers can roughly be divided into two major types: adaptive and non-adaptive. Within each type the systems are specialized with respect to the number of signal controllers the system governs and the network layout, when more than one intersection is under signal control. 
 
-The general traffic light management system controls signal controllers in a grid of connected roads and the optimization problem must respect all traffic flows between each input and output. A special case is the \textit{artery} where a single one-way or bidirectional traffic flow dominates the total demand of the network.
+The general traffic light management system manage the settings of signal controllers in a grid of connected roads and the optimization problem must respect all traffic flows between each input and output. A special case is the \textit{artery} where a single one-way or bidirectional traffic flow dominates the total demand of the network.
 
-This section introduces briefly the major trends in these two systems to outline the setting in which DOGS comes in.
+This section introduces briefly the major trends in these two systems to outline the setting in which DOGS is used.
 
 \subsection{Traditional signal control}
 
-The traditional systems, which are also the simplest, operate on the basis of signal plans, such as the ones seen in appendix \ref{app:signalplans}. For isolated intersections, there is a choice between pretimed and traffic actuated control strategies. Pretimed control involves the use of static signal plans for phase sequences, cycle time and green times according to the day of time. Traffic actuated signals are usually flexible versions of the static signal plans, allowing the green time of stages to be extended, up to some maximum when vehicles are detected.
+The traditional systems, which are also the simplest, operate on the basis of signal plans, such as the ones seen in appendix \ref{app:signalplans}. For isolated intersections, there is a choice between pretimed and traffic actuated control strategies. Pretimed control involves the use of static signal plans for phase sequences, cycle time and green times according to the time of day. Traffic actuated signals are usually flexible versions of the static signal plans, allowing the green time of stages to be extended, up to some maximum when vehicles are detected.
 
 When more than one signal controller is under system control the signal plans are based on a common cycle time and the signal controllers are adjusted relative to each other by choosing an offset, for each signal controller, which provides good coordination. Traffic actuated signals cannot cooperate with other signal controllers in an artery since they operate on a variable cycle time depending on the amount of time each stage was extended.
 
-Pretimed control is based on the assumption that demand is fairly stable within certain divisions of time eg. morning, midday and evening or workday \/ weekend. For instance, in the morning (7.00 to 9.00) and afternoon (15.00 to 17.00) the traffic is usually heavier than during the day or night due to  commuter traffic.
+Pretimed control is based on the assumption that demand is fairly stable within certain divisions of time eg. morning, midday and evening or workday / weekend. For instance, in the morning (7.00 to 9.00) and afternoon (15.00 to 17.00) the traffic is usually heavier than during the day or night due to  commuter traffic.
 
 Tools such as TRANSYT are used to generate static signal plans and offsets given historical traffic data.
 
 \subsection{Adaptive signal control}
-Adaptive signal control strategies may be based on historical data as well, but differ from schemes using static signal plans by actively monitor current traffic conditions and make adjustments accordingly.
+Adaptive signal control strategies may be based on historical data as well, but differ from schemes using static signal plans by actively monitoring current traffic conditions and make adjustments accordingly.
 
 The dynamic aspects of traffic become obvious when considering the things that affect it:
 
 \begin{itemize}
 \item Events: football games, lane closures due to VIP transport etc. will cause a focusing of traffic in certain areas
 \item Weather: warm weather will cause more traffic going out of the city while winter and snow causes reduced speeds but potentially also fewer vehicles on the road
-\item Accidents: traffic is diverted onto alternativ routes
+\item Accidents: traffic is diverted onto alternative routes
 \end{itemize}
 
 It is near impossible to take into account such phenomenon when designing pretimed signal plans. In fact traffic engineers will attempt to capture the least "eventful" (neutral) dataset possible when designing such plans to accomodate the most common traffic situation.
 
-Adaptive signal control systems adjust signal controllers in an arterial or network to coordinate intersections so as to optimize some performance index eg. average delay or number of stops (or a combination) but also to reduce the need for constant supervision and tuning of signal timing plans, which is necessary for pretimed control. That said, adaptive system will also need supervision, but at least they are designed to be able to make adjustments autonomously, such as redistributing green time from one direction to another, when traffic changes.
+Adaptive signal control systems adjust signal controllers in an arterial or network to coordinate intersections so as to optimize some performance index eg. average delay or number of stops (or a combination) but also to reduce the need for constant supervision and tuning of signal timing plans, which is necessary for pretimed control. That said, an adaptive system will also need supervision, but at least they are designed to be able to make adjustments autonomously, such as redistributing green time from one direction to another, when traffic changes.
 
 To achieve optimum combined performance, adaptive systems dynamically adjust parameters such as cycle times, phase sequences and green times according to detected as well as predicted traffic thereby reacting to those dynamic aspects of traffic, which cannot be captured by the pretimed signal plans. Systems like the phase-by-phase system in the article \cite{phase_by_phase}, RHODES \cite{rhodes}, OPAC \cite{opac} and SCOOT \cite{scoot} even skip or work around the conventional periodic scheme based on a common cycle time and make direct assignments of phases and allow phases to be skipped, as discussed later in section \ref{phase_based}. 
 
@@ -38,10 +38,3 @@ The key to adaptive signals is reliable detection and short term prediction of t
 While an isolated signal controller operated in a traffic actuated scheme can be thought of as a primitive type of adaptive signal, the main attraction with adaptive signals is when they can be set to work together. A good system will naturally cause green waves to appear and move the direction of the green waves along with changes in flow.
 
 It is evident that the cycle time is crucial in optimization because, for a congested network, increasing the cycle time will cause increased capacity and - hopefully - increased throughput as well. Long cycle times lead to long phase durations, which allow a steady flow of vehicles to pass and minimizes lost and interphase time per time unit, but will also allow queues to grow larger until they can be emptied by the start of a green stage for the approach of the queue. Thus increasing the cycle time increases the capacity of the intersection. The exception is for left-turning traffic, which does not have a priority stage, here long cycle times will actually decrease capacity since only as many vehicles as will fit in the intersection may turn per cycle.
-
-DOGS is a hybrid somewhere between adaptive and traditional pretimed systems for arterial signal control, making adjustments to cycle time and splitting the extra green time in favor of the arterial traffic. DOGS has no prediction capabilities, but relies on detector values, and is thus lacking a key component of other adaptive systems. 
-
-This, however, gives DOGS a clear advantage in implementation since no heavy calculations of prediction are needed and the only decision to make is whether to remain at the current level (ie. common cycle time) or to change the level by one ie. increasing or decreasing the common cycle time. This decision does not require much computational effort (see section \ref{dogs}) and this, along with the immediate adoption of the preexisting signal timing plans, makes DOGS a simple and easily implemented - and understood - arterial optimization system.
-
-DOGS has been implemented on several arteries in Denmark and relies on site specific knowledge for definition of criteria parameters, which must be gathered in a manual process and reevaluated over time and thus does not liberate the system owners from continuous supervision and periodic parameter tuning.
-DOGS is different from other adaptive systems by the fact that it only operates under medium to heavy traffic loads under which the problem of choosing signal settings reduce to the proper setting of capacity on the major road and coordination by offsets.

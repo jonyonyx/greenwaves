@@ -26,7 +26,7 @@ The travel time is calculated as $o = L / v$ where $L$ is the distance and $v$ i
 
 $$C = 2 \cdot \frac{L}{n \cdot v}$$
 
-This equation is quite constrained, however. For cycle time we require that is lies within a span of about 60 til 120 seconds based on recommendations from DRD. If the cycle time is less stage lengths become too short to reach past the queue startup delays (about 4 vehicles), if more the minor roads experience long delays and pedestrians and bicyclists may start to cross the road before the signal turns green.
+This equation is quite constrained, however. For cycle time we require that it lies within a span of about 60 til 120 seconds based on recommendations from DRD. If the cycle time is less stage lengths become too short to reach past the queue startup delays (about 4 vehicles), if more the minor roads experience long delays and pedestrians and bicyclists may start to cross the road before the signal turns green.
 
 In addition green waves usually span over more than two intersections which may have different distances and average speeds between them, all this making it hard or impossible to find an integer $n$. Thus green waves are most easily established in one, main direction. It is possible to affect the average speeds between intersections by changing the allowed speed-signs. If this is not sufficient one might accept that the green wave is not perfect by, for instance, prioritizing one direction over the other.
 
@@ -65,18 +65,18 @@ The queues for minor roads cannot exceed a predefined length nor must a vehicle 
 These rules - given proper parameters - are precise enough to be implemented in a computer program. The setting of parameters (for instance maximum queue length for minor roads) is a difficult subject, which could require many training hours for end-users. This was my impression about the Utopia/Spot system which the municipality of Copenhagen (Vej \& Park) had implemented for Centrum Forbindelsen - its was difficult for them to decide on which adjustsments should be made, when the system acted up. 
 However, many parameters can - and should - be set automatically by repeated simulation with trial-and-error or they are either easy enough to understand that rules of thumb and area specific insight is enough to make proper choices.
 
-I believe stage based signals and more centralized computer control of arterials could be accepted and achieved if systems were more available and open as proposed above. The introduction of stage based signals would be a major break with tradition in Denmark - and probably also in many other countries. Some system exist, which use stage-based programs including RHODES \cite{rhodes} and UTOPIA/SPOT \cite{utopia_spot} (which is implemented in copenhagen for "Centrumforbindelsen").
+I believe stage based signals and more centralized computer control of arterials could be accepted and achieved if systems were more available and open as proposed above. The introduction of stage based signals would be a major break with tradition in Denmark - and probably also in many other countries. Some system exist, which use stage-based programs including RHODES \cite{rhodes} and UTOPIA/SPOT \cite{utopia_spot} mentioned previously.
 
-Breaking tradition is always hard; this combined with the volume of such a system has compelled me to remain in the common cycle time world in this project. But as will be seen in the following sections, there are many ways to improve arterial signal performance in spite of the the restrictions of $C$.
+Breaking tradition is always hard; this combined with the complexity of such a system has compelled me to remain in the common cycle time world in this project. But as will be seen in the following sections, there are many ways to improve arterial signal performance in spite of the the restrictions of $C$.
 
 \subsection{Manipulating speed}
 The first option, which is implemented in the search procedure (see section \ref{siman}), is to improve coordination by affecting the speeds of road users. This is done by adjusting speed signs since most motorists will obey these. The travel time between intersections, which largely determines the offset, could then be increased or decreased by changing the speed signs. 
 
 In Figure \ref{fig:change_speed} we can see how this works. In the \textit{before} situation, platoons from intersection $i+1$ arrive too late and some experience red light. In the \textit{after} situation, the platoon is allowed to go faster and arrive entirely during the green time of intersection $i$.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.2]{change_speed.png}
+\includegraphics[scale=0.4]{change_speed.png}
 \caption{Changing speeds to obtain better coordination}
 \label{fig:change_speed}
 \end{figure}
@@ -94,9 +94,9 @@ Traditional offline optimization systems such as TRANSYT often employs a black-b
 
 Basically the purpose of offsets is to properly align adjacent intersections in time such that a platoon emitted during the green time of intersection 1 is met by a green light at the adjacent intersection 2. A good estimate of the propagation time of the platoon is the travel time $tt_{1,2} = d / v$ where $v$ is the average speed and $d$ is the distance between the intersections and the green time displacement, $\Delta f_{i,j}$, should match $tt$ for all adjacent intersections $i$ and $j$.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.2]{change_offset.png}
+\includegraphics[scale=0.4]{change_offset.png}
 \caption{Changing offsets to obtain better coordination}
 \label{fig:change_offset}
 \end{figure}
@@ -133,7 +133,7 @@ In this cycle-based approach the variable to be optimized is, of course, the off
 
 \subsubsection*{Evaluation of solutions}
 \label{eval_coord}
-For non-trivial arteries of size $n \geq 2$ intersections there are $n$ offsets to select and $m = 2 \cdot n - 2$ coordinations and hence $m$ speeds to choose, assuming speeds and distances are \textit{not} symmetric in the coordination from signal controller $i$ to $j$ and $j$ to $i$.
+For non-trivial arteries of size $n \geq 2$ intersections there are $n$ offsets to select and $m = 2 \cdot n - 2$ coordinations\footnote{Since each signal controller has an outgoing coordination in each direction except at the ends, which have only one} and hence $m$ speeds to choose, assuming speeds and distances are \textit{not} symmetric in the coordination from signal controller $i$ to $j$ and $j$ to $i$.
 The selection of offsets and speeds is a minimization problem where the fitness value indicates the quality of a coordination:
 
 $$ \min \sum_{\forall i,j} f(o_i,o_j,s_{ij})$$
@@ -153,7 +153,7 @@ $$|\Delta f - traveltime|$$
 \item[Green time displacement considering length of green times]
 In the above evaluation method only green starts are considered. If the green durations of the signal controllers being coordinated are not equally long it is possible to introduce some flexibility, as can be seen in Figure \ref{fig:green_time_displacement_flex}.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
 \includegraphics[scale=0.4]{green_time_displacement_flex.png}
 \caption{Flexibility in green time displacement considering downstream green duration}
@@ -180,7 +180,7 @@ This evaluation method is generic since the only requirement is the green bands 
 
 \end{description}
 
-During testing it was found that the simplest evaluation option, to regard only green time displacements, gave the best results on average and this was chosen as the primary evaluation mechanism in the offset optimization routine. I suspect - but cannot prove - that the reduced search space and complexity increased the number of solutions tested per second so that the higher freedoms of the latter two solutions did not give an advantage over the simplest evaluation method.
+During testing it was found that the simplest evaluation option, to regard only green time displacements, gave the best results on average and this was chosen as the primary evaluation mechanism in the offset optimization routine. I believe that the reduction in search space and complexity has increased the number of solutions tested per second to a level that the higher freedoms of the latter two solutions did not give an advantage over the simplest evaluation method. Unfortunately I did not have time to properly test this hypothesis.
 
 \subsection{Simulated Annealing}
 \label{siman}
@@ -189,11 +189,11 @@ SA is a \textit{hill-climber} with the ability to escape from local optima ie. j
 
 This can be transferred to computer-aided optimization as taking a completely random (ie. "smeltered" solution) and slowly cool it (inspecting neighbor solutions) to find a good solution. Thus SA performs a randomized, converging search in the entire search space (for offsets that is each combination of $N \bmod C$ over the intersections) looking for the possible best set of offsets without getting stuck with the \textit{first-and-best} solution it encounters.
 
-The initial solution is chosen so that all offsets are zero. SA then works its way toward a better solution by examining neighbor solutions to the current one. A neighbor solution is found by incrementing or decrementing a single offset in the current solution or changing the allowed speed between the intersections by 5$km/h$.
+The initial solution is chosen so that all offsets are zero\footnote{Alternatives are, for each controller, a random offset within the common cycle time (by some distribution eg. uniform) or some pre-existing offsets eg. generated by TRANSYT}. SA then works its way toward a better solution by examining neighbor solutions to the current one. A neighbor solution is found by incrementing or decrementing a single offset in the current solution or changing the allowed speed between the intersections by 5$km/h$.
 
 The solutions to offsets are evaluated and compared in the context of the network and, if a neighbor is found to be better than the best solution found so far, it is adopted as the new \textit{encumbent}. If the neighbor was not better it should be thrown away, but here SA avoids being caught in a local optima by \textit{with some probability}, related to the entropy difference of the current and neighbor solutions, keeping the neighbor solution regardless and work on from there. This characteristics of this probability function - which decreases as the search progress  - is chosen manually and so is subject to tuning.
 
-Generally metaheuristics give no guarantee that an optimum solution will be found, but with proper tuning and fast data structures, so that at least a couple of hundred solutions can be tested per second, it will generally yield good solutions. The strengths of metaheuristics are that they can easily support any kind of constraint, take advantage of the structure of the problem and run in O([insert seconds here]) ie. the running time is bounded by the time available.
+Generally metaheuristics give no guarantee that an optimum solution will be found, but with proper tuning and fast data structures - so that at least a couple of hundred solutions can be tested per second - it is my experience that they will yield good solutions. The strengths of metaheuristics are that they can easily support any kind of constraint, take advantage of the structure of the problem and run in O([insert seconds here]) ie. the running time is bounded by the time available.
 
 In this project I have developed data structures, which are fast enough to generate the necessary iterations per second and can be used in various metaheuristic search schemes, not just simulated annealing.
 
@@ -206,7 +206,7 @@ Every time a neighbor solution is generated we normally immediately want to eval
 
 A change in the offset of signal controller $sc_i$ will affect the coordinations between $sc_{i-1}$ and $sc_{i}$ and also between $sc_{i}$ and $sc_{i+1}$. Since we didn't change the offset $sc_{i-1}$ or $sc_{i+1}$ or any other offset, all coordinations but those mentioned will remain just as good - or bad - as before the offset change for $sc_i$. This is illustrated in Figure \ref{fig:delta_eval}.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
 \includegraphics[scale=0.3]{delta_eval.png}
 \caption{Local nature of coordinations. This illustrates the quality of coordinations between three signal controllers before and after changing the offset of the middle controller. Notice that the coordinations between the outer controllers and $sc_{i-2}$ and $sc_{i+2}$ remain the same.}
@@ -215,10 +215,10 @@ A change in the offset of signal controller $sc_i$ will affect the coordinations
 
 So, rather than evaluating every coordination again we may safely assume that only coordinations $(sc_{i-1},sc_{i})$, $(sc_{i-1},sc_{i})$ and $(sc_{i},sc_{i+1})$, $(sc_{i+1},sc_{i})$ need to be reevaluated. 
 
-We now need only to evaluate at most four coordinations\footnote{Changing offsets for controllers in the ends of the arterial will only change the value of two coordinations.} to obtain the neighbor solution value. In total there are $2\cdot (n-1)$ coordinations to evaluate since each signal controller has an outgoing coordination in each direction except at the ends, which have only one. Thus we exchange a linearly growing evaluation time (in the number of signal controllers) for a constant one and rough tests have shown that, even for small networks, the savings are in excess of a factor two, in spite of the extra overhead due to bookkeeping.
+We now need only to evaluate at most four coordinations\footnote{Changing offsets for controllers in the ends of the arterial will only change the value of two coordinations.} to obtain the neighbor solution value. In total there are $m = 2\cdot (n-1)$ coordinations to evaluate and thus we exchange a linearly growing evaluation time (in the number of signal controllers) for a constant one and rough tests have shown that, even for small networks, the savings in CPU time per iteration are in excess of a factor two, in spite of the extra overhead due to bookkeeping.
 
 \subsubsection{Neighbor solutions}
-In previous studies of metaheuristics, where the object oriented programming model was completely adopted, it was found that the overhead of object instantiation, whenever a neighbor solution was generated, would result in tremendous time consumption. 
+In previous studies of metaheuristics, where the object oriented programming model was completely adopted, it was found that the overhead of object instantiation, whenever a neighbor solution was generated, would result in tremendous consumption of CPU time. 
 
 Instead I have minimized the need for copying information from a solution to its neighbor by introducing the dual methods \verb|change| and \verb|undo_changes|. The purpose of these methods is to allow a solution to temporarily take the form of its neighbor and switch back to its former self, if requested. 
 When the metaheuristic runs it will constantly ask for neighbor solutions but throw away most of them. This approach avoids much copying of solution attributes and at the same time the details of the switching of identify are relayed to the solution object.
@@ -230,7 +230,7 @@ When \verb|change| is called a signal controller whose offset to change is chose
 
 We must be ready to undo the changes we just made, so we track all these changes: which offset or speed we changed and by how much as well as the previous contributions from the affected coordinations.
 
-The extra time spent on bookkeeping is bounded by the number of affected coordinations, as explained previously and does increase the complexity of the codes by a great amount.
+The extra time spent on bookkeeping is bounded by the number of affected coordinations, as explained previously and does increase the complexity of the code by a great amount.
 
 \subsubsection{Parameter tuning}
 The performance of simulated annealing is highly dependent on the parameters, which are used. Parameter tuning involves finding the best possible set of parameters. 
@@ -259,47 +259,45 @@ In parameter tuning a large number of parameter combinations are tested and sele
 
 Tuning is usually done in the generic case where an array of "problems" - in this context arterials - are solved using all parameter combinations. Metrics such as the average fitness and variance is compared and the paramteres which gave the best result are chosen. In our case there are only two arterials to test ie. Herlev and Glostrup. Furthermore we know that all critical runs will be done in these areas and thus the parameter tuning is focused here.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.3]{tuning_jumpstart-vs-alpha.png}
-\caption{Jumpstart threshold values versus cooling factors}
-\label{fig:jumpstart-vs-alpha}
-\end{figure}
+\subfloat[Jumpstart threshold values versus cooling factors]{
+  \includegraphics[width=\doubleimwidth]{tuning_jumpstart-vs-alpha.png}
+  \label{fig:jumpstart-vs-alpha}
+}
 
-\begin{figure}[ht]
-\centering
-\includegraphics[scale=0.3]{tuning_starttemp-vs-jumpstart.png}
-\caption{Starting temperatures versus jumpstart threshold values}
-\label{fig:starttemp-vs-jumpstart}
-\end{figure}
+\subfloat[Starting temperatures versus jumpstart threshold values]{
+  \includegraphics[width=\doubleimwidth]{tuning_starttemp-vs-jumpstart.png}
+  \label{fig:starttemp-vs-jumpstart}
+}
 
-\begin{figure}[ht]
-\centering
-\includegraphics[scale=0.3]{tuning_starttemp-vs-alpha.png}
-\caption{Starting temperatures versus cooling factors}
-\label{fig:starttemp-vs-alpha}
+\subfloat[Starting temperatures versus cooling factors]{
+  \includegraphics[width=\doubleimwidth]{tuning_starttemp-vs-alpha.png}
+  \label{fig:starttemp-vs-alpha}
+}
+\caption{Effects of parameter variations}
 \end{figure}
 
 In Figures (\ref{fig:jumpstart-vs-alpha}-\ref{fig:starttemp-vs-alpha}) are the average fitness values of all 2-combinations of parameters where lower is better. Each parameter combination was tested 10 times and the fitness is the average of the final solution values. 
 
-The running time of the solver was $0.1$ seconds since convergence was quickly achieved in the small networks available - Herlev and Glostrup. It was observed that in at most 1 second simulated annealing with any parameter combination would have found almost identical solutions indication an optimum is found, indicating that an optimum solution has been found under the chosen evaluation scheme.
+The running time of the solver was $0.1$ seconds since convergence was quickly achieved in the small networks available - Herlev and Glostrup. It was observed that in at most 1 second simulated annealing with any parameter combination would have found almost identical solutions, indicating that an optimum solution has been found under the chosen evaluation scheme.
 
-The parameter, which is most sensitive, seems to be alpha, which must not be too high. In Figures \ref{fig:starttemp-vs-alpha} and {fig:jumpstart-vs-alpha} we see that alpha = $0.99$ gives considerably worse fitness values and taking alpha down to $0.95$ reduces the gap in fitness. The best alpha value is $0.9$ by a minor margin indicating that the best solutions are found by - relatively quickly - decreasing the capability of accepting a worse-than-current solution.
+The parameter, which is most sensitive, seems to be alpha, which must not be too high. In Figures \ref{fig:starttemp-vs-alpha} and \ref{fig:jumpstart-vs-alpha} we see that alpha = $0.99$ gives considerably worse fitness values and taking alpha down to $0.95$ reduces the gap in fitness. The best alpha value is $0.9$ by a minor margin indicating that the best solutions are found by - relatively quickly - decreasing the capability of accepting a worse-than-current solution.
 
 The jumpstart threshold value is not very sensitive, which is seen in Figures \ref{fig:jumpstart-vs-alpha} and \ref{fig:starttemp-vs-jumpstart} in that it is mainly the variation in the other parameter (cooling factor and starting temperature resp.) that causes changes of fitness. We can deduce from this that the jumpstart actions are not of high importance to simulated annealing in this problem.
 
 The best starting temperature among the tested values is 100 again supporting the claim that the solver desires to quickly zoom in on a specific region of the search space. Using this temperature and the best alpha value of $0.90$, we see in Figure \ref{fig:cooling_scheme} the resulting cooling.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.3]{temp-vs-iter_alpha09_starttemp100.png}
+\includegraphics[width=0.5\textwidth]{temp-vs-iter_alpha09_starttemp100.png}
 \caption{Cooling diagram for alpha $0.9$ and starting temperature $100$.}
 \label{fig:cooling_scheme}
 \end{figure}
 
 The final results of the parameter tuning, which was used in the final testing, can be seen in Table \ref{tab:saparms}.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
 \begin{tabular}{l|c}
 \textbf{Parameter} & \textbf{Value}\\ \hline
@@ -312,7 +310,7 @@ Random restart action probability & 0.33 \\
 Offset change probability & 1.0 \\
 Speed change probability & 0.0
 \end{tabular}
-\caption{Parameters used for simulated annealing}
+\caption{Parameters used for simulated annealing when generating offsets for the tests in section \ref{test}.}
 \label{tab:saparms}
 \end{table}
 
@@ -320,26 +318,17 @@ Speed change probability & 0.0
 A neighbor solution is different by the speed in a coordination \textit{or} by an offset and thus when creating the neighbor solution it must be decided which change to make.
 Maintaining the values of Table \ref{tab:saparms} except for speed and offset change probabilities I have performed another test to see the effect of making speed changes compared to changing offsets.
 
-\begin{figure}[ht]
-
-    \begin{minipage}[b]{0.5\linewidth}
-
+\begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.25]{tuning_change_offset-speed_ratio0.png}
+\subfloat[All probabilities]{
+  \includegraphics[width=\doubleimwidth]{tuning_change_offset-speed_ratio0.png}
+  \label{fig:offset-vs-speed0}
+}
+\subfloat[All probabilities but zero]{
+  \includegraphics[width=\doubleimwidth]{tuning_change_offset-speed_ratio.png}
+  \label{fig:offset-vs-speed}
+}
 \caption{Probability of changing offsets and speeds}
-\label{fig:offset-vs-speed0}
-
-    \end{minipage}
-    \hspace{0.5cm}
-    \begin{minipage}[b]{0.5\linewidth}
-
-\centering
-\includegraphics[scale=0.25]{tuning_change_offset-speed_ratio.png}
-\caption{Probability of changing offsets and speeds}
-\label{fig:offset-vs-speed}
-
-    \end{minipage}
-
 \end{figure}
 
 In Figure \ref{fig:offset-vs-speed0} we see the importance of offsets compared to the average speeds used between intersections. In Figure \ref{fig:offset-vs-speed} we are zoomed in on the upper probability levels for changing offsets and see that, although marginal, allowing speed changes with probability $0.3$ is preferable to not allowing speed changes at all.
