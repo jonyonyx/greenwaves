@@ -1,8 +1,25 @@
 \section{Introduction}
 
-The ringroads sorrounding the city of Copenhagen serve to route traffic around the city to offload the urban road networks and provide an alternative to going through the city. As such they are part of the collection of arteries in Denmark.
+Road traffic has become an essential part of modern society and is putting an increasing
+demand on road networks.
+Traffic network congestion causes delays which add substantial costs
+to society and businesses on a daily basis and also increase emissions
+and the risk of accidents.
 
-The DOGS system by Technical Traffic Solution (TTS) was chosen to adjust the capacity of ringroad 3 due to the rebuilding of the nearby motorring 3, which was expected to cause increased traffic on ringroad 3.
+To alleviate congestion, public transport can be improved or the
+infrastructure can be expanded. In urban areas, the latter is often
+impossible due to residential areas adjacent to the existing roads.  A
+more subtle way to improve the network performance is to make better
+use of the existing roads, which can be achieved in part by proper
+setting of traffic signal parameters.
+
+It is estimated that the proper use of intelligent traffic systems
+including intelligent traffic signals, could increase the capacity of the
+road network in the Greater Copenhagen area by 5 to 10\% and in the report \cite{bedresignaler} simulations reveal that optimized coordinations for a circular artery in Copenhagen can reduce delays and stops in the morning rush hour by more than 25\%.
+
+The ringroads sorrounding the city of Copenhagen are part of the collection of arteries in Denmark and serve to route traffic around the city to offload the urban road networks and provide an alternative to going through the city. As such the signal controller settings are frequently adjusted in an offline process (see eg. an optimization using TRANSYT\footnote{See section \ref{simulation} for more details on simulation	tools.} \cite{transyt}) to best serve the demand from road users. Offline signal settings are made for some prespecified time interval eg. "morning" or "afternoon" and cannot compensate for the dynamic aspects of traffic, unlike adaptive signal control systems.
+
+The DOGS system by Technical Traffic Solution (TTS) is a system for intelligent traffic light management on an artery. DOGS was chosen by the Danish Road Directorate (DRD) to adjust the capacity of ringroad 3 due to the rebuilding of the nearby motorring 3, which was expected to cause increased traffic.
 
 DOGS increases capacity by simultaneously increasing cycle times in all signal controllers, when certain traffic conditions arise. These criteria are determined statically so as to alleviate the most heavily loaded intersection in the DOGS area.
 
@@ -12,7 +29,7 @@ The simulation tool is chosen to be Vissim, which is the de-facto microsimulatio
 
 To test the issue of disrupted coordination during DOGS operation an offset optimization tool was developed to provide precalculated offsets for each signal controller for each cycle time. This tool also integrates closely with Vissim to extract informations such as distances and signal controller plans. 
 
-The report is structured as follows. After introducing traffic signal optimization system in section \ref{systems} I describe how DOGS work and what the intentions behind DOGS are in section \ref{dogs}. Section \ref{simulation} introduces the Vissim microsimulator and I describe how Vissim structures its data and how I can take advantage of the plain text property of the Vissim network file to automatically insert traffic data for link inputs and route choice. In section \ref{vap} I describe the Vehicle Actuated Programming language (VAP) of Vissim and how I use it to emulate DOGS in a master-slave scheme. For the purpose of adjusting the simulation I received detailed traffic data from both the Danish Road Directorate (traffic counts and signal layouts) and from TTS detector data. These data are analysed in section \ref{data} where I show the arterial properties of ringroad 3 and the direction bias. The Vissim network I use in this project was started by COWI and later inherited and improved by many students at Technical University of Denmark. In the next section \ref{modelling} I discuss how I expanded and modified the network using automatic procedures, which work directly on the data structures described in section \ref{simulation}. Section \ref{optimization} is where I discuss optimization of coordination and how I designed my own system based on simulated annealing. The last section \ref{test} compares the performance of original DOGS and DOGS with offsets from the optimizer to the basic program. Finally in section \ref{conclusion} I bring my conclusions and suggestions for future works based on the results of section \ref{test}.
+The report is structured as follows. After introducing traffic signal optimization system in section \ref{systems} I describe how DOGS work and what the intentions behind DOGS are in section \ref{dogs}. Section \ref{simulation} introduces the Vissim microsimulator and I describe how Vissim structures its data and how I can take advantage of the plain text property of the Vissim network file to automatically insert traffic data for link inputs and route choice. In section \ref{vap} I describe the Vehicle Actuated Programming language (VAP) of Vissim and how I use it to emulate DOGS in a master-slave scheme. For the purpose of adjusting the simulation I received detailed traffic data from both the Danish Road Directorate (traffic counts and signal layouts) and from TTS detector data. These data are analysed in section \ref{data} where I show the arterial properties of ringroad 3 and the direction bias. The Vissim network I use in this project was started by COWI and later inherited and improved by many students at the Technical University of Denmark. In the next section \ref{modelling} I discuss how I expanded and modified the network using automatic procedures, which work directly on the data structures described in section \ref{simulation}. Section \ref{optimization} is where I discuss optimization of coordination and how I designed my own system based on simulated annealing. The last section \ref{test} compares the performance of original DOGS and DOGS with offsets from the optimizer to the basic program. Finally in section \ref{conclusion} I bring my conclusions and suggestions for future works based on the results of section \ref{test}.
 
 \subsection{Terms}
 \label{vocabulary}
@@ -61,6 +78,6 @@ Platoons are \textit{dispersed} ie. split up over time into multiple platoons du
 \end{description}
 
 \subsection{Software versions}
-The Vissim network was developed first under Vissim 4.00-06 and later in the newly released Vissim 5.00 using the latest service packs as they were released. All tests were performed in Vissim version 5.00-08, however. 
+The Vissim network was developed first under Vissim 4.00-16 and later in the newly released Vissim 5.00 using the latest service packs as they were released. All tests were performed in Vissim version 5.00-08, however. 
 
 Libraries for Vissim manipulation, support and optimization were written in Ruby, targeting version 1.8.6.

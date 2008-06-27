@@ -8,6 +8,7 @@
 \usepackage{fancyhdr}
 \usepackage{lscape}
 \usepackage[pdftex,bookmarksnumbered,colorlinks,backref, bookmarks, breaklinks, linktocpage]{hyperref}
+\usepackage{subfig}
 \usepackage{listings}
 \lstset{
   language=ruby, %The programminglanguage to be used
@@ -26,11 +27,13 @@
 
 \addtolength{\textwidth}{1cm}
 \addtolength{\textheight}{1cm}
-
 \setlength{\parindent}{0pt} % for adjusting indentation
 
 \hyphenation{desirable finally sta-ti-sti-cal-ly basic tailored}
 \date{A date}
+
+\newcommand{\singleimwidth}{0.9\textwidth}
+\newcommand{\doubleimwidth}{0.5\textwidth}
 
 %BEGIN Changing sizes of captions:
 
@@ -83,21 +86,21 @@ Jesper Larsen, DTU Management\\[3mm]
 \newpage
 
 \input{traffic_optimization}
-\clearpage
+\newpage
 \input{dogs}
-\clearpage
+\newpage
 \input{simulation}
-\clearpage
+\newpage
 \input{vap}
-\clearpage
+\newpage
 \input{data}
-\clearpage
+\newpage
 \input{modelling}
-\clearpage
+\newpage
 \input{optimization}
-\clearpage
+\newpage
 \input{test}
-\clearpage
+\newpage
 \input{conclusion}
 
 \cite{*}
@@ -111,7 +114,7 @@ Jesper Larsen, DTU Management\\[3mm]
 \appendix
 
 \input{app_signalplans}
-\clearpage
+\newpage
 \input{app_vap}
 \input{app_code}
 

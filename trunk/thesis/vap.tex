@@ -4,7 +4,7 @@ VAP is an optional module for Vissim which enables direct programming of signal 
 
 With VAP there is a graphical program, VISVAP, that allows the user to design a flowchart description of the controller logic, rather than writing it in VAP, as VISVAP can compile the flowchart into VAP. Figure \ref{fig:visvap_example} shows an example of a simple logic to control the lights at the ring 3 / Herlev Sygehus intersection.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
 \includegraphics[scale=0.5]{visvap_example_herlev-sygehus.png} 
 \caption{VISVAP flowchart description of simple fixed-time logic for Herlev Sygehus / ring 3}
@@ -50,7 +50,7 @@ function UpdateController(cycle_second){
 }
 \end{verbatim}
 
-VAP is suitable, however, for implementation of DOGS due to its simple decision system as described in section \ref{dogs}. In this section I will describe how the DOGS logic was implementated in VAP.
+VAP is suitable, however, for the implementation of DOGS due to its simple decision system as described in section \ref{dogs}. In this section I will describe how the DOGS logic was implementated in VAP.
 
 \subsection{Interstage definitions}
 Before we move on to DOGS in VAP it is fundamental to explain the \verb|Interstage| (abbr. \verb|Is|) concept. Interstage definitions are mandatory in Vissim whenever a VAP program is to control a signal.
@@ -61,9 +61,9 @@ The amber light of A is a warning that a transition is in progress, the intersec
 
 The red and amber period of B indicates that attentive entry into the intersection is permitted. The red and amber period is 2 seconds for all intersections.
 
-Thus a total stage transition will last 6 seconds or more. In Figure \ref{fig:lost_time_example} is an example of the interstage lost times for various number of stages and cycle times. Some stages - eg. a through, left and rightgoing stage followed by a left-only stage - will be \textit{compatible} ie. there is no pause during the transition thus the table is pessimistic. However it clearly shows that there is a tradeoff between lost time and cycle time - especially in complex, multistaged intersections.
+Thus a total stage transition will last 6 seconds or more. Figure \ref{fig:lost_time_example} is an example of the interstage lost times for various number of stages and cycle times. Some stages - eg. a through, left and rightgoing stage followed by a left-only stage - will be \textit{compatible} ie. there is no pause during the transition thus the table is pessimistic. However it clearly shows that there is a tradeoff between lost time and cycle time - especially in complex, multistaged intersections.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
 \includegraphics[scale=0.6]{interstage_lost_time.png} 
 \caption{Interstage lost time in percent of cycle time for some combinations of cycle time and number of incompatible stages}
@@ -108,7 +108,7 @@ $END
 
 In section \$STAGES it is defined that stage A should be green while B should is red and vice versa (they are not compatible). Here A and B refers to a space-separated list of signal groups from the \$SIGNAL\_GROUPS section.
 
-For the interstage definitions, in INTERSTAGE1, we have redend for A to be -127, which means that A is green before the interstage, and grend (green end) is 0 meaning it should be red when the interstage has completed. For stage B, which is red before the interstage is run due to the \$STAGES definition, the redend (=green start) occurs 6 seconds into the interstage and grend set to 127 means that B should remain green after the interstage.
+For the interstage definitions, in INTERSTAGE1, we have \verb|redend| for A to be -127, which means that A is green before the interstage, and \verb|grend| (green end) is 0 meaning it should be red when the interstage has completed. For stage B, which is red before the interstage is run due to the \$STAGES definition, the \verb|redend| (=green start) occurs 6 seconds into the interstage and grend set to 127 means that B should remain green after the interstage.
 
 It is always up to the interstage designer to ensure that no right-of-way conflicts are present in the stage definitions. PTV supplies a support tool, which solves this issue, called CROSSIG. CROSSIG is capable of generating .PUA files; in this project CROSSIG was not available, however, and they were generated automatically from the signal plans, which are listed in appendix \ref{app:signalplans}.
 
@@ -140,7 +140,7 @@ Along with the detector data described in section \ref{detector_data} TTS suppli
 
 DOGS accumulate detections over a cycle - which is of variable length - and compare them to the threshold values. Occupancy is the percentage of time of which the detector was enabled ie. a vehicle passed over or was in queue over the detector and thus the detection period can be chosen freely. The amount of vehicles which passed over (the 2nd component for threshold matching) is in total numbers and consequently when the cycle time increase so does the number of detected vehicles. TTS informs me that no adjustment - except for the standard exponential smoothening - is performed when comparing detector vehicle count values with the thresholds. I decided to correct this in the VAP code by assuming the counting thresholds matched a 80 seconds cycle and then scale the detected count to this level by using the actual cycle time (which is usually higher, when DOGS is enabled).
 
-Another observation, though not compensated for as for vehicle counts, is that when DOGS is active the level is adjusted at most by one for each 2-cycle. Thus when the level is high it will take longer to change between levels and the measuring periods are longer. This results in more accurate measurements, but less responsiveness. I do not have a suggestion for an alternative to this approach, which solves the problem of keeping the controllers synchronized as well.
+Another observation, though not compensated for as for vehicle counts, is that when DOGS is active the level is adjusted at most by one for each 2-cycle. Thus when the level is high it will take longer to change between levels and the measuring periods are longer. This results in more accurate measurements, but less responsiveness. I do not have a suggestion for an alternative to this approach, that also solves the problem of keeping the controllers synchronized.
 
 The modified version of the master controller differ only from the unmodified version in how long the cycle time must be allowed to run before changing to the next - thus changing between the versions, for the master, is a matter of adjusting a single variable.
 
@@ -171,6 +171,6 @@ This is implemented by associating detectors for north- and southgoing buses for
 
 When bus prioritization is activated under these conditions the stage end times will be adjusted as mentioned and the next cycle (compensation) will perform likewise adjustments albeit inversed.
 
-In case that a bus arrives and activates bus prioritization but make it across the intersection before the green time for the stage has been extended, bus prioritization is cancelled and no changes are made to the green time distribution.
+In the case where a bus arrives and activates bus prioritization but make it across the intersection before the green time for the stage has been extended, bus prioritization is cancelled and no changes are made to the green time distribution.
 
 Such iterations of borrowing and compensation will not affect coordination very much since only the green-end times are changed and the cycle time remains in sync with the common cycle time set by DOGS. Hence the performance degradation for non-bus traffic becomes a mere matter of capacity redistribution. This is changed if the aggresiveness of bus priority is increased and the next green stage for the bus is expedited, however only the above described bus priority technique was tested.

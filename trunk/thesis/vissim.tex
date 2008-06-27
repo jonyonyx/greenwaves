@@ -2,7 +2,7 @@
 \label{vissim}
 Vissim provides a microscopic simulation of traffic in a network. In this context microscopic entails that each vehicle is individually modelled and, in a sense, Vissim takes the view of the users of the network.
 
-The main feat of Vissim is the visual representation of vehicle movements and inspection of signal controller states. Furthermore Vissim allows a multitude of information to be extracted in addition to the ones listed below. This, and a theoretically well foundedness, is presumably why Vissim has become so widespread in Denmark.
+The main feat of Vissim is the visual representation of vehicle movements and inspection of signal controller states. Furthermore Vissim allows a multitude of information to be extracted in addition to the ones listed below. This, and a theoretically well foundedness, is presumably why Vissim has become so widespread in Denmark. Some of the most important informations which is available from a Vissim simulation run are:
 
 \begin{enumerate}
 \item Delay: the difference between the best-case travel time ie. no intersections and travel at free flow speeds (no other road users). The delay from point A to B when there are no intermediate intersections is an indication of the congestion
@@ -21,13 +21,13 @@ Links are directed sections of road with one or more lanes. All lanes have the s
 Connectors are mostly relevant in intersections where they connect exactly two links, however the lanes connected within the links can be chosen freely.
 
 \subsubsection*{Traffic input}
-Vissim is capable of dynamic traffic assignment (DTA) as well as static input. DTA is a method by \cite{Wardrop} in which the traffic flow adapts to the capacity of the network due to a \textit{stochastic user equilibrium} (SUE) ie. the road user response of traffic conditions model their choice of route. 
+Vissim is capable of dynamic traffic assignment (DTA) as well as static input. DTA is a method in which the traffic flow adapts to the capacity of the network due to a \textit{stochastic user equilibrium} (SUE) ie. the road user response of traffic conditions model their choice of route \cite{Wardrop}. 
 
 Vissim can perform this form of traffic input given zones, which are confined and non-overlapping areas of the network, and a matrix describing the relative traffic from each zone to each other zone.
 
 In this project DTA was abandoned on recommendation from DTU Transport professor Otto Anker Nielsen due to the dynamic nature of the traffic signals since, in his experience, odd phenomenon may occur such as random gridlocks, when adjacent links are fully saturated.
 
-Instead static input was chosen. In static input traffic enters on specific links and traverse the network until an exit link has been reached. Static input is used in combination with routing decisions, which are usually placed on input such that each vehicle entering will routed through the network according to the available traffic data.
+Instead static input was chosen. In static input traffic enters on specific links and traverse the network until an exit link has been reached. Static input is used in combination with routing decisions, which are usually placed on input such that each vehicle entering will be routed through the network according to the available traffic data.
 
 \subsubsection*{Routing decisions}
 \label{routingdecisions}
