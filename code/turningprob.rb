@@ -28,7 +28,7 @@ class RoutingDecision
     @routes << [route, fractions]
   end
   def to_vissim i
-    str = "ROUTING_DECISION #{i} NAME \"#{@desc ? @desc : (@veh_type)} from #{@input_link}\" LABEL  0.00 0.00\n"
+    str = "ROUTING_DECISION #{i} NAME \"#{@desc ? @desc : (@veh_type.to_s.capitalize)} from #{@input_link}\" LABEL  0.00 0.00\n"
     # AT must be AFTER the input point
     # place decisions as early as possibly to give vehicles time to changes lanes
     tbegin = @time_intervals.min.tstart
@@ -81,6 +81,10 @@ class Stream
     @turning_motion
   end
   
+  def approach
+    "#{@from}#{@intersection}"
+  end
+  
   def add_fraction tstart, tend, cars, trucks
     period = Interval.new(tstart,tend)
     @traffic[period][:cars] = cars
@@ -122,14 +126,20 @@ def get_streams program
       Time.parse(row[:tend][-8..-1]), 
       row[:cars], row[:trucks])
   end
-  #puts "Size before: #{streams.size}"
+  
+  # find all streams, which have donor streams, and
+  # scale 
+  
+#  for approach, streams_for_approach in streams.group_by{|s|s.approach}
+#    puts "#{approach}: #{streams_for_approach.join(' ')}"
+#  end
+  
   if program.repeat_first_interval
     time_offset = program.resolution * 60
     
     streams.each do |stream|
       first_period = stream.traffic.keys.min
       
-      #puts "copying stream #{stream} in period #{first_period}"
       veh_flow_map = stream.traffic[first_period]
       stream.add_fraction(
         first_period.tstart - time_offset,
@@ -138,7 +148,6 @@ def get_streams program
       )
     end
   end
-  #puts "Size after: #{streams.size}"
   
   streams
 end
@@ -254,11 +263,12 @@ end
 if __FILE__ == $0  
   puts "BEGIN"
   
+  require 'cowi_tests'
+  
   vissim = Vissim.new
   
-  rds = get_routing_decisions vissim
+  rds = get_routing_decisions vissim,MORNING
   #puts rds.to_vissim
-  rds.write
     
   puts "END"
 end
