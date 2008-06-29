@@ -27,11 +27,13 @@ class RoutingDecision
     raise "Wrong number of fractions, #{fractions.size}, expected #{@time_intervals.size}\n#{fractions.sort.join("\n")}\n#{route}" unless fractions.size == @time_intervals.size
     @routes << [route, fractions]
   end
+  def tbegin
+    @time_intervals.min.tstart
+  end
   def to_vissim i
     str = "ROUTING_DECISION #{i} NAME \"#{@desc ? @desc : (@veh_type.to_s.capitalize)} from #{@input_link}\" LABEL  0.00 0.00\n"
     # AT must be AFTER the input point
     # place decisions as early as possibly to give vehicles time to changes lanes
-    tbegin = @time_intervals.min.tstart
     
     str << "     LINK #{@input_link.number} AT #{@input_link.length * 0.1 + 10}\n"
     str << "     TIME #{@time_intervals.sort.map{|int|int.to_vissim(tbegin)}.join(' ')}\n"
@@ -107,50 +109,6 @@ class Stream
   end
 end
 
-def get_streams program
-  streams = []
-  sql = TURNING_SQL.gsub('PERIOD_START',program.from.to_hm).gsub('PERIOD_END', program.to.to_hm)
-  
-  DB[sql].each do |row|
-    from = row[:from_direction][0..0]
-    to = row[:to_direction][0..0]
-    intersection = row[:intersection_number]
-    
-    stream = streams.find{|s|s.from == from and s.to == to and s.intersection == intersection}
-    if not stream 
-      stream = Stream.new(from[0..0],to[0..0],intersection,row[:turn][0..0])
-      streams << stream
-    end
-    stream.add_fraction(
-      Time.parse(row[:tstart][-8..-1]), 
-      Time.parse(row[:tend][-8..-1]), 
-      row[:cars], row[:trucks])
-  end
-  
-  # find all streams, which have donor streams, and
-  # scale 
-  
-#  for approach, streams_for_approach in streams.group_by{|s|s.approach}
-#    puts "#{approach}: #{streams_for_approach.join(' ')}"
-#  end
-  
-  if program.repeat_first_interval
-    time_offset = program.resolution * 60
-    
-    streams.each do |stream|
-      first_period = stream.traffic.keys.min
-      
-      veh_flow_map = stream.traffic[first_period]
-      stream.add_fraction(
-        first_period.tstart - time_offset,
-        first_period.tend - time_offset,
-        veh_flow_map[:cars],veh_flow_map[:trucks]
-      )
-    end
-  end
-  
-  streams
-end
 def print_streams streams
   streams.each do |s|
     puts s
@@ -165,14 +123,22 @@ class Interval
   def initialize tstart,tend
     @tstart,@tend = tstart,tend    
   end
-  def hash; @tstart.hash + @tend.hash; end
-  def eql?(other); @tstart == other.tstart and @tend == other.tend; end
+  def shift(seconds)
+    @tstart += seconds
+    @tend += seconds
+  end
+  def copy
+    Interval.new(@tstart,@tend)
+  end
   def to_vissim(tbegin); "FROM #{@tstart - tbegin} UNTIL #{@tend - tbegin}"; end
   def to_s; "#{@tstart.to_hm} to #{@tend.to_hm}"; end
   def <=>(i2); @tstart <=> i2.tstart; end
 end
 class Fraction
   attr_reader :interval, :veh_type, :quantity
+  def copy
+    Fraction.new!(:interval => @interval.copy,:veh_type => @veh_type,:quantity => @quantity)
+  end
   def <=>(f2); @interval <=> f2.interval; end
   def to_s; "Fraction from #{@interval} = #{quantity} #{@veh_type}"; end
   def to_vissim; "FRACTION #{@quantity}";end
@@ -180,41 +146,10 @@ end
 
 def get_routing_decisions vissim, program
   
-  streams = get_streams(program)
-  #print_streams streams
-  
-  raise "No traffic streams found in program '#{program}'. Is your data source OK?" if streams.empty?
-  
-  vissim.decisions.sort.each do |dec|
-    
-    # find the stream which defines the quantity of vehicles over this decision
-    quantity_stream = streams.find do |s|
-      s.from == dec.from_direction and 
-        s.turning_motion == dec.turning_motion and 
-        s.intersection == dec.intersection
-    end || raise("Could not find stream for #{dec}")
-    
-    # the donor stream is usually identical to quantity_stream
-    # but may be some upstream source, which should be adjusted
-    donor_stream = streams.find do |s|
-      s.from == dec.decide_from_direction and
-        s.intersection == dec.decide_at_intersection and
-        s.turning_motion == 'T' # TODO correctly determine which stream is the donor
-    end || quantity_stream
-    
-    quantity_stream.traffic.keys.sort.each do |period|
-      [:cars,:trucks].each do |veh_type|
-        request_vehicles = quantity_stream.traffic[period][veh_type]
-        vehicles = donor_stream.get_traffic(period, veh_type,request_vehicles)
-      
-        #puts "Received only #{vehicles} of #{request_vehicles} #{veh_type} for stream #{quantity_stream} from #{donor_stream}" if request_vehicles != vehicles
-        dec.add_fraction(period, veh_type, vehicles)
-      end
-    end
+  decisions = vissim.decisions.find_all do |dec| 
+    dec.fractions.any?{|fraction|program.interval === fraction.interval.tstart}
   end
-  
-  decisions = vissim.decisions.find_all{|dec|not dec.fractions.empty?}
- 
+    
   routing_decisions = RoutingDecisions.new
   
   decision_points = []
@@ -250,13 +185,28 @@ def get_routing_decisions vissim, program
         raise "No routes from #{decision_link} to #{dest} over #{dec} among these routes:
                \n#{local_routes.map{|lr|lr.to_vissim}.join("\n")}" if local_route.nil?
                 
-        rd.add_route(local_route, 
-          dec.fractions.find_all{|f| f.veh_type == veh_type})
+        fractions = dec.fractions.find_all do |fraction| 
+          fraction.veh_type == veh_type and
+            program.interval === fraction.interval.tstart
+        end
+        if program.repeat_first_interval
+          first_fraction = dec.fractions.min_by{|f|f.interval}
+          
+          raise "Fractions at #{dec}:\n#{fractions.join("\n")}" unless first_fraction
+          
+          new_first_fraction = first_fraction.copy
+          new_first_fraction.interval.shift(-program.resolution * 60)
+          
+          fractions << new_first_fraction
+        end
+        rd.add_route(local_route, fractions)
       end
   
       routing_decisions << rd 
     end
+    
   end
+  
   routing_decisions
 end
 
@@ -268,7 +218,7 @@ if __FILE__ == $0
   vissim = Vissim.new
   
   rds = get_routing_decisions vissim,MORNING
-  #puts rds.to_vissim
+  puts rds.to_vissim
     
   puts "END"
 end

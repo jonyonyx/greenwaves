@@ -4,10 +4,10 @@ DRD and TTS has informed me that the DOGS system has not previously been tested 
 
 As part of this, tests were performed to discover the effect of bus priority and to discover whether the uncontrolled green time displacements, which DOGS introduce during level change (see section \ref{dogs_offset}), can be remedied by choosing cycle-time specific offsets at level changes.
 
-Only the morning period (7.00-9.00) was tested due time constraints and that, the fact that few differences in results were expected considering the similarities between morning and afternoon (15.00-17.00) we saw in section \ref{data}.
+Only the morning period (7.00-9.00) was tested due time constraints and the fact that few differences in results were expected considering the similarities between morning and afternoon (15.00-17.00) we saw in section \ref{data}.
  
-The overall conclusion is that the combined performance of the network is reduced when DOGS is running. This means that the positive effect for traffic traversing the arterial does not outweigh the penalties for crossing traffic. 
-This is acceptable since DOGS, for political reasons, was sanctioned to perform a capacity redistribution from minor road (traffic from east- and west) to arterial traffic. However, tests show that this redistribution does not succeed in a convincing way and even increases queue lengths and delays for arterial traffic in some cases.
+The overall conclusion is that the combined performance of the network is reduced when DOGS is running. This means that the positive effect for traffic traversing the arterial does not outweigh the penalties for minor road traffic. 
+A performance decrease for minor roads is acceptable since DOGS, for political reasons, was sanctioned to perform a capacity redistribution to favor traffic on the artery. However, tests show that this redistribution does not succeed in a convincing way and even increases queue lengths and delays for arterial traffic in some cases.
 
 In section \ref{dogs_offset} I discussed how DOGS inadvertently alters the coordination as it increases the cycle time without compensating by implementing new offsets. The tests involving \textit{Modified DOGS} show that DOGS can be improved by choosing new offsets when the cycle time is changed.
 
@@ -39,7 +39,7 @@ Apart from the varying offsets, the only other difference between \textit{modifi
 As DOGS will naturally cause decreased performance for the minor roads it was decided to split the dataset so that \textit{arterial} and \textit{minor road} traffic can be distinguished. 
 
 \begin{description}
-\item[Arterial] traffic is defined as traffic which enters an intersection from north or south and makes a throughgoing motion rather than turning off the arterial. 
+\item[Arterial] traffic is defined as traffic which enters an intersection from north or south and makes a throughgoing motion rather than turning off the artery. 
 \item[Minor road] traffic consist of all traffic from east and west making left- and right turns as well as crossing over the artery.
 \end{description}
 
@@ -97,7 +97,7 @@ In Herlev DOGS actually increase the queue lengths for arterial traffic, compare
 \caption{Average queue length}
 \end{figure}
 
-(Since intersections 6 to 9 are not controlled by DOGS the performance is almost identical wether DOGS is enabled or not and are not shown for this reason.)
+(Since intersections 6 to 9 are not controlled by DOGS the performance is almost identical whether DOGS is enabled or not and are not shown for this reason.)
 
 Figures \ref{fig:aveq_int_art} and \ref{fig:aveq_int_cross} shows the average lengths of queues forming at arterial and  minor road intersection approaches. We see that in the Herlev area only arterial traffic at Herlev Hovedgade gains an advantage under DOGS. On the other hand the Herlev Sygehus intersection performs almost twice as bad as it did without DOGS.
 
@@ -150,11 +150,11 @@ These analyses leave an impression of DOGS as a system which work as intended, a
 The fact that minor road traffic suffers reduced performance is explained by the uneven distribution of the extra green-time, which comes as a result of increased cycle times, in the ratio 4:1. What this means is that, when DOGS increase the cycle time by 10 seconds, the arterial phase will receive 8 extra seconds of green per cycle but the minor road phase only receives 2 seconds. 
 The case of performance for arterial traffic is somewhat unexpected since DOGS increased capacity and requires more study.
 
-In the DRD report \ref{dogs} Steen Lauritzen makes a note of the uncontrolled behaviour of offsets when DOGS change level (section 5.8) and in section \ref{dogs_offset} I explained the problem.
+In the DRD report \cite{dogs} Steen Lauritzen makes a note of the uncontrolled behaviour of offsets when DOGS change level (section 5.8 in his report) and in section \ref{dogs_offset} I explained the problem.
 
 During simulation it has been observed how the resulting poor coordinations are affected by DOGS; more vehicles are stopped at the red light due to the increased capacity and queues become longer. 
 
-To test the theory that poor offsets are, in fact, the main cause of less-than-expected performance benefits - and even performance decreases for arterial average delays and -queues I tested a modified version of DOGS with per-cycle-time offsets. The comparisons made in the section has shown us that improper offsets are a likely cause of the performance difference and that DOGS can be improved by adopting such per-level offset values. The offset values can be calculated by any offline optimization tool, such as the one I have developed, and I believe the changes can easily be implemented in existing DOGS logic considering the ease by which I was able to change between original and modified DOGS in my VAP codes.
+To test the theory that poor offsets are, in fact, the main cause of less-than-expected performance benefits - and even performance decreases for arterial average delays and -queues I tested a modified version of DOGS with per-cycle-time offsets. The comparisons made in the section has shown us that improper offsets are a likely cause of the performance difference and that DOGS can be improved by adopting such per-level offset values. The offset values can be calculated by any offline optimization tool, such as the one I have developed, and I believe the changes can easily be implemented in existing DOGS logic considering the ease by which I was able to change between original and modified DOGS in my VAP codes (see appendix \ref{app:vap}).
 
 In the Glostrup area we observe how modified DOGS is not able to match the performance of original DOGS, except for Kindebjergvej and Roskildevej. The optimization routine used to select the offsets for modified DOGS does not distinguish between solutions where the coordination quality is focused in one section of the artery and solutions where the coordination quality is fairly divided over among all intersections. I did not have time to test this hypothesis either, but suspect the lack of this feature is what is causing the inferior performance of modified DOGS in Glostrup. My suggestion is that future work should focus on such an improvement.
 
@@ -174,7 +174,7 @@ In Figures \ref{fig:dogs_cycle_times} are the cycle times chosen between 7 and 9
 
 We see that the modifications made to DOGS reduces the eagerness to change levels. This is an effect of the mandatory rule for modified DOGS to remain at least 3 cycles in each level, whereas DOGS is free to change the cycle time up or down after each level has been implemented. 
 
-This explains why modified DOGS is generally kinder on the minor roads than DOGS. Modified DOGS will remain longer at each level, allowing not only the new offsets to take effect but also the increased traffic, which caused the level change, to traverse the artery, before changing to the next level. An attempt to implement this form of level smoothening was thought into the DOGS system by the lower- and upper threshold values. However it appears that more drastic means should be taken to ensure that this of hysteria does not occur - an obvious approach is simply to require level burn-in times, such at the one I chose for modified DOGS (3 levels).
+This explains why modified DOGS is generally kinder on the minor roads than DOGS. Modified DOGS will remain longer at each level, allowing not only the new offsets to take effect but also the increased traffic, which caused the level change, to traverse the artery, before changing to the next level. An attempt to implement this form of level smoothening was thought into the DOGS system by the lower- and upper threshold values. However it appears that more drastic means should be taken to ensure that this form of hysteria does not occur - an obvious approach is simply to require level burn-in times, such at the 3 cycles I chose for modified DOGS.
 
 \subsection{Throughput}
 DOGS attempts to increase throughput ie. the number of vehicles which traverse a section of road in a time interval. The observed effect of a throughput increase is a smoothening of traffic peaks when more vehicles are let through due to increased cycle times. As we saw earlier, for instance in Figure \ref{fig:delay_arterial_herlev}, the DOGS system is capable of smoothening the average delays durings peaks of traffic (in the figure, around simulation second 3600 ie at 8-o'clock).
@@ -192,12 +192,12 @@ The final Figures \ref{fig:volume_hb-hh} show the throughput of DOGS and modifie
 \label{fig:volume_hb-hh}
 \end{figure}
 
-Comparing the throughput of both DOGS versions to the we see that DOGS is capable of increasing the throughput, as expected. It appears that there is no immediate correlation between the other measurements performed on queue lengths and delays.
+Comparing the throughput of both DOGS versions we see that DOGS is capable of increasing the throughput, as expected. It appears that there is no immediate correlation between the other measurements performed on queue lengths and delays.
 
 \subsection{Bus priority}
 The final analysis is for the bus priority for the three Glostrup intersections, Fabriksparken, Gammel Landevej and Kindebjergvej.
 
-Bus priority is a questionable feature for a crowded arterial, such as ringroad 3. Unless there exist dedicated bus lanes, buses wait in queue to cross an intersection along with all other vehicles. For the three intersections with bus priority there is no such dedicated lane.
+Bus priority is a questionable feature for a crowded artery, such as ringroad 3. Unless there exist dedicated bus lanes, buses wait in queue to cross an intersection along with all other vehicles. For the three intersections with bus priority there is no such dedicated lane.
 
 In Vissim it is possible to see delays per vehicle type, which in this analysis is used to filter out delays for buses.
 In Figures \ref{fig:delay_bus} we see how the various systems affects bus delays with and without bus priority.
@@ -215,7 +215,7 @@ In Figures \ref{fig:delay_bus} we see how the various systems affects bus delays
 
 It is clear that the bus priority logic makes a considerable positive difference in bus delay reduction in spite of the heavy traffic, which ringroad 3 faces. In addition, the logic could be more aggressive by detecting waiting buses shortening the non-bus stages so that the stage, which will serve the bus, can start earlier.
 
-I have selected to compare each program variant with and without bus priority since this is the natural scenario, when any of the systems are chosen, and one must decide wether to use bus priority or not. 
+I have selected to compare each program variant with and without bus priority since this is the natural scenario, when any of the systems are chosen, and one must decide whether to use bus priority or not. 
 
 \begin{figure}[htbp]
 \centering
@@ -226,4 +226,4 @@ I have selected to compare each program variant with and without bus priority si
 
 In Figure \ref{fig:buscomp} we see the different effects of bus priority in the three systems. At Fabriksparken the systems are almost identical using bus priority. Modified DOGS is the worst performer at Gammel Landevej and Kindebjergvej, in line with the observations previously made for modified DOGS in Glostrup, since buses are vehicles sharing road segments with cars and trucks and bus delay will thus be correlated to the delay of other vehicle types. The bus prioritized versions of original DOGS and the basic program take turn in being best at reducing delays for Gammel Landevej and Kindebjergvej respectively. 
 
-The overall conclusion on bus priority is that it seems to have a positive effect in all systems and that modified DOGS - as it was tested - is the worst performer. The question wether to favor original DOGS over the modified version for this reason on this account is left to politicians.
+The overall conclusion on bus priority is that it seems to have a positive effect in all systems and that modified DOGS - as it was tested - is the worst performer. The question whether to favor original DOGS over the modified version for this reason on this account is left to politicians.

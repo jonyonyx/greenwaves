@@ -8,21 +8,21 @@ Coordination along an arterial is fundamental in signal optimization. The ideal 
 
 Contemporary car engines consume less fuel in general when they are allowed to run at a constant RPM level so the travel experience as well as emmission levels are improved under coordination.
 
-There are also security aspects which indicate that coordination and green waves are desirable since the human eye has difficulty in observing acceleration and deceleration.
+There are also security aspects which indicate that coordination and green waves are desirable since the human eye has difficulty in observing acceleration and deceleration and coordination will cause less variation in speed.
 
 In one-way coordination a signal controller emits a platoon of vehicles over a period of time, say from $t_1$ to $t_2$, where $T_g = t_2 - t_1$ ie. the green time is indicative of the number of vehicles that need to pass. To avoid stopping these vehicles at the next signal the same amount of green time, $T_g$ must be given to the approaching platoon only \textit{offset} in time by $\Delta f$ to represent the travel time of the platoon from one signal to the next. 
 
-In fact, due to \textit{platoon dispersion}, which depend mainly on the intersignal distance and speeds, more than $T_g$ green time must be allotted to the stage of the downstream signal. It is also due to platoon dispersion that coordination is only relevant for signals which are relatively close. Practical experience from DRD indicate that the distance should not exceed 800-900 m. 
+In fact, due to \textit{platoon dispersion}, which depend mainly on the intersignal distance and speeds, more than $T_g$ green time must be allotted to the stage of the downstream signal. It is also due to platoon dispersion that coordination is only relevant for signals which are relatively close. In the experience of DRD the distance should not exceed 800-900 m. 
 
 In perfect two-way coordination between two intersections the leading vehicles in platoons of traffic in either direction must experience that the next signal switch to green before they reach the area in which they decide to brake for red.
 
 In a common cycle-time based system \cite{coord} gives us:
 
-$$o = n \cdot \frac{C}{2}$$
+$$tt = n \cdot \frac{C}{2}$$
 
-Where $o$ is the travel time between the intersections, which is assumed to be the same in both directions, $C$ is the cycle time and $n$ is an integer.
+Where $tt$ is the travel time between the intersections, which is assumed to be the same in both directions, $C$ is the cycle time and $n$ is an integer.
 
-The travel time is calculated as $o = L / v$ where $L$ is the distance and $v$ is the speed by which road users travel between the intersections. By insertion we get:
+The travel time can be calculated as $tt = L / v$ where $L$ is the distance and $v$ is the speed by which road users travel between the intersections. By insertion we get:
 
 $$C = 2 \cdot \frac{L}{n \cdot v}$$
 
@@ -30,20 +30,16 @@ This equation is quite constrained, however. For cycle time we require that it l
 
 In addition green waves usually span over more than two intersections which may have different distances and average speeds between them, all this making it hard or impossible to find an integer $n$ satisfying the constraints. Thus green waves are most easily established in one, main direction. It is possible to affect the average speeds between intersections by changing the allowed speed-signs. If this is not sufficient one might accept that the green wave is not perfect by, for instance, prioritizing one direction over the other.
 
-Priority can be given entirely to one direction or distributed by some weight, for instance based on the ratio of traffic in each direction. An obvious choice for the first option would be for an arterial with traffic between some suburbs and a major city. In the morning full priority should be given in the direction towards the city when people go to work and opposite in the afternoon. A third alternative is to provide a perfect progression band in one direction for a some ratio of time, corresponding to the ratios of traffic in either direction.
+Priority can be given entirely to one direction or distributed by some weight, for instance based on the ratio of traffic in each direction. An obvious choice for the first option would be for an artery with traffic between some suburbs and a major city. In the morning full priority should be given in the direction towards the city when people go to work and opposite in the afternoon. A third alternative is to provide a perfect progression band in one direction for a some ratio of time, corresponding to the ratios of traffic in either direction.
 For ringroad 3, which was simulated in this project, there is no profound direction bias in the morning or afternoon traffic (see section \ref{data}) and a solution which weighs the green wave quality according to direction ratio is preferred. 
-
-The distance between one signal head (intersection) and the next can be extracted from the Vissim network file in both directions and is static. The signal heads for both directions of the arterial are marked using a naming convention similar to the one mentioned in Section \ref{routefractions} only less information is required since the relation of the head to its signal controller can be deduced directly from the network file. Further details on this process can be read in Section \ref{signal_details}.
-
-For travel times (which is a key component in finding a proper offset) it is possible to rely on the speed limitations / free flow speeds for offset calculation, however under congestion speeds will decrease causing the travel times to increase. A better solution is to continuously inspect the smoothened travel times which are inserted for each stretch. 
 
 \subsection*{Why are we using common cycle schemes?}
 \label{phase_based}
 In this section I highlight the restrictions imposed when introducing two-way coordination between common cycle time signal controllers. Are there no alternatives, which are less strict and why aren't they used in Denmark?
 
-With a common cycle time comes fixed signal plans that give us full insight into the operation of the each signal controller. We can see exactly which signal groups ie. heads are green, red, yellow and amber at any given second. Furthermore, as presented above, there exist expressions for the offset and cycle time which causes coordination. 
+With a common cycle time comes fixed signal plans that give us full insight into the operation of each signal controller. We can see exactly which signal groups ie. heads are green, red, yellow and amber at any given second. Furthermore, as presented above, there exist expressions for the offset and cycle time which causes coordination. 
 
-Although traffic actuated green time extension schemes exist to make fine adjustsmens, such as the ones used for bus priority, it is always necessary to take the seconds from some other stage due to the common cycle time requirement. Likewise with stage skipping, you must always "spend" $C$ cycle seconds - and may never spend more - before restarting the signal plan.
+Although traffic actuated green time extension schemes exist to make fine adjustments, such as the ones used for bus priority, it is always necessary to take the seconds from some other stage due to the common cycle time requirement. Likewise with stage skipping, you must always "spend" $C$ cycle seconds - and may never spend more - before restarting the signal plan.
 
 These restrictions makes it difficult for a computer system to obtain optimum performance for the signal controllers and the observed / predicted traffic.
 
@@ -55,9 +51,9 @@ Here is a subset of rules such a system should implement:
 
 \begin{description}
 \item[Coordination]
-Whenever the arterial stage for a signal is active from $t_1$ to $t_2$ the arterial stage of the downstream signal should be active from $t_1 + o$ to $t_2 + o$ where $tt$ is the best estimate of travel time from signal 1 to signal 2.
-\item[Priority for the arterial]
-The green times for all stages in the direction of the arterial must match the load on the arterial, respecting other rules.
+Whenever the arterial stage for a signal is active from $t_1$ to $t_2$ the arterial stage of the downstream signal should be active from $t_1 + tt$ to $t_2 + tt$ where $tt$ is the best estimate of travel time from signal 1 to signal 2.
+\item[Priority for the artery]
+The green times for all stages in the direction of the artery must match the load on the arterial, respecting other rules.
 \item[Fairness to minor roads]
 The queues for minor roads cannot exceed a predefined length nor must a vehicle wait more than a certain amount of time at any intersection to pass.
 \end{description}
@@ -65,11 +61,12 @@ The queues for minor roads cannot exceed a predefined length nor must a vehicle 
 These rules - given proper parameters - are precise enough to be implemented in a computer program. The setting of parameters (for instance maximum queue length for minor roads) is a difficult subject, which could require many training hours for end-users. This was my impression about the Utopia/Spot system which the municipality of Copenhagen (Vej \& Park) had implemented for Centrum Forbindelsen - its was difficult for them to decide on which adjustsments should be made, when the system acted up. 
 However, many parameters can - and should - be set automatically by repeated simulation with trial-and-error or they are either easy enough to understand that rules of thumb and area specific insight is enough to make proper choices.
 
-I believe stage based signals and more centralized computer control of arterials could be accepted and achieved if systems were more available and open as proposed above. The introduction of stage based signals would be a major break with tradition in Denmark - and probably also in many other countries. Some systems exist, which use stage-based programs including RHODES \cite{rhodes} and UTOPIA/SPOT \cite{utopia_spot} mentioned previously.
+I believe that stage based signals and more centralized computer control of arteries could be accepted and achieved if systems were more available and open as proposed above. The introduction of stage based signals would be a major break with tradition in Denmark - and probably also in many other countries. Some systems exist, which use stage-based programs including RHODES \cite{rhodes} and UTOPIA/SPOT \cite{utopia_spot} mentioned previously.
 
-Breaking tradition is always hard; this combined with the complexity of such a system has compelled me to remain in the common cycle time world in this project. But as will be seen in the following sections, there are many ways to improve arterial signal performance in spite of the the restrictions of $C$.
+Breaking tradition is always hard; this combined with the complexity of such a system has compelled me to remain in the common cycle time world in this project. But as will be seen in the following sections, there are many ways to improve the performance of signal controllers in spite of the the restrictions of $C$.
 
 \subsection{Manipulating speed}
+
 The first option, which is implemented in the search procedure (see section \ref{siman}), is to improve coordination by affecting the speeds of road users. This is done by adjusting speed signs since most motorists will obey these. The travel time between intersections, which largely determines the offset, could then be increased or decreased by changing the speed signs. 
 
 In Figure \ref{fig:change_speed} we can see how this works. In the \textit{before} situation, platoons from intersection $i+1$ arrive too late and some experience red light. In the \textit{after} situation, the platoon is allowed to go faster and arrive entirely during the green time of intersection $i$.
@@ -81,18 +78,18 @@ In Figure \ref{fig:change_speed} we can see how this works. In the \textit{befor
 \label{fig:change_speed}
 \end{figure}
 
-Some considerations should be made in this respect. For instance we must ensure that the speeds do not divert too much from the norm of the relevant type of road. In addition the number of speed changes, which a motorist travelling throughout the arterial experience, must be minimized. And if speed changes do occur, it is a good idea to keep them small so that the speeds don't go from 50 to 70 from one stretch of road to the next.
+Some considerations should be made in this respect. For instance we must ensure that the speeds do not divert too much from the norm of the relevant type of road. In addition the number of speed changes, which a motorist travelling throughout the artery experience, must be minimized. And if speed changes do occur, it is a good idea to keep them small so that the speeds don't go from 50 to 70 from one stretch of road to the next.
 
 From a security perspective it might seem risky to not persist a common speed level through the artery. But considering that a change of speed might improve the quality of the coordination, this problem is negated. This also applies to the additional acceleration and deceleration since, if a green wave does not exist the vehicles must be stopped altogether at the red light causing even more acceleration.
 
-The current infrastructure on O3 does not offer this fine-grained level of adjustment but electronic speed signs are common practice nowadays and is, for instance, used on the almost-parallel motorring 3 to smoothen out queues.
+The current infrastructure on ringroad 3 does not offer this fine-grained level of adjustment but electronic speed signs are common practice nowadays and is, for instance, used on the almost-parallel M3 to smoothen out queues.
 
 \subsection{Adjusting offsets}
 The individual signal offset is the traditional parameter for adjustment. The formulas presented earlier (section \ref{coordination}) can be used to establish one-way coordination, under the restrictions described, but two-way coordination is not solved so easily.
 
 Traditional offline optimization systems such as TRANSYT often employs a black-box simulator for fitness evaluation. However for offsets we can do without such overhead since we know exactly what we are looking for.
 
-Basically the purpose of offsets is to properly align adjacent intersections in time such that a platoon emitted during the green time of intersection 1 is met by a green light at the adjacent intersection 2. A good estimate of the propagation time of the platoon is the travel time $tt_{1,2} = d / v$ where $v$ is the average speed and $d$ is the distance between the intersections and the green time displacement, $\Delta f_{i,j}$, should match $tt$ for all adjacent intersections $i$ and $j$.
+Basically the purpose of offsets is to properly align adjacent intersections in time such that a platoon emitted during the green time of intersection 1 is met by a green light at the adjacent intersection 2. A good estimate of the propagation time of the platoon is the travel time $tt_{1,2} = L / v$ where $v$ is the average speed and $L$ is the distance between the intersections and the green time displacement, $\Delta f_{i,j}$, should match $tt$ for all adjacent intersections $i$ and $j$.
 
 \begin{figure}[htbp]
 \centering
@@ -103,10 +100,8 @@ Basically the purpose of offsets is to properly align adjacent intersections in 
 
 We can change both the travel time, by changing speed signs, and also the green time displacement by adjusting offsets. The consequences of changing an offsets can be difficult to foresee, consider the example in Figure \ref{fig:change_offset}. From intersection $j$ to $i$ the platoon will arrive too early. We can increase the offset (delay the green start) of $j$ but then we just reverse the situation. During all this, we must expect that there are also signal controllers $i-1$ and $j+1$ to the left and right resp. of $i$ and $j$, which must be in coordination with $i$ and $j$.
 
-Metaheuristic search procedures are designed to cope with situations such as these where the immediate effects of a change cannot be foretold.
-
 \subsection{Direction bias}
-In section \ref{data} we looked at the detector data and traffic counts, which are used to fit the simulation. We saw, among other things, that there northgoing traffic is higher than southgoing. The optimization routine can be coherced into favoring one direction over the other - or be completely fair - by punishing deviations from a certain bias indicator.
+In section \ref{data} we looked at the detector data and traffic counts, which are used to fit the simulation. We saw, among other things, that the northgoing traffic is higher than southgoing. The optimization routine can be coherced into favoring one direction over the other - or be completely fair - by punishing deviations from a certain bias indicator.
 
 To calculate the bias under current offsets we sum, in each direction of the artery, the deviations of the green time displacement to the expected travel time. The bias is thus the ratio of these sums and can be compared to the desired bias. The punishment for choosing settings, which result in deviation from the desired bias, is a factor which grows exponentially with deviations in either direction.
 
@@ -123,9 +118,7 @@ When the distance from an intersection to the upstream intersection is short (eg
 To favorize good coordination between closely distanced intersection I have chosen to use weights.  I have opted to not statically classify what is close and what is not but rather rank the distances of all coordinations between adjacent intersections and set the weight of imperfections accordingly. The effect is that flaws in coordinations between close intersections adds more to the total solution value than for the same flaws at widely spaced intersections and thus the minimization problem solver is guided toward favorizing coordination between close intersections.
 
 \subsection{Metaheuristic search}
-DRD has traditionally used TRANSYT to obtain coordination. TRANSYT employs a genetic algorithm to finds its solutions but often it is necessary to manually adjust the offsets in order to obtain a good two-way coordination or to give preference to some direction. 
-
-This manual process involves creating good two-way green waves by compromise, which could be either some sacrifice in the quality of the green waves. 
+DRD has traditionally used TRANSYT to obtain coordination. TRANSYT employs a genetic algorithm to finds its solutions but often it is necessary to manually adjust the offsets in order to obtain a good two-way coordination or to give preference to some direction.
 
 In this project the green wave concept has been formalized so that it is possible to evaluate a proposal for offsets. This opens up for the application of a metaheuristic search procedure.
 
@@ -142,7 +135,7 @@ Where $i$ and $j$ are signal controllers, $o$ is the offset vector, $s$ contains
 
 I previously hinted at various methods of evaluating the fitness of solutions to offsets (and speeds). The most general approach is by using a simulator, however we cannot use Vissim for this purpose, as mentioned in section \ref{simulation}, due to the fact that Vissim runs - at best - at 10-50 times realtime speed in the network used in this project on contemporary machines. Using metaheuristics we need to evaluate several hundreds of solutions - and preferably more - per second and thus Vissim is far too slow for this purpose.
 
-Since we only solve a subproblem of signal setting optimization, \textit{coordination}, we can exploit the nature of coordination and below are three suggestions, listed in order of increasing complexity, I have found to evaluate solutions to coordination.
+Since we only solve a subproblem of signal setting optimization, that is \textit{coordination}, we can exploit the nature of coordination and below are three suggestions, listed in order of increasing complexity, I have found to evaluate solutions to coordination.
 
 \begin{description}
 \item[Green time displacement]
@@ -160,7 +153,7 @@ In the above evaluation method only green starts are considered. If the green du
 \label{fig:green_time_displacement_flex}
 \end{figure}
 
-Since the duration of the downstream green time is longer, the green start (offset) of the first signal controller can be chosen more freely without sacrificing coordination. This increases the count of good solutions, since now several solutions yield the same solution value due to the addded flexibility and allows the solver to find better solutions.
+Since the duration of the downstream green time is longer, the green start (offset) of the first signal controller can be chosen more freely without sacrificing coordination. This increases the size of the search space, since now several solutions yield the same solution value due to the added flexibility and allows the solver will be able to find better solutions.
 
 \item[Horizon evaluation]
 The final suggestion is an extension of the previous scheme. It is suited for evaluating coordination for common cycle time, fixed signal plan controllers as well as stage based signal controllers.
@@ -171,9 +164,9 @@ Given the distance and chosen speed in the coordination we can shift the band em
 
 \begin{itemize}
 \item There is no overlap. This is the worst situation that happens when all traffic from the first signal controller will be met by a red light at the downstream controller. The fitness is the size of $b1$.
-\item When the beginning of the $b1$ lies before $b2$ the green start of the first controller was too early or the downstream controller started its green too late. This will result in the stopping of the head vehicles from $i$ and the fitness is the size of $b1 \ b2$.
-\item Similar to the previous case but $b1$ extends beyond $b2$. Here the tail of vehicles from $i$ is cut off and the fitness is the size of $b2 \ b1$.
-\item When $|b1|>|b2|$ there is a chance that both the head and tail of vehicles from the first signal controller are cut since the downstream controller cannot offer enough green time to match that of the previous controller. In this case $b1 \ b2$ will result in two discontinued sequences of seconds in the horizon and the sum of the sizes of the sets constitute the fitness value.
+\item When the beginning of the $b1$ lies before $b2$ the green start of the first controller was too early or the downstream controller started its green too late. This will result in the stopping of the head vehicles from $i$ and the fitness is the size of $b1 \setminus b2$.
+\item Similar to the previous case but $b1$ extends beyond $b2$. Here the tail of vehicles from $i$ is cut off and the fitness is calculated same as before.
+\item When $|b1|>|b2|$ there is a chance that both the head and tail of vehicles from the first signal controller are cut since the downstream controller cannot offer enough green time to match that of the previous controller. In this case $b1 \setminus b2$ will result in two discontinued sequences of seconds in the horizon and the sum of the sizes of the sets constitute the fitness value.
 \end{itemize}
 
 This evaluation method is generic since the only requirement is the green bands in the horizon. This information can be extracted from all types of signal controllers, including stage-based controllers with memory of past stages. Pretimed signal controllers does not need memory of past stages to supply information on green times and thus the overhead of this evaluation scheme is not necessary. I believe, however, that this option might be of interest in future works and have left it here for completeness.
@@ -199,7 +192,7 @@ Generally metaheuristics give no guarantee that an optimum solution will be foun
 
 In this project I have developed data structures, which are fast enough to generate the necessary iterations per second and can be used in various metaheuristic search schemes, not just simulated annealing.
 
-In my experience the keys to speed in metaheuristic search are \textit{delta-evaluation} and to avoid \textit{object instantiation}.
+In my experience the keys to speed in metaheuristic search are \textit{delta-evaluation} and to reduce the need for \textit{object instantiation}.
 
 \subsubsection{Delta-evaluation}
 To evaluate a solution for offsets for sequentially adjacent signal controllers $sc_1$ to $sc_n$ we evaluate, in accordance to description in section \ref{eval_coord}, each coordination $(sc_1,sc_2)$, $(sc_2,sc_1)$\footnote{Coordinations between adjacent signal controllers need not be symmetrical. For instance there might be a longer way in one direction that the other or, more likely, different \textit{speeds} might be allowed} and so forth. This gives us a value for each coordination and we then perform some kind of aggregation in order to obtain a single figure, the solution value, which is augmented using the weighting methods described earlier.
@@ -215,7 +208,7 @@ A change in the offset of signal controller $sc_i$ will affect the coordinations
 \label{fig:delta_eval}
 \end{figure}
 
-So, rather than evaluating every coordination again we may safely assume that only coordinations $(sc_{i-1},sc_{i})$, $(sc_{i-1},sc_{i})$ and $(sc_{i},sc_{i+1})$, $(sc_{i+1},sc_{i})$ need to be reevaluated. 
+So, rather than evaluating every coordination again we may safely assume that only coordinations $(sc_{i-1},sc_{i})$, $(sc_{i},sc_{i-1})$ and $(sc_{i},sc_{i+1})$, $(sc_{i+1},sc_{i})$ need to be reevaluated. 
 
 We now need only to evaluate at most four coordinations\footnote{Changing offsets for controllers in the ends of the arterial will only change the value of two coordinations.} to obtain the neighbor solution value. In total there are $m = 2\cdot (n-1)$ coordinations to evaluate and thus we exchange a linearly growing evaluation time (in the number of signal controllers) for a constant one and rough tests have shown that, even for small networks, the savings in CPU time per iteration are in excess of a factor two, in spite of the extra overhead due to bookkeeping.
 
@@ -223,7 +216,7 @@ We now need only to evaluate at most four coordinations\footnote{Changing offset
 In previous studies of metaheuristics, where the object oriented programming model was completely adopted, it was found that the overhead of object instantiation, whenever a neighbor solution was generated, would result in tremendous consumption of CPU time. 
 
 Instead I have minimized the need for copying information from a solution to its neighbor by introducing the dual methods \verb|change| and \verb|undo_changes|. The purpose of these methods is to allow a solution to temporarily take the form of its neighbor and switch back to its former self, if requested. 
-When the metaheuristic runs it will constantly ask for neighbor solutions but throw away most of them. This approach avoids much copying of solution attributes and at the same time the details of the switching of identify are relayed to the solution object.
+When the metaheuristic runs it will constantly ask for neighbor solutions but throw away most of them. This approach avoids much copying of solution attributes and at the same time the details of the switching of identify are relayed to the solution object, ensuring proper encapsulation.
 
 \subsubsection{Bookkeeping outline}
 The \verb|change| and \verb|undo_changes| methods are closely integrated with delta-evaluation. The initial solution obviously cannot be delta-evaluated so, during full evaluation, the \textit{contribution} from each coordination is noted. 
@@ -253,13 +246,13 @@ Other parameters used in the optimization system are:
 \begin{enumerate}
 \item Reheating causes the temperature to be increased to the starting temperature thus increasing future chances of adopting poor solutions and make hill jumps. Reheating is only allowed if the temperature is below the starting temperature.
 \item Focus immediately returns to the encumbent solution and works its way from there rather than continuing with the current solution, which seems to be a dead end. Focus is only allowed if the value of the solution, which is currently being explored, is not as good as that of the encumbent solution.
-\item Random restart is the most drastic jump-start alternative when the solver has been stuck for a number of iterations. The offsets for every signal controller are chosen randomly from within the common cycle time and - if speed changes are allowed - the speed for each coordinations is set to the default speed or default speed $\pm 5km/h$. Random restarts is the only action which may actually land in the new best-so-far solution
+\item Random restart is the most drastic jump-start alternative when the solver has been stuck for a number of iterations. The offsets for every signal controller are chosen randomly from within the common cycle time and - if speed changes are allowed - the speed for each coordinations is set to the default speed or default speed $\pm 5km/h$. Random restart is the only action which may actually land in a new encumbent solution
 \end{enumerate}
 \end{enumerate}
 
-In parameter tuning a large number of parameter combinations are tested and selected among according to the observed performance of simulated annealing. As can be seen above there are many parameter combinations to tune. I have selected to tune only starting temperature, alpha and the jump-start action threshold. The choice among the possible jump-start actions is done with equal probability, respecting the required conditions of reheating and focus, thus giving higher effective chance of choosing random restart since it has no constraints unlike reheat and focus. The probability of changing an offset is set to 1.0 since speed changes were not needed required for the comparisons of section \ref{test}.
+In parameter tuning a large number of parameter combinations are tested and selected among according to the observed performance of simulated annealing. As can be seen above there are many parameter combinations to tune. I have selected to tune only starting temperature, alpha and the jump-start action threshold. The choice among the possible jump-start actions is done with equal probability, respecting the required conditions of reheating and focus, thus giving higher effective chance of choosing random restart since it has no constraints unlike the other two options. The probability of changing an offset is set to 1.0 since speed changes was not relevant for the comparisons of section \ref{test}.
 
-Tuning is usually done in the generic case where an array of "problems" - in this context arterials - are solved using all parameter combinations. Metrics such as the average fitness and variance is compared and the paramteres which gave the best result are chosen. In our case there are only two arterials to test ie. Herlev and Glostrup. Furthermore we know that all critical runs will be done in these areas and thus the parameter tuning is focused here.
+Tuning is usually done in the generic case where an array of "problems" - in this context arterials - are solved using all parameter combinations. Metrics such as the average fitness and variance is compared and the parameters which gave the best result are chosen. In our case there are only two arteries to test ie. Herlev and Glostrup. Furthermore we know that all critical runs will be done in these areas and thus the parameter tuning is focused here.
 
 \begin{figure}[htbp]
 \centering
