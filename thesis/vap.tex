@@ -7,7 +7,7 @@ With VAP there is a graphical program, VISVAP, that allows the user to design a 
 \begin{figure}[htbp]
 \centering
 \includegraphics[scale=0.5]{visvap_example_herlev-sygehus.png} 
-\caption{VISVAP flowchart description of simple fixed-time logic for Herlev Sygehus / ring 3}
+\caption{VISVAP flowchart description of simple fixed-time logic for the intersection between Herlev Sygehus and ringroad 3}
 \label{fig:visvap_example}
 \end{figure}
 
@@ -36,7 +36,7 @@ S02Z004:    SetT(cycle_sec_plus1)
 PROG_ENDE:    .
 \end{verbatim}
 
-VAP is unsuited for complex controller logic, such as ones involving predictions and optimization by iteration. This is due to the fact that VAP only has support for basic programming language constructs and the label-based nature of the language, which is detrimental to larger code bases see eg. the statement by Dijkstra \cite{nogoto}. As an example the above VAP code could be written in procedural language as:
+VAP is unsuited for complex controller logic, such as ones involving predictions and optimization by iteration. This is due to the fact that VAP only has support for basic programming language constructs and the label-based nature of the language, which is detrimental to larger code bases see eg. the statement by Dijkstra \cite{nogoto}. As an example the above VAP code could be written in procedural language with better programming constructs as:
 
 \begin{verbatim}
 function UpdateController(cycle_second){
@@ -126,7 +126,7 @@ A safety period, where all heads are red, is sometimes introduced in order to al
 \subsection{DOGS}
 As VAP does not permit the writing of a program, which supervise all signal controllers at the same time, it was necessary to dedicate a signal controller as the master controller. To fully separate the master/slave concept it was chosen to install a virtual signal controller for each DOGS area, whose only purpose is to run the DOGS program.
 
-The master controller, which for the purpose of offset has a virtual location on Herlev Hovedgade, runs the DOGS program and determines the current level by inspecting the northern- and southern detectors according to the specification outlined in section \ref{dogs}. In addition this controller also runs the master clock and the current DOGS level and master cycle second is sent to all slave controllers every cycle second.
+The master controller, which for the purpose of offset has a virtual location on Herlev Hovedgade and Roskildevej (for the Herlev and Glostrup areas resp.), runs the DOGS program and determines the current level by inspecting the northern- and southern detectors according to the specification outlined in section \ref{dogs}. In addition this controller also runs the master clock and the current DOGS level and master cycle second is sent to all slave controllers every cycle second.
 
 The slave signal controller - even the one on Herlev Hovedgade - must listen for communication from the master controller and set the green time of the various stages according to the current dogs level and cycle second as received from the master.
 
@@ -154,7 +154,7 @@ The modified DOGS version of the slave will also select its offset depending on 
 Given the local time, current DOGS level (and offset) the slave will implement the associated signal timing plan (see appendix \ref{app:signalplans}) by making interstage transitions.
 
 An issue I discovered during implementation can be described accordingly:
-consider that stage A is active while the master controller lowers the DOGS level by 1. In this case the end time is lowered if stage A receives priority from DOGS and it may happen that the end time for stage A is now lower then the current cycle second. Stage A will then have received more green time than it was supposed to and the I have solved this issue by causing the slave to immediately make the transition from stage A to the next stage, B. In case B is not the stage which was supposed to be active (a rare case - stage B is short indeed) we allow stage A to carry over to the next cycle as we can only make stage transitions between subsequent stages - not in arbitrary order.
+consider that stage A is active while the master controller lowers the DOGS level by 1. In this case the end time is lowered if stage A receives priority from DOGS and it may happen that the end time for stage A is now lower then the current cycle second. Stage A will then have received more green time than it was supposed to and I solved this issue by causing the slave to immediately make the transition from stage A to the next stage, B. In case B is not the stage which was supposed to be active (a rare case - stage B is short indeed) we allow stage A to carry over to the next cycle as we can only make stage transitions between subsequent stages - not in arbitrary order.
 
 \subsection{Bus priority}
 Three intersections in the Glostrup area - Fabriksparken, Gammel Landevej and Kindebjergvej - operate with bus priority on the arterial direction. Bus priority is effectuated solely by the corresponding slave controller as follows:
