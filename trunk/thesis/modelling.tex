@@ -1,18 +1,25 @@
 \section{Vissim Network Modelling}
 \label{modelling}
-The Vissim network used throughout the project is derived from a network originally introduced by COWI\footnote{A Danish consulting firm in engineering, environmental science and economics.} and later reworked by DTU Transport students.
+The Vissim network used throughout the project is derived from a network originally introduced by COWI and later reworked by DTU Transport students.
 
-COWI's version included ringroad 3 from Jyllingevej to the intersection with highway 3 and even further north. In addition M3, which runs almost parallel with ringroad 3 in this area, was included as well as the minor roads in between..
+COWI's version included ringroad 3 from Jyllingevej to the intersection with highway 3 and even further north. In addition M3, which runs almost parallel with ringroad 3 in this area, was included as well as the minor roads in between.
 
 The network which is modelled in this project is somewhat large. Vissim maintains a \textit{.inp} file, which contains the most relevant informations necessary to run a simulation including information on links, connectors and routes. This file is plain text and can be modified using simple file input-output operations. To properly insert and manage the traffic data necessary to obtain a correct simulation, the inp file is manipulated by scripts - how I do this is explained below\footnote{Note that many of the operations I perform by changing the raw Vissim network data file can be done using the COM interface of Vissim. However when work on this project was commenced only Vissim version 4 was available, which has major flaws in COM interaction. So I decided to take the herein described approach instead, accepting that changes in the Vissim data file format could break my tools. Vissim 5 works much better with COM and future project could involve porting the tools to use the COM interface.}.
 
 \subsection{Modifications and additions to existing model}
 
-As such the network was missing four intersections of O3 from Jyllingevej to Roskildevej. To establish this section satellite photos from Google Earth was combined with intersection layouts, kindly provided by DRD.
+As such the network was missing four intersections of ringroad 3 from Jyllingevej to Roskildevej. To establish this section satellite photos from Google Earth was combined with intersection layouts, kindly provided by DRD.
 
-The signal plans and naming conventions for the existing intersections in the COWI model for O3 intersections were adopted when entering the four missing intersections into the network. As for the intersection layout, DRD provided the missing signal plans for these intersections as well.
+\begin{figure}[htbp]
+\centering
+\includegraphics[scale=0.4]{vissimnetwork.png} 
+\caption{The final Vissim network for ringroad 3 from Herlev Sygehus (north) to Roskildevej (south)}
+\label{fig:vissimnetwork}
+\end{figure}
 
-To prevent side-effects all links not connected to O3 from Herlev Sygehus to Jylligevej were removed as well as all parking lots (DTA zones).
+The signal plans and naming conventions for the existing intersections in the COWI model for ringroad 3 intersections were adopted when entering the four missing intersections into the network. As for the intersection layout, DRD provided the missing signal plans for these intersections as well.
+
+To prevent side-effects all links not connected to ringroad 3 from Herlev Sygehus to Jylligevej were removed as well as all parking lots (DTA zones).
 
 A number of mistakes were corrected in the definition of the intersections. This was done using layout plans for the intersections from DRD. Most mistakes were related to non-existent turning-lanes (and even turning possibilities) and the placement of bus-only lanes. 
 
@@ -43,21 +50,21 @@ Routes can be designed using the GUI tool provided with Vissim. However, in the 
 
 At every intersection it is possible to follow each adjacent link (ie. turn left, right or go straight through) and thus the total number of routes from an input link to an exit link in the network is tremendous.
 
-To apply traffic count dataset by DRD in Vissim (section \ref{traffic_count_analysis}) it is possible to use Vissim \textit{turning decisions} but the Vissim manual is clear that static routes should be used instead, when modelling turning distributions. The main reason is that congestion may cause a decision to turn to be overruled whereas a vehicle on a fixed route will wait for the congestion to clear. It appears that technical limitations in Vissim (or perhaps backwards compatability requirements) render Vissim unable to fixate a certain destination upon a vehicle by using turning decisions alone, unlike when using a routing decision. But routing decisions has an edge over turning decisions in that they can be made a long time before the vehicle arrives at the critical point at which to turn, allowing the vehicle to position itself in the turning lane rather than making a last-minute lane change, when the turning decision is applied.
+To apply traffic count dataset by DRD in Vissim (section \ref{traffic_count_analysis}) it is possible to use Vissim \textit{turning decisions} but the Vissim manual is clear that static routes should be used instead, when modelling turning distributions. The main reason is that congestion may cause a decision to turn to be overruled whereas a vehicle on a fixed route will wait for the congestion to clear. It appears that technical limitations in Vissim (or perhaps backwards compatibility requirements) render Vissim unable to fixate a certain destination upon a vehicle by using turning decisions alone, unlike when using a routing decision. But routing decisions has an edge over turning decisions in that they can be made a long time before the vehicle arrives at the critical point at which to turn, allowing the vehicle to position itself in the turning lane rather than making a last-minute lane change, when the turning decision is applied.
 
-The simplest approach was to introduce a routing decision for each approach, which had traffic count data, and then add routes - respecting the counting data - which represented the turning motion. Such a route is \textit{internal} as it does not necessarily lead from an input to an exit link. Consequently this approach yields a network with the possibility of endless circulation of vehicles, however since we only regard an arterial in this project - and the fact that there are no U-turns in the network - no vehicles will be able to circulate and will always find an exit link.
+The simplest approach was to introduce a routing decision for each approach, which had traffic count data, and then add routes - respecting the counting data - which represented the turning motion. Such a route is \textit{internal} as it does not necessarily lead from an input to an exit link. Consequently this approach yields a network with the possibility of endless circulation of vehicles, however since we only regard an artery in this project - and the fact that there are no U-turns in the network - no vehicles will be able to circulate and will always find an exit link.
 
 The routing decision must be placed at a \textit{decision point}, however this does not exist in Vissim. Rather the decision point is scattered over 2 or more connectors attached to each link facing an intersection. In order to overcome this these connectors were grouped by a naming convention which identifies which decision point they belong to and which turning motion they will cause a vehicle to take. 
-The names are the concatenation of the direction from which traffic arrives (ie. north, south, east or west), the number of the intersection the decision belongs to (intersections are numbered increasingly from north to south) and finally the turning motion (ie. left, through or right), whichever is applicable. 
+The names are the concatenation of the direction from which traffic arrives (ie. north, south, east or west), the number of the intersection the decision belongs to (intersections are sequentially numbered from north to south) and finally the turning motion (ie. left, through or right), whichever is applicable. 
 
 As an example the decision point at Herlev Sygehus (the northern-most intersection with the number 1), which faces traffic from north consist of three connectors, are called \verb|N1L|, \verb|N1T| and \verb|N1R|.
 
-To find the insertion point for the routing a backtracking search is made from each turning motion until a common link is found. This link is thus the decision point and we can automatically generate our internal routes by using the discovery routine of section \ref{routingdecisions} to find a valid route.
+To find the insertion point for the routing a backtracking search is made from each turning motion until a common link is found. This link is thus the decision point and we can automatically generate our internal routes by using a discovery routine to find a valid route. This routine is presented later in this section.
 
 In Figure \ref{fig:flow_dist_principle} is an example of decision points (y) and the proportions of traffic for each turning motion.
 \begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.6]{trafficcount_to_routes_sketch.png} 
+\includegraphics[scale=0.4]{trafficcount_to_routes_sketch.png} 
 \caption{Flow distribution principle}
 \label{fig:flow_dist_principle}
 \end{figure}
@@ -109,11 +116,9 @@ In the initial call only the starting link is given along with an empty path and
 
 A Vissim route is a sequence of connectors and links and must start and end with the first connector, which is outgoing from the start link, and the connector, which is incoming to the exit link, resp.
 
-In line 2 a check is made if the adjacent link, which is currently being explored, has already been visited in which case it should be skipped to avoid a loop. In line 8 it is checked wether the adjacent link leads out of the network. If it does we have found a route from the start link otherwise we descend into the recursion and explore the adjacent links of this link.
+In line 2 a check is made if the adjacent link, which is currently being explored, has already been visited in which case it should be skipped to avoid a loop. In line 8 it is checked whether the adjacent link leads out of the network. If it does we have found a route from the start link otherwise we descend into the recursion and explore the adjacent links of this link.
 
 The \verb|Route.new| invocation, which is performed when an exit link is found, instantiates a new Route object, which enables additional options such as printing the mentioned sequence of connectors links for Vissim, which is more cumbersome with just the raw path.
-
-\clearpage
 
 \subsection{Right-of-way}
 The purpose of a traffic signal is to fairly distribute the right-of-way for conflicting traffic motions.  In spite of this traffic signals cannot overcome all situations and rely on road users to enforce themselves some right-of-way rules. This especially becomes relevant when the capacity of the intersection is reached and vehicles become trapped due to a stage change.
@@ -129,7 +134,7 @@ Vissim per default allows "collisions" since overlapping links and connectors mu
 
 In Vissim 5, which was used in this project, there is also the concept of conflict areas, which is recommended over priority rules (the latter remain in Vissim for compatibility) since they are easier to establish and will result in more intelligent driving behaviour. For instance vehicles will avoid entering a conflict area if they can see that it will not be possible to leave it with a certain minimum speed, which will prevent vehicles from clogging up intersections.
 
-Conflict areas and priority rules both rely on threshold values (gap) which road users will use to assess wether it is possible to safely enter a conflict area. The gap is an estimate of the minimum time before the next vehicle from a conflicting link will enter the conflict area.
+Conflict areas and priority rules both rely on threshold values (gap) which road users will use to assess whether it is possible to safely enter a conflict area. The gap is an estimate of the minimum time before the next vehicle from a conflicting link will enter the conflict area.
 
 For the extensions made from Jyllingevej to Roskildevej relevant conflict areas was added for each of the four intersections. The default values in Vissim service pack 6 was used for all conflict areas.
 

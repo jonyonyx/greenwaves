@@ -26,16 +26,16 @@ The travel time is calculated as $o = L / v$ where $L$ is the distance and $v$ i
 
 $$C = 2 \cdot \frac{L}{n \cdot v}$$
 
-This equation is quite constrained, however. For cycle time we require that it lies within a span of about 60 til 120 seconds based on recommendations from DRD. If the cycle time is less stage lengths become too short to reach past the queue startup delays (about 4 vehicles), if more the minor roads experience long delays and pedestrians and bicyclists may start to cross the road before the signal turns green.
+This equation is quite constrained, however. For cycle time we require that it lies within a span of about 60 til 120 seconds based on recommendations from DRD. If the cycle time is less, stage lengths become too short to reach past the queue startup delay (about 4 vehicles), if more the minor roads experience long delays and pedestrians and bicyclists may start to cross the road before the signal turns green.
 
-In addition green waves usually span over more than two intersections which may have different distances and average speeds between them, all this making it hard or impossible to find an integer $n$. Thus green waves are most easily established in one, main direction. It is possible to affect the average speeds between intersections by changing the allowed speed-signs. If this is not sufficient one might accept that the green wave is not perfect by, for instance, prioritizing one direction over the other.
+In addition green waves usually span over more than two intersections which may have different distances and average speeds between them, all this making it hard or impossible to find an integer $n$ satisfying the constraints. Thus green waves are most easily established in one, main direction. It is possible to affect the average speeds between intersections by changing the allowed speed-signs. If this is not sufficient one might accept that the green wave is not perfect by, for instance, prioritizing one direction over the other.
 
 Priority can be given entirely to one direction or distributed by some weight, for instance based on the ratio of traffic in each direction. An obvious choice for the first option would be for an arterial with traffic between some suburbs and a major city. In the morning full priority should be given in the direction towards the city when people go to work and opposite in the afternoon. A third alternative is to provide a perfect progression band in one direction for a some ratio of time, corresponding to the ratios of traffic in either direction.
 For ringroad 3, which was simulated in this project, there is no profound direction bias in the morning or afternoon traffic (see section \ref{data}) and a solution which weighs the green wave quality according to direction ratio is preferred. 
 
 The distance between one signal head (intersection) and the next can be extracted from the Vissim network file in both directions and is static. The signal heads for both directions of the arterial are marked using a naming convention similar to the one mentioned in Section \ref{routefractions} only less information is required since the relation of the head to its signal controller can be deduced directly from the network file. Further details on this process can be read in Section \ref{signal_details}.
 
-For travel times (which is a key component in finding a proper offset) it is possible to rely on the speed limitations / free flow speeds for offset calculation, however under congestion speeds will decrease causing the travel times to increase. A better solution is to continously inspect the smoothened travel times which are inserted for each stretch. 
+For travel times (which is a key component in finding a proper offset) it is possible to rely on the speed limitations / free flow speeds for offset calculation, however under congestion speeds will decrease causing the travel times to increase. A better solution is to continuously inspect the smoothened travel times which are inserted for each stretch. 
 
 \subsection*{Why are we using common cycle schemes?}
 \label{phase_based}
@@ -65,7 +65,7 @@ The queues for minor roads cannot exceed a predefined length nor must a vehicle 
 These rules - given proper parameters - are precise enough to be implemented in a computer program. The setting of parameters (for instance maximum queue length for minor roads) is a difficult subject, which could require many training hours for end-users. This was my impression about the Utopia/Spot system which the municipality of Copenhagen (Vej \& Park) had implemented for Centrum Forbindelsen - its was difficult for them to decide on which adjustsments should be made, when the system acted up. 
 However, many parameters can - and should - be set automatically by repeated simulation with trial-and-error or they are either easy enough to understand that rules of thumb and area specific insight is enough to make proper choices.
 
-I believe stage based signals and more centralized computer control of arterials could be accepted and achieved if systems were more available and open as proposed above. The introduction of stage based signals would be a major break with tradition in Denmark - and probably also in many other countries. Some system exist, which use stage-based programs including RHODES \cite{rhodes} and UTOPIA/SPOT \cite{utopia_spot} mentioned previously.
+I believe stage based signals and more centralized computer control of arterials could be accepted and achieved if systems were more available and open as proposed above. The introduction of stage based signals would be a major break with tradition in Denmark - and probably also in many other countries. Some systems exist, which use stage-based programs including RHODES \cite{rhodes} and UTOPIA/SPOT \cite{utopia_spot} mentioned previously.
 
 Breaking tradition is always hard; this combined with the complexity of such a system has compelled me to remain in the common cycle time world in this project. But as will be seen in the following sections, there are many ways to improve arterial signal performance in spite of the the restrictions of $C$.
 
@@ -76,7 +76,7 @@ In Figure \ref{fig:change_speed} we can see how this works. In the \textit{befor
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[scale=0.4]{change_speed.png}
+\includegraphics[scale=0.3]{change_speed.png}
 \caption{Changing speeds to obtain better coordination}
 \label{fig:change_speed}
 \end{figure}
@@ -108,7 +108,7 @@ Metaheuristic search procedures are designed to cope with situations such as the
 \subsection{Direction bias}
 In section \ref{data} we looked at the detector data and traffic counts, which are used to fit the simulation. We saw, among other things, that there northgoing traffic is higher than southgoing. The optimization routine can be coherced into favoring one direction over the other - or be completely fair - by punishing deviations from a certain bias indicator.
 
-To calculate the bias under current offsets we sum, in each direction of the artery, the deviations of the green time displacement to the expected travel time. The bias is thus the ratio of these sums and can be compared to the desired bias. The punisment for choosing settings, which result in deviation from the desired bias, is a factor which grows exponentially with deviations in either direction.
+To calculate the bias under current offsets we sum, in each direction of the artery, the deviations of the green time displacement to the expected travel time. The bias is thus the ratio of these sums and can be compared to the desired bias. The punishment for choosing settings, which result in deviation from the desired bias, is a factor which grows exponentially with deviations in either direction.
 
 By using such a weight the effect is that eg. perfect coordination in one direction - on the cost of coordination in the opposite direction - will be heavily punished under neutral bias (identity). This method can also be used to establish highly direction specific coordinations when the bias approaches zero or infinity.
 
@@ -180,6 +180,8 @@ This evaluation method is generic since the only requirement is the green bands 
 
 \end{description}
 
+In these evaluation methods no attempt is made to address preexisting queues before the arrival of platoons from the downstream intersections. The dynamic nature (length) of these residual queues first mentioned in section \ref{dogs_offset} is not easily handled in a common cycle time signal setting scheme. It is possible to incorporate a buffer for residual queue clearance by reducing the travel time used in the calculations so that it is shorter than the actual travel time. However the problem of finding a \textit{sweet spot} that does not waste green time while clearing queues was beyond the scope of this report.
+
 During testing it was found that the simplest evaluation option, to regard only green time displacements, gave the best results on average and this was chosen as the primary evaluation mechanism in the offset optimization routine. I believe that the reduction in search space and complexity has increased the number of solutions tested per second to a level that the higher freedoms of the latter two solutions did not give an advantage over the simplest evaluation method. Unfortunately I did not have time to properly test this hypothesis.
 
 \subsection{Simulated Annealing}
@@ -193,7 +195,7 @@ The initial solution is chosen so that all offsets are zero\footnote{Alternative
 
 The solutions to offsets are evaluated and compared in the context of the network and, if a neighbor is found to be better than the best solution found so far, it is adopted as the new \textit{encumbent}. If the neighbor was not better it should be thrown away, but here SA avoids being caught in a local optima by \textit{with some probability}, related to the entropy difference of the current and neighbor solutions, keeping the neighbor solution regardless and work on from there. This characteristics of this probability function - which decreases as the search progress  - is chosen manually and so is subject to tuning.
 
-Generally metaheuristics give no guarantee that an optimum solution will be found, but with proper tuning and fast data structures - so that at least a couple of hundred solutions can be tested per second - it is my experience that they will yield good solutions. The strengths of metaheuristics are that they can easily support any kind of constraint, take advantage of the structure of the problem and run in O([insert seconds here]) ie. the running time is bounded by the time available.
+Generally metaheuristics give no guarantee that an optimum solution will be found, but with proper tuning and fast data structures - so that at least a couple of hundred solutions can be tested per second - it is my experience that they will yield good solutions. The strengths of metaheuristics are that they can easily support any kind of constraint, take advantage of the structure of the problem and the running time is bounded only by the time available.
 
 In this project I have developed data structures, which are fast enough to generate the necessary iterations per second and can be used in various metaheuristic search schemes, not just simulated annealing.
 

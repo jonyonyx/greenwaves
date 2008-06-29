@@ -5,7 +5,7 @@ The DOGS system for arterial traffic optimization was implemented in the Herlev 
 
 DOGS was developed by Danish Technical Traffic Solution and basically uses threshold values to determine a proper common cycle time so that increase in load on arterial automatically causes the capacity to increase when the extra green is primarily given to the stages accomodating arterial traffic.
 
-However DOGS was never tested in a simulation environment, such as the (in Denmark) de-facto Vissim simulation tool - a microsimulator well-suited for testing complex situations and signal controller configurations.
+However DOGS was never tested in a simulation environment, such as the (in Denmark de-facto) Vissim simulation tool - a microsimulator well-suited for testing complex situations and signal controller configurations.
 The Danish Road Directorate (DRD) suggested that DOGS be tested in Vissim to discover if the system delivers the necessary offload, when traffic is diverted onto ringroad 3.
 
 In this report are the results of such a test performed for the morning period in the two disjoint DOGS areas, Herlev and Glostrup, consisting of 5 and 4 intersections, respectively. 
@@ -47,6 +47,8 @@ It is my hope that existing and future DOGS installations will incorporate some 
 The studies presented in this report tests a busy albeit normal morning situation and does not include an investigation of the DOGS "panic function" ie. the capability of DOGS to adopt very high cycle times when eg. an accident occurs on motorring 3. It is expected that the benefit of DOGS will increase greatly, compared to the basic morning program, when such situations occur.
 
 The optimization routine was implemented in the interpreted language Ruby. Although the implemention will try more than 1000 combinations per second on a $2.0$ GHz CPU, it is expected that an implementation in a compiled language, such as C\# or Java will lead to even better solutions with regards to CPU time.
+
+In the evaluation methods mentioned in section \ref{eval_coord} no attempt is made to clear residual queues before the arrival of platoons from upstream intersections. Although I believe it is difficult to find a good solution to this issue under a common cycle time signal scheme, future works should review the issue.
 
 As mentioned the implemented system is capable of optimizing coordinations by changing speeds as well as offsets. Dynamic speed signs are becoming more and more widespread with the introduction of LED technology, for instance on motorring 3, and simulation studies should be performed to test wether road users will be able to respond to such speed signs indicating \textit{recommended speed for green wave}.
 

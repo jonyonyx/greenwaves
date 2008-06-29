@@ -18,7 +18,7 @@ Vissim is highly flexible with regards to network layout description and interse
 
 Links are directed sections of road with one or more lanes. All lanes have the same direction as the link - the opposite direction is modelled using a parallel link.
 
-Connectors are mostly relevant in intersections where they connect exactly two links, however the lanes connected within the links can be chosen freely.
+Connectors are mostly relevant in intersections where they connect exactly two links, however the lanes connected within the links can be chosen freely. Multiple connectors may be inserted between links, allowing routing alternatives.
 
 \subsubsection*{Traffic input}
 Vissim is capable of dynamic traffic assignment (DTA) as well as static input. DTA is a method in which the traffic flow adapts to the capacity of the network due to a \textit{stochastic user equilibrium} (SUE) ie. the road user response of traffic conditions model their choice of route \cite{Wardrop}. 
@@ -27,13 +27,13 @@ Vissim can perform this form of traffic input given zones, which are confined an
 
 In this project DTA was abandoned on recommendation from DTU Transport professor Otto Anker Nielsen due to the dynamic nature of the traffic signals since, in his experience, odd phenomenon may occur such as random gridlocks, when adjacent links are fully saturated.
 
-Instead static input was chosen. In static input traffic enters on specific links and traverse the network until an exit link has been reached. Static input is used in combination with routing decisions, which are usually placed on input such that each vehicle entering will be routed through the network according to the available traffic data.
+Instead static input was chosen. In static input traffic enters on specific links and traverse the network until an exit link has been reached. Static input is used in combination with routing decisions, which are usually placed on input link such that each vehicle entering will be routed through the network according to the available traffic data.
 
 \subsubsection*{Routing decisions}
 \label{routingdecisions}
 Routing decisions are made by vehicles when they pass over a routing decision point in the Vissim network. Selecting routes for vehicles can be done either by placing a routing decision point on an input link and designate a number of exit link options (end-to-end routes) or by placing routing decisions on each approach and route vehicles through eg. an intersection (local routes).
 
-For the first option there exist many routes even for small networks when routes are symmetric (albeit using different links). Furthermore the number of routes will grow exponentially as the number of exit links (intersections) increase and the problem of mapping traffic count data onto end-to-end routes is not easy to solve. On the upside end-to-end routes are more correct to use since road users will most likely know how they wish to traverse the entire artery in advance and routes ending in an exit link is certain to cause no vehicles to cycle about indefinately in the network.
+For the first option there exist many routes even for small networks when routes are symmetric (albeit using different input and exit links). The number of routes will grow exponentially as the number of intersections (exit link options) increase and the problem of mapping traffic count data onto end-to-end routes is not easy to solve. On the upside end-to-end routes are more correct to use since road users will most likely know how they wish to traverse the network in advance and routes ending in an exit link are certain to cause no vehicles to cycle about indefinately in the network.
 
 The second option requires a route per traffic stream in each intersection. Here a traffic stream is a pair of orientational markers indicating from where the route origins and where it ends eg. north-to-south (a through-going traffic stream) or north-to-west (a left-turning stream). This option is easy to implement given traffic count data since they immediately give the proportions of vehicles making each turn (ie. taking each route) in an approach. A vehicle will pass a number of routing decisions, obtaining new routes (making turning movements) until an exit link is reached.
 
