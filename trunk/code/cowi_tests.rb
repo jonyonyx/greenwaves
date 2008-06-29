@@ -10,7 +10,10 @@ class TestPrograms
   :repeat_first_interval # use for sim heating
   def duration
     @to - @from
-  end  
+  end
+  def interval
+    (@from..@to)
+  end
   # the number of intervals when
   # dividing the timespan of from-to by the resolution
   def interval_count

@@ -51,7 +51,6 @@ class Vissim
         
     # remove all outgoing connectors which no longer have a from link
     @connectors.delete_if{|c| @links_map[c.from_link.number].nil?}
-    @decisions = @connectors.find_all{|c| c.instance_of?(Decision)}
     
     # notify the links of their outgoing connectors
     @connectors.each{|conn| conn.from_link.outgoing_connectors << conn}
@@ -251,7 +250,7 @@ class Vissim
         # the affected vehicles so they may obtain a new route
         opts[:drop_link] = links.find{|l| l.drop_for.include?(decid)} || opts[:to_link]      
         
-        Decision.new!(number,opts)
+        Decision.new!(number,opts)        
       else
         Connector.new!(number,opts)
       end
@@ -259,7 +258,39 @@ class Vissim
       # only links which can be reached are cars and trucks are interesting 
       @connectors << conn if conn.allows_private_vehicles?
     end
+    
+    @decisions = @connectors.find_all{|c| c.instance_of?(Decision)}.sort
+    
+    DB["SELECT clng(INTSECT.number) as intersection_number,
+                  from_direction,[Turning Motion] As turn, 
+                  [Period Start] As tstart,[Period End] As tend,
+                  cars, trucks
+                FROM [counts$] As COUNTS
+                INNER JOIN [intersections$] As INTSECT
+                ON COUNTS.Intersection = INTSECT.Name
+                WHERE NOT IsNull(to_direction)"].each do |row|
+      from = row[:from_direction][0..0]
+      turn = row[:turn][0..0]
+      intersection = row[:intersection_number]
+    
+      dec = @decisions.find do |d|
+        d.from_direction == from and 
+          d.turning_motion == turn and 
+          d.intersection == intersection
+      end || next # Cannot find decision - presumably its not defined
+      
+      dec.add_fraction(
+        Time.parse(row[:tstart][-8..-1]), 
+        Time.parse(row[:tend][-8..-1]), 
+        row[:cars], row[:trucks]
+      )
+    end
+    
+    for dec in @decisions
+      puts "#{dec} fractions:\n",dec.fractions
+    end
   end
+  
   # Extract knot definitions for links and connectors
   def set_over_points opts, inp    
     opts[:over_points] = []

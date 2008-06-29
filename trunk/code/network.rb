@@ -33,7 +33,6 @@ end
 class Decision < Connector
   attr_reader :from_direction,:intersection,:turning_motion,:fractions,:weight,:drop_link,
     :decide_from_direction, :decide_at_intersection
-  @@decision_points = []
   def initialize(number)
     super(number)
     # the numbered option for this turning motion, when altertives for the
@@ -41,8 +40,10 @@ class Decision < Connector
     @fractions = []
   end
   def time_intervals; @fractions.map{|f| f.interval}; end
-  def add_fraction(interval, vehtype, quantity)
+  def add_fraction(tstart,tend, vehtype, quantity)
+    interval = Interval.new(tstart, tend)
     raise "Fractions at #{to_s} for #{vehtype} from #{interval} already exist!" if @fractions.any?{|f| f.interval == interval and f.veh_type == vehtype}
+    
     @fractions << Fraction.new!(:interval => interval, :veh_type => vehtype, :quantity => quantity)
   end
   def <=>(d2)
