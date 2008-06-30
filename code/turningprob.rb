@@ -24,7 +24,10 @@ class RoutingDecision
              from the input link of the routing decision(#{@input_link})!" unless route.start == @input_link
       
     raise "Wrong vehicle types detected among fractions, expecting only #{@veh_type}" if fractions.any?{|f| f.veh_type != @veh_type}
-    raise "Wrong number of fractions, #{fractions.size}, expected #{@time_intervals.size}\n#{fractions.sort.join("\n")}\n#{route}" unless fractions.size == @time_intervals.size
+    unless fractions.size == @time_intervals.size
+      raise "Wrong number of fractions, #{fractions.size}, " +
+        "expected #{@time_intervals.size}\n#{fractions.sort.join("\n")}\n#{route}\n#{@time_intervals.join("\n")}" 
+    end
     @routes << [route, fractions]
   end
   def tbegin
@@ -70,53 +73,6 @@ TURNING_SQL = "SELECT clng(INTSECT.number) as intersection_number,
                 WHERE [Period End] BETWEEN \#1899/12/30 PERIOD_START:00\# AND \#1899/12/30 PERIOD_END:00\#
                 AND NOT IsNull(to_direction)"
 
-class Stream
-  attr_reader :from, :to, :intersection, :traffic # eg N / S / E / W
-  
-  def initialize from,to,intersection,turning_motion
-    @from,@to,@intersection = from,to,intersection
-    @turning_motion = turning_motion
-    @traffic = Hash.new {|h,k| h[k] = {}} # period => veh_type => quantity
-  end
-  
-  def turning_motion
-    @turning_motion
-  end
-  
-  def approach
-    "#{@from}#{@intersection}"
-  end
-  
-  def add_fraction tstart, tend, cars, trucks
-    period = Interval.new(tstart,tend)
-    @traffic[period][:cars] = cars
-    @traffic[period][:trucks] = trucks
-  end
-  
-  def get_traffic(period, veh_type, volume)
-    vehicles = @traffic[period][veh_type]
-    if volume > vehicles
-      @traffic[period][veh_type] = 0 # stream was drained
-      return vehicles # he gets the rest
-    else
-      @traffic[period][veh_type] -= volume # got what he asked for      
-    end
-    volume # got what he wanted
-  end
-  
-  def to_s
-    "#{@from}#{@intersection}#{@turning_motion}"
-  end
-end
-
-def print_streams streams
-  streams.each do |s|
-    puts s
-    s.traffic.keys.sort.each do |period|
-      puts "\t#{period}: #{s.traffic[period]}"
-    end
-  end
-end
 # helper-classes for Decision
 class Interval
   attr_reader :tstart, :tend
@@ -129,6 +85,12 @@ class Interval
   end
   def copy
     Interval.new(@tstart,@tend)
+  end
+  def hash
+    @tstart.hash + @tend.hash
+  end
+  def eql?(other)
+    @tstart == other.tstart and @tend == other.tend
   end
   def to_vissim(tbegin); "FROM #{@tstart - tbegin} UNTIL #{@tend - tbegin}"; end
   def to_s; "#{@tstart.to_hm} to #{@tend.to_hm}"; end
@@ -173,7 +135,10 @@ def get_routing_decisions vissim, program
     decision_link = dp.link(vissim)
     
     for veh_type in [:cars,:trucks]
-      rd = RoutingDecision.new!(:input_link => decision_link, :veh_type => veh_type, :time_intervals => dp.time_intervals)
+      rd = RoutingDecision.new!(
+        :input_link => decision_link, 
+        :veh_type => veh_type, 
+        :time_intervals => dp.time_intervals(program))
   
       # add routes to the decision point
       for dec in dp.decisions
@@ -190,7 +155,7 @@ def get_routing_decisions vissim, program
             program.interval === fraction.interval.tstart
         end
         if program.repeat_first_interval
-          first_fraction = dec.fractions.min_by{|f|f.interval}
+          first_fraction = dec.fractions.find_all{|f|f.veh_type == veh_type}.min_by{|f|f.interval}
           
           raise "Fractions at #{dec}:\n#{fractions.join("\n")}" unless first_fraction
           

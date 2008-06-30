@@ -28,7 +28,7 @@ Cars_and_trucks_str1 = [:cars,:trucks]
 Cars_and_trucks = Type_map.map{|k,v| Cars_and_trucks_str1.include?(k) ? v : nil} - [nil]
 
 EPS = 0.01
-INPUT_SCALING = 1.20
+INPUT_SCALING = 1.0
 ANNUAL_INCREASE = 1.005 # used in input generation for scaling
 BASE_CYCLE_TIME = 80 # seconds
 DATAFILE = File.join(Base_dir,'data',"data.xls") # main data file containing counts, sgp's, you name it
@@ -39,8 +39,8 @@ ENABLE_VAP_TRACING = {:master => false, :slave => false} # write trace statement
 # denotes the *end* times of data collection intervals eg 7:00 to 7:15
 #PERIOD_START, PERIOD_END = '15:15', '17:00'
 PERIOD_START, PERIOD_END = '7:15', '9:00'
-START_TIME = Time.parse('7:00') # for counting seconds
-END_TIME = Time.parse('9:00')
+START_TIME = Time.parse(PERIOD_START) - 15 * 60 # for counting seconds
+END_TIME = Time.parse(PERIOD_END)
 
 require 'dbi'
 require 'fileutils'

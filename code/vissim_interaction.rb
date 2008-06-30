@@ -8,7 +8,7 @@ require 'vissim_input'
 
 puts "#{Time.now}: BEGIN"
 
-thorough = false # false => quick test
+thorough = false # false => quick test to see everything works
 
 if thorough
   SOLVER_TIME = 2 # seconds
@@ -73,9 +73,36 @@ while test = TESTQUEUE.shift
     else
       setup_test test[:detector_scheme], program, workdir
     end
+    print "Vissim running #{RUNS} simulation#{RUNS != 1 ? 's' : ''} of '#{simname}'... "
+    
+    RUNS.times do |i|
+      print "#{i+1} "
+    
+      # setting and incrementing RunIndex causes vissim to store
+      # the results of the consecutive runs in the same table
+      sim.RunIndex = i 
+      sim.RandomSeed = seeds.pop
+      sim.RunContinuous
+    end
+  
+    puts "done"
+  
+    # the results from all runs in this test scenario can now be extracted
+    results.extract_results "#{simname} #{program.name}", workdir
+
+    vissim.Exit
+
   end # end for each test program (eg. morning, afternoon)
 end
 
 to_xls(networks,'networks to test',File.join(Base_dir,'results','results.xls'))
+
+puts "PREPARING RESULTS - PLEASE WAIT!"
+
+to_xls(results.to_a, 'data', RESULTS_FILE)
+
+# take cycle times and link evaluations from the last run of DOGS and mod DOGS
+require 'extract_cycle_times'
+require 'extract_links_evals'
 
 puts "#{Time.now}: END"
