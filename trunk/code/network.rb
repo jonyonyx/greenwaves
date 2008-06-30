@@ -40,8 +40,7 @@ class Decision < Connector
     @fractions = []
   end
   def time_intervals; @fractions.map{|f| f.interval}; end
-  def add_fraction(tstart,tend, vehtype, quantity)
-    interval = Interval.new(tstart, tend)
+  def add_fraction(interval, vehtype, quantity)
     raise "Fractions at #{to_s} for #{vehtype} from #{interval} already exist!" if @fractions.any?{|f| f.interval == interval and f.veh_type == vehtype}
     
     @fractions << Fraction.new!(:interval => interval, :veh_type => vehtype, :quantity => quantity)
@@ -98,8 +97,12 @@ class DecisionPoint
   # decision point.
   # note that the decisions might not have flows in the same
   # time intervals
-  def time_intervals
-    @decisions.map{|d|d.time_intervals}.flatten.uniq
+  def time_intervals(program)
+    intervals = @decisions.map{|d|d.time_intervals}.flatten.uniq.find_all{|i|program.interval === i.tstart}
+    if program.repeat_first_interval
+      intervals << intervals.min
+    end
+    intervals
   end
   # Locates the common origin link for the decisions in this decision point.
   # Does this by finding a link from which there is a route to all decision 

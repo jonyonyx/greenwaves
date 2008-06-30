@@ -279,15 +279,10 @@ class Vissim
           d.intersection == intersection
       end || next # Cannot find decision - presumably its not defined
       
-      dec.add_fraction(
-        Time.parse(row[:tstart][-8..-1]), 
-        Time.parse(row[:tend][-8..-1]), 
-        row[:cars], row[:trucks]
-      )
-    end
-    
-    for dec in @decisions
-      puts "#{dec} fractions:\n",dec.fractions
+      interval = Interval.new(Time.parse(row[:tstart][-8..-1]),Time.parse(row[:tend][-8..-1]))
+      [:cars,:trucks].each do |vehtype|
+        dec.add_fraction(interval,vehtype,row[vehtype])
+      end
     end
   end
   

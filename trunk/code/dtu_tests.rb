@@ -59,7 +59,6 @@ if TESTQUEUE.any?{|test|test[:use_calculated_offsets]}
   to_xls(offset_data,'offsets',RESULTS_FILE)
 end
 
-
 if TESTQUEUE.any?{|test|test[:buspriority]}
   insert_measurements # bus traveltime measurements
 end
