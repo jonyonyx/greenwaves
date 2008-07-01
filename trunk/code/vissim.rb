@@ -248,7 +248,7 @@ class Vissim
         
         # The link at which this decision should end, ie. drop
         # the affected vehicles so they may obtain a new route
-        opts[:drop_link] = links.find{|l| l.drop_for.include?(decid)} || opts[:to_link]      
+        opts[:drop_link] = links.find{|l| l.drop_for.include?(decid)} || opts[:to_link]
         
         Decision.new!(number,opts)        
       else
@@ -261,6 +261,7 @@ class Vissim
     
     @decisions = @connectors.find_all{|c| c.instance_of?(Decision)}.sort
     
+    # insert traffic count data
     DB["SELECT clng(INTSECT.number) as intersection_number,
                   from_direction,[Turning Motion] As turn, 
                   [Period Start] As tstart,[Period End] As tend,
@@ -269,21 +270,65 @@ class Vissim
                 INNER JOIN [intersections$] As INTSECT
                 ON COUNTS.Intersection = INTSECT.Name
                 WHERE NOT IsNull(to_direction)"].each do |row|
+      
       from = row[:from_direction][0..0]
       turn = row[:turn][0..0]
       intersection = row[:intersection_number]
-    
+      
       dec = @decisions.find do |d|
         d.from_direction == from and 
           d.turning_motion == turn and 
           d.intersection == intersection
       end || next # Cannot find decision - presumably its not defined
       
-      interval = Interval.new(Time.parse(row[:tstart][-8..-1]),Time.parse(row[:tend][-8..-1]))
+      interval = Decision::Interval.new(Time.parse(row[:tstart][-8..-1]),Time.parse(row[:tend][-8..-1]))
       [:cars,:trucks].each do |vehtype|
         dec.add_fraction(interval,vehtype,row[vehtype])
       end
     end
+    
+    # For decisions which are made at upstream decision points, make 
+    # adjustments to maintain ratios
+    @decisions.find_all{|d|d.foreign_decision?}.group_by{|d|d.decide_at}.each do |dp,foreign_decisions|
+      affected_decisions = @decisions.find_all{|d|d.decide_at == dp} - foreign_decisions
+            
+      # TODO: find the donor decision using route discovery
+      donor_decision = affected_decisions.find{|dec|dec.turning_motion == 'T'}
+      
+      # for every time interval adjust the fractions of
+      # the affected decisions to maintain their relative proportions to the donor decision
+      foreign_decisions.map{|d|d.time_intervals}.flatten.uniq.each do |interval|
+        [:cars,:trucks].each do |vehtype|
+          decision_fractions = {} # decision => list of fractions
+          decision_quantity = {} # decision => quantity
+          
+          (affected_decisions + foreign_decisions).each do |dec|
+            fractions = dec.fractions.flatten.find_all{|f|f.interval == interval and f.veh_type == vehtype}
+            decision_fractions[dec] = fractions              
+            decision_quantity[dec] = fractions.map{|f|f.quantity}.sum
+          end
+          
+          affected_sum = affected_decisions.map{|dec|decision_quantity[dec]}.sum
+          foreign_sum =  foreign_decisions.map{|dec|decision_quantity[dec]}.sum
+          
+          diff = (foreign_sum-affected_sum).abs.to_f
+          
+          decisions_to_scale = if affected_sum > foreign_sum
+            foreign_decisions
+          else
+            affected_decisions
+          end
+          
+          reference_quantity = decisions_to_scale.map{|dec|decision_quantity[dec]}.max
+          
+          decisions_to_scale.each do |dec|
+            amount = diff * decision_quantity[dec] / reference_quantity
+            decision_fractions[dec].each{|f|f.adjust(amount)}
+          end
+        end
+      end
+    end
+    
   end
   
   # Extract knot definitions for links and connectors
@@ -392,6 +437,14 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new
+  
+  interval = Decision::Interval.new(Time.parse('8:15'),Time.parse('08:30'))
+  vissim.decisions.find_all{|d|not d.disable_route?}.group_by{|d|d.decide_at}.each do |approach,decisions|
+    puts "#{approach}"
+    decisions.each do |dec|
+      puts "   #{dec.name}: #{dec.fractions.find{|f|f.interval == interval and f.veh_type == :cars}}"
+    end
+  end
   #  vissim.controllers_with_plans.each do |sc|
   #    for grp in sc.groups
   #      puts grp.program

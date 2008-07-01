@@ -113,62 +113,6 @@ def get_inputs vissim,program
     end
   end
   
-  # for northern end (by herlev sygehus) and roskildevej
-  # use the dogs detector data and take the cars-to-truck ratios from the
-  # traffic counts  
-  
-  if Project == 'dtu'
-    for det in ['D3', # northern input from herlev sygehus
-        'D01','D03','D06' # roskildevej
-      ]
-      
-      # Fetch the link input number for this detector
-      number = exec_query("SELECT LINKS.Number 
-        FROM [detectors$] As DETS
-        INNER JOIN [links$] As LINKS
-        ON DETS.Intersection = LINKS.Intersection_name
-        AND DETS.FROM = LINKS.From_direction
-        WHERE DETS.Name = '#{det}'").flatten.first.to_i
-      
-      # now change the input for this link number to use
-      # the data from this detector, respecting the vehicle ratio
-      
-      inputs_for_link = inputs.get_by_link number
-      raise "No inputs found for link #{number}" if inputs_for_link.empty?
-      
-      #puts "input link: #{number}"
-      
-      sql = "SELECT 
-          HOUR(Time) As h,
-          MINUTE(Time) As m,
-          AVG(Detected) As detected
-        FROM [data$]
-        WHERE NOT DoW IN ('Sat','Sun') 
-        AND Detector = '#{det}'
-        AND [Time] BETWEEN \#1899/12/30 #{program.from.to_hm}:00\# AND \#1899/12/30 #{program.to.to_hm}:00\#
-        GROUP BY Detector,Time"
-      
-      for row in DOGSDB[sql].all
-        input = inputs_for_link.find{|i| i.tend.hour == row[:h] and i.tend.min == row[:m]}
-        raise "Input for link #{number} at tend #{row[:h]}h#{row[:m]}m not found" if input.nil?
-        # Vissim expects flow in vechicles per hour. The dogs flow seems to have been adjusted
-        # already by inspecting of before and after flow data for each vehicle type (see commented code below)
-        flow = row[:detected].to_f * 4
-        
-        # Assume the DOGS detector data follow approx. the same vehicle type
-        # proportion as the counting data and reuse the proportion.
-        r = input.ratio('Cars', 'Trucks')        
-        #        before_cars = input.veh_flow_map['Cars']
-        #        before_trucks = input.veh_flow_map['Trucks']
-        input.veh_flow_map['Cars'] = flow * r
-        input.veh_flow_map['Trucks'] = flow * (1 - r)
-        
-        #        puts "Cars delta: #{before_cars - input.veh_flow_map['Cars']}"
-        #        puts "Trucks delta: #{before_trucks - input.veh_flow_map['Trucks']}"
-      end
-    end
-  end
-  
   inputs
 end
 

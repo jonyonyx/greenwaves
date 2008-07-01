@@ -111,7 +111,7 @@ def to_xls rows, sheetname, xlsfile
     
     wb.Save
   rescue Exception => e
-    raise(e, "Failed to write #{rows.size} rows and #{rows.first.size} columns to sheet '#{sheetname}' of excel file '#{xlsfile}'")
+    raise("Failed to write #{rows.size} rows and #{rows.first.size} columns to sheet '#{sheetname}' of excel file '#{xlsfile}': #{e.message}")
   ensure
     excel.DisplayAlerts = false # avoid excel nag to save book
     excel.Quit

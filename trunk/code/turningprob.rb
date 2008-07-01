@@ -58,77 +58,29 @@ class RoutingDecision
   end
 end
 
-# SQL for extracting traffic count information for turning ratios
-# note there are two placeholders: PERIOD_START and PERIOD_END, which 
-# must be substituted by a time-of-day value such as 7:00 or 15:00
-TURNING_SQL = "SELECT clng(INTSECT.number) as intersection_number,
-                  from_direction, to_direction,
-                  [Turning Motion] As turn, 
-                  [Period Start] As tstart,
-                  [Period End] As tend,
-                  cars, trucks
-                FROM [counts$] As COUNTS
-                INNER JOIN [intersections$] As INTSECT
-                ON COUNTS.Intersection = INTSECT.Name
-                WHERE [Period End] BETWEEN \#1899/12/30 PERIOD_START:00\# AND \#1899/12/30 PERIOD_END:00\#
-                AND NOT IsNull(to_direction)"
-
-# helper-classes for Decision
-class Interval
-  attr_reader :tstart, :tend
-  def initialize tstart,tend
-    @tstart,@tend = tstart,tend    
-  end
-  def shift(seconds)
-    @tstart += seconds
-    @tend += seconds
-  end
-  def copy
-    Interval.new(@tstart,@tend)
-  end
-  def hash
-    @tstart.hash + @tend.hash
-  end
-  def eql?(other)
-    @tstart == other.tstart and @tend == other.tend
-  end
-  def to_vissim(tbegin); "FROM #{@tstart - tbegin} UNTIL #{@tend - tbegin}"; end
-  def to_s; "#{@tstart.to_hm} to #{@tend.to_hm}"; end
-  def <=>(i2); @tstart <=> i2.tstart; end
-end
-class Fraction
-  attr_reader :interval, :veh_type, :quantity
-  def copy
-    Fraction.new!(:interval => @interval.copy,:veh_type => @veh_type,:quantity => @quantity)
-  end
-  def <=>(f2); @interval <=> f2.interval; end
-  def to_s; "Fraction from #{@interval} = #{quantity} #{@veh_type}"; end
-  def to_vissim; "FRACTION #{@quantity}";end
-end
-
 def get_routing_decisions vissim, program
   
   decisions = vissim.decisions.find_all do |dec| 
-    dec.fractions.any?{|fraction|program.interval === fraction.interval.tstart}
+    not dec.disable_route? and 
+      dec.fractions.any?{|fraction|program.interval === fraction.interval.tstart}
   end
-    
+  
   routing_decisions = RoutingDecisions.new
   
   decision_points = []
   decisions.each do |dec|
+    
+    # create new dp, if no other decision created it before
     dp = decision_points.find do |dp|
       dp.from_direction == dec.decide_from_direction and 
         dp.intersection == dec.decide_at_intersection
-    end
+    end || DecisionPoint.new(dec.decide_from_direction,dec.decide_at_intersection)    
     
-    # create new dp, if no other decision created it before
-    if dp.nil?
-      dp = DecisionPoint.new(dec.decide_from_direction,dec.decide_at_intersection)
-      decision_points << dp
-    end
+    decision_points << dp unless decision_points.include?(dp)
+      
     dp.decisions << dec
   end
-    
+  
   # find the local routes from the decision point
   # to the point where the vehicles are dropped off downstream of intersection
   decision_points.sort.each do |dp|
@@ -160,7 +112,7 @@ def get_routing_decisions vissim, program
           raise "Fractions at #{dec}:\n#{fractions.join("\n")}" unless first_fraction
           
           new_first_fraction = first_fraction.copy
-          new_first_fraction.interval.shift(-program.resolution * 60)
+          new_first_fraction.interval.shift!(-program.resolution * 60)
           
           fractions << new_first_fraction
         end
