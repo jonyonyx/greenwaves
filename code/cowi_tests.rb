@@ -24,9 +24,30 @@ class TestPrograms
   end
 end
 
-MORNING = TestPrograms.new! :name => 'Morgen', :resolution => 15, :from => Time.parse('7:00'), :to => Time.parse('9:00'), :repeat_first_interval => true
-DAY = TestPrograms.new! :name => 'Dag', :resolution => 60, :from => Time.parse('11:00'), :to => Time.parse('13:00')
-AFTERNOON = TestPrograms.new! :name => 'Eftermiddag', :resolution => 15,:from => Time.parse('15:00'), :to => Time.parse('17:00'), :repeat_first_interval => true
+MORNING = TestPrograms.new!(
+  :name => 'Morgen', 
+  :resolution => 15, 
+  :from => Time.parse('7:00'), 
+  :to => Time.parse('9:00'), 
+  :repeat_first_interval => true
+)
+
+DAY = TestPrograms.new!(
+  :name => 'Dag', 
+  :resolution => 60, 
+  :from => Time.parse('12:00'), 
+  :to => Time.parse('13:00'), 
+  :repeat_first_interval => true
+)
+
+AFTERNOON = TestPrograms.new!(
+  :name => 'Eftermiddag', 
+  :resolution => 15,
+  :from => Time.parse('15:00'), 
+  :to => Time.parse('17:00'), 
+  :repeat_first_interval => true
+)
+
 FIXED_TIME_PROGRAM_NAME = {'Morgen' => 'M80', 'Dag' => 'D60', 'Eftermiddag' => 'E80'}
 
 TESTQUEUE = [
@@ -112,7 +133,6 @@ def setup_test(detector_scheme, program, output_dir)
   # write them to the vissim file in the workdir
   get_inputs(vissim,program).write(inppath)
   
-  # there are no traffic counts for traffic
   get_routing_decisions(vissim, program).write(inppath)
   
   if detector_scheme # => traffic actuated, otherwise fixed signal timing 
@@ -137,5 +157,5 @@ end
 
 if __FILE__ == $0
   #puts AFTERNOON.interval_count
-  setup_test(nil, MORNING, Vissim_dir)
+  setup_test(nil, DAY, Vissim_dir)
 end

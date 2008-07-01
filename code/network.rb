@@ -39,6 +39,15 @@ class Decision < Connector
     # same turning motion exist
     @fractions = []
   end
+  def foreign_decision?
+    @from_direction != @decide_from_direction or @intersection != @decide_at_intersection
+  end
+  def disable_route?
+    @name =~ /no-route/
+  end
+  def decide_at
+    "#{@decide_from_direction}#{@decide_at_intersection}"
+  end
   def time_intervals; @fractions.map{|f| f.interval}; end
   def add_fraction(interval, vehtype, quantity)
     raise "Fractions at #{to_s} for #{vehtype} from #{interval} already exist!" if @fractions.any?{|f| f.interval == interval and f.veh_type == vehtype}
@@ -49,6 +58,44 @@ class Decision < Connector
     @intersection == d2.intersection ? 
       (@from_direction == d2.from_direction ? @turning_motion <=> d2.turning_motion : @from_direction <=> d2.from_direction) : 
       @intersection <=> d2.intersection
+  end
+  # helper-classes for Decision
+  class Interval
+    attr_reader :tstart, :tend
+    def initialize tstart,tend
+      @tstart,@tend = tstart,tend    
+    end
+    def shift!(seconds)
+      @tstart += seconds
+      @tend += seconds
+    end
+    def copy
+      Interval.new(@tstart,@tend)
+    end
+    def hash
+      @tstart.hash + @tend.hash
+    end
+    def eql?(other)
+      self == other
+    end
+    def ==(other)
+      @tstart == other.tstart and @tend == other.tend
+    end
+    def to_vissim(tbegin); "FROM #{@tstart - tbegin} UNTIL #{@tend - tbegin}"; end
+    def to_s; "#{@tstart.to_hm} to #{@tend.to_hm}"; end
+    def <=>(i2); @tstart <=> i2.tstart; end
+  end
+  class Fraction
+    attr_reader :interval, :veh_type, :quantity
+    def copy
+      Fraction.new!(:interval => @interval.copy,:veh_type => @veh_type,:quantity => @quantity)
+    end
+    def adjust(amount)
+      @quantity += amount
+    end
+    def <=>(f2); @interval <=> f2.interval; end
+    def to_s; "Fraction from #{@interval} = #{quantity} #{@veh_type}"; end
+    def to_vissim; "FRACTION #{@quantity}";end
   end
 end
 class Link < RoadSegment
@@ -100,7 +147,9 @@ class DecisionPoint
   def time_intervals(program)
     intervals = @decisions.map{|d|d.time_intervals}.flatten.uniq.find_all{|i|program.interval === i.tstart}
     if program.repeat_first_interval
-      intervals << intervals.min
+      firstinterval = intervals.min.copy
+      firstinterval.shift!(-program.resolution*60)
+      intervals << firstinterval
     end
     intervals
   end
