@@ -85,6 +85,9 @@ class Time
   def to_hm
     strftime "%H:%M"
   end
+  def to_hms
+    strftime '%H:%M:%S'
+  end
 end
 def numbers(from,step,count)
   linspace(from,step,(count - 1) * step + from)

@@ -127,7 +127,7 @@ def generate_master output_dir
   cp.write(File.join(output_dir,'master.vap'))
 end
 
-def generate_slave slave,stages,program,detector_scheme
+def generate_slave slave,stages,program,detector_scheme,output_dir
   
   cp = CodePrinter.new
 
@@ -202,5 +202,5 @@ def generate_slave slave,stages,program,detector_scheme
   
   cp.add_verb 'PROG_ENDE:    .'
 
-  cp.write(File.join(Vissim_dir,"#{slave.name}.vap"))
+  cp.write(File.join(output_dir,"#{slave.name}.vap"))
 end

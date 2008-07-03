@@ -31,7 +31,7 @@ seeds = numbers(rand(100) + 1, rand(100) + 1, TESTQUEUE.size*RUNS)
 vissimnet = Vissim.new
 results = NodeEvals.new(vissimnet)
 
-networks = [['Path','Scenario','Time of Day']]
+networks = [['Path','Start Time']]
 
 processed = 0
 while test = TESTQUEUE.shift
@@ -40,11 +40,9 @@ while test = TESTQUEUE.shift
   
   # for each time-of-day program in the test
   test[:programs].each do |program|
-    next if program == DAY# or program == MORNING
   
-    workdir = File.join(Tempdir, "vissim_scenario#{processed}_#{program.to_s.downcase}")
-    
-    
+    workdir = File.join(Base_dir,'test_scenarios', "scenario#{processed}_#{test[:name].downcase.gsub(/\s+/, '_')}_#{program.name.downcase}")
+        
     begin
       Dir.mkdir workdir
     rescue
@@ -59,50 +57,40 @@ while test = TESTQUEUE.shift
     Dir.chdir(vissim_dir)
     
     # copy all relevant files to the instance workdir
-    FileUtils.cp(%w{inp pua knk mdb szp}.map{|ext| Dir["*.#{ext}"]}.flatten, workdir)
+    FileUtils.cp(%w{inp pua knk mdb szp fzi}.map{|ext| Dir["*.#{ext}"]}.flatten, workdir)
     
     inpfilename = Dir['*.inp'].first # Vissim => picky
     inppath = File.join(workdir,inpfilename)
-    networks << [inppath,processed,program.name]
+    networks << [inppath,program.vissim_start_time,program.name]
   
-    if Project == 'dtu'
-      # creates vap and pua files respecting the simulation parameters
-      generate_controllers vissimnet, test + 
-        {:offset => (test[:use_calculated_offsets] ? calculated_offsets : nil)}, 
-        workdir
-    else
-      setup_test test[:detector_scheme], program, workdir
-    end
-    print "Vissim running #{RUNS} simulation#{RUNS != 1 ? 's' : ''} of '#{simname}'... "
+    setup_test test[:detector_scheme], program, workdir
     
-    RUNS.times do |i|
-      print "#{i+1} "
+    if test[:run_vissim]
+      print "Vissim running #{RUNS} simulation#{RUNS != 1 ? 's' : ''} of '#{simname}'... "
     
-      # setting and incrementing RunIndex causes vissim to store
-      # the results of the consecutive runs in the same table
-      sim.RunIndex = i 
-      sim.RandomSeed = seeds.pop
-      sim.RunContinuous
-    end
+      RUNS.times do |i|
+        print "#{i+1} "
+    
+        # setting and incrementing RunIndex causes vissim to store
+        # the results of the consecutive runs in the same table
+        sim.RunIndex = i 
+        sim.RandomSeed = seeds.pop
+        sim.RunContinuous
+      end
   
-    puts "done"
+      puts "done"
   
-    # the results from all runs in this test scenario can now be extracted
-    results.extract_results "#{simname} #{program.name}", workdir
+      # the results from all runs in this test scenario can now be extracted
+      results.extract_results "#{simname} #{program.name}", workdir
 
-    vissim.Exit
+      vissim.Exit 
+    end
 
   end # end for each test program (eg. morning, afternoon)
 end
 
+puts "Prepared #{networks.size-1} scenarios"
+
 to_xls(networks,'networks to test',File.join(Base_dir,'results','results.xls'))
-
-puts "PREPARING RESULTS - PLEASE WAIT!"
-
-to_xls(results.to_a, 'data', RESULTS_FILE)
-
-# take cycle times and link evaluations from the last run of DOGS and mod DOGS
-require 'extract_cycle_times'
-require 'extract_links_evals'
 
 puts "#{Time.now}: END"
