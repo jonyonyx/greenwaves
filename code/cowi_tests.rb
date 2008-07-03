@@ -22,6 +22,9 @@ class TestPrograms
   def to_s
     @name
   end
+  def vissim_start_time
+    (@from - (@repeat_first_interval ? 60 * resolution : 0)).to_hms
+  end
 end
 
 MORNING = TestPrograms.new!(
@@ -50,36 +53,108 @@ AFTERNOON = TestPrograms.new!(
 
 FIXED_TIME_PROGRAM_NAME = {'Morgen' => 'M80', 'Dag' => 'D60', 'Eftermiddag' => 'E80'}
 
+class VissimTest
+  attr_reader :name,:programs
+  def initialize name, programs, options = {}
+    @name,@programs = name,programs
+    @opts = options
+  end
+  def setup
+    
+    # for each time-of-day program in the test
+    @programs.each do |program|
+  
+      output_dir = File.join(Base_dir,'test_scenarios', "scenario_#{@name.downcase.gsub(/\s+/, '_')}_#{program.name.downcase}")
+      
+      begin
+        Dir.mkdir output_dir
+      rescue
+        # workdir already exists, clear it
+        FileUtils.rm Dir[File.join(output_dir,'*')]
+      end
+    
+      # move into the default vissim directory for this project
+      # or the directory of the requested vissim network in order to copy it to
+      # a temporary location
+      vissim_dir = @opts[:network_dir] ? File.join(Base_dir,@opts[:network_dir]) : Vissim_dir
+      
+      # copy all relevant files to the instance workdir, first from try the main network
+      # dir then the specific network dir
+      [Vissim_dir,vissim_dir].uniq.each do |vissim_source_dir|
+        Dir.chdir(vissim_source_dir)
+        FileUtils.cp(%w{pua knk mdb szp fzi pua vap}.map{|ext| Dir["*.#{ext}"]}.flatten, output_dir)
+      end
+      
+      FileUtils.cp(Dir[File.join(vissim_dir,'*.inp')],output_dir)
+      
+      inpfilename = Dir['*.inp'].first # Vissim => picky
+      inppath = File.join(output_dir,inpfilename)
+      
+      puts "Preparing '#{@opts[:detector_scheme] ? "Trafikstyring #{@opts[:detector_scheme]}" : FIXED_TIME_PROGRAM_NAME[program.name]}' #{program}"
+      Dir.chdir output_dir
+      inpname = Dir['*.inp'].first
+      raise "INP file not found in '#{output_dir}'" unless inpname
+      inppath = File.join(output_dir,inpname)
+  
+      vissim = Vissim.new(inppath) # reload network to avoid backreferences
+  
+      # generate link inputs and routes using the time frame of the test program
+      # write them to the vissim file in the workdir
+      get_inputs(vissim,program).write(inppath)  
+      get_routing_decisions(vissim, program).write(inppath)
+      
+      if @opts[:detector_scheme] # => traffic actuated, otherwise fixed signal timing 
+        generate_master output_dir
+        SLAVES.each do |slave|
+          generate_slave(slave,STAGES[slave.name],program,@opts[:detector_scheme],output_dir)
+      
+          # copy a PUA file tailored for the traffic actuation scheme
+          name = slave.name.downcase
+          FileUtils.cp(File.join(Vissim_dir,"slave_#{name}.pua"),
+            File.join(output_dir,"#{name}.pua"))
+        end
+    
+        # gammel køge landevej remains pretimed - loss of coordination
+        gkl = vissim.controllers_with_plans.find{|sc|sc.number == 1} 
+    
+        generate_controller(gkl,output_dir,FIXED_TIME_PROGRAM_NAME[program.name])
+      else
+        vissim.controllers_with_plans.each do |sc|
+          program_name = FIXED_TIME_PROGRAM_NAME[program.name]
+          
+          if @opts[:alternative_signal_program] # program (Morning...) => program name (M100...)
+            altprogname = @opts[:alternative_signal_program][program]          
+            program_name = altprogname if sc.program[altprogname]
+          end
+          
+          generate_controller(sc,output_dir,program_name)
+        end
+      end
+      
+      yield inppath, program.vissim_start_time, program.name if block_given?      
+
+    end # end for each test program (eg. morning, afternoon)
+  end
+end
+
 TESTQUEUE = [
-  {
-    :name => 'Basis', 
-    :programs => [MORNING,DAY,AFTERNOON]
-  }, {
-    :name => 'Trafikstyring 1', 
-    :programs => [MORNING,DAY,AFTERNOON], 
-    :detector_scheme => 1
-  }, {
-    :name => 'Trafikstyring 2', 
-    :programs => [DAY], 
-    :detector_scheme => 2
-  }, {
-    :name => 'Dobbelt venstreving', 
-    :programs => [MORNING,AFTERNOON], 
-    :network_dir => 'dobbelt_venstre',
-    :detector_scheme => 1
-  }, {
-    :name => 'Ekstra spor på rampe fra København', 
-    :programs => [MORNING,AFTERNOON], 
+  VissimTest.new('Basis', [MORNING,DAY,AFTERNOON]), 
+  VissimTest.new('Trafikstyring 1', [MORNING,DAY,AFTERNOON], :detector_scheme => 1), 
+  VissimTest.new('Trafikstyring 2', [DAY], :detector_scheme => 2), 
+  VissimTest.new('Dobbelt venstresving', [MORNING,AFTERNOON], 
+    :network_dir => 'dobbelt_venstre', :detector_scheme => 1), 
+  VissimTest.new('Ekstra spor', [MORNING,AFTERNOON], 
     :network_dir => 'ekstra_spor',
+    :detector_scheme => 1,
+    :alternative_signal_program => {MORNING => 'M80-2',AFTERNOON => 'E80-2'}
+  ), 
+  VissimTest.new('Hoejere omloebstid', [MORNING,AFTERNOON],
+    :signal_program_scheme => 3,
+    :alternative_signal_program => {MORNING => 'M100',AFTERNOON => 'E100'}
+  ), 
+  VissimTest.new('Laengere groentid', [MORNING,AFTERNOON], 
     :detector_scheme => 1
-  }, {
-    :name => 'Fast tidsstying med højere omløbstid (100s)', 
-    :programs => [MORNING,AFTERNOON]
-  }, {
-    :name => 'Længere grøntid til venstresving', 
-    :programs => [MORNING,AFTERNOON], 
-    :detector_scheme => 1
-  }
+  )
 ]
 
 require 'vap_avedoere-havnevej' # methods for generating H&H master and slave controllers
@@ -119,43 +194,19 @@ STAGES = {
   ]
 }
 
-# prepare link inputs, routing decisions and signal controllers before the test is run
-def setup_test(detector_scheme, program, output_dir)  
-  puts "Preparing '#{detector_scheme ? "Trafikstyring #{detector_scheme}" : FIXED_TIME_PROGRAM_NAME[program.name]}' #{program}"
-  Dir.chdir output_dir
-  inpname = Dir['*.inp'].first
-  raise "INP file not found in '#{output_dir}'" unless inpname
-  inppath = File.join(output_dir,inpname)
-  
-  vissim = Vissim.new(inppath) # reload network to avoid backreferences
-  
-  # generate link inputs and routes using the time frame of the test program
-  # write them to the vissim file in the workdir
-  get_inputs(vissim,program).write(inppath)
-  
-  get_routing_decisions(vissim, program).write(inppath)
-  
-  if detector_scheme # => traffic actuated, otherwise fixed signal timing 
-    generate_master output_dir
-    SLAVES.each do |slave|
-      generate_slave(slave,STAGES[slave.name],program,detector_scheme)
-      
-      # copy a PUA file tailored for the traffic actuation scheme
-      name = slave.name.downcase
-      FileUtils.cp(File.join(Vissim_dir,"slave_#{name}.pua"),
-        File.join(output_dir,"#{name}.pua"))
-    end
-  else
-    # copy 'a' master program to avoid a nag - it is not used
-    FileUtils.cp(File.join(Vissim_dir,'master.vap'), output_dir) unless output_dir == Vissim_dir
-    vissim.controllers_with_plans.each do |sc|
-      gen_vap sc, output_dir, FIXED_TIME_PROGRAM_NAME[program.name]
-      gen_pua sc, output_dir, FIXED_TIME_PROGRAM_NAME[program.name]
-    end
-  end
+def generate_controller sc, output_dir, program_name  
+  gen_vap sc, output_dir, program_name
+  gen_pua sc, output_dir, program_name
 end
 
 if __FILE__ == $0
-  #puts AFTERNOON.interval_count
-  setup_test(nil, DAY, Vissim_dir)
+  networks = [['Path','Start Time']]
+  TESTQUEUE.each do |test|
+    test.setup do |inppath,simstarttime|
+      networks << [inppath,simstarttime]
+    end
+  end
+  puts "Prepared #{networks.size-1} scenarios"
+
+  to_xls(networks,'networks to test',File.join(Base_dir,'results','results.xls'))
 end

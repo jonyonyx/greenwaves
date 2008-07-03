@@ -196,10 +196,10 @@ class Vissim
       sc.update :program => sc_program unless sc_program.empty?      
       
       for grp in sc.groups
-        grp_program = {} # 
+        grp_program = {}
         for row in plans.find_all{|r| r[:isnum] == sc.number and r[:grpnum] == grp.number}
           grp_program[row[:program]] = row.retain_keys!(:red_end, :green_end, :priority)
-        end         
+        end
         grp.update(:program => grp_program) unless grp_program.empty?
       end
       
