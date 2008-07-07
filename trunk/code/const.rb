@@ -135,6 +135,9 @@ class Array
   def copy
     inject([]){|a,el|a << (el.respond_to?(:copy) ? el.copy : el)}
   end
+  def join_by property,delimeter    
+    map{|d|d.send(property)}.join(delimeter)
+  end
 end
 
 class Point

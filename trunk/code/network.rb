@@ -28,16 +28,43 @@ class Connector < RoadSegment
     length_over_points 
   end
 end
+
+# A list of vehicle fractions for time intervals.
+class Fractions < Array
+  def filter interval,vehtype
+    find_all{|f|f.interval == interval and f.veh_type == vehtype}
+  end
+  def self.sum fractions
+    fractions.map{|f|f.quantity}.sum
+  end
+end
 # A decision is a connector, which, whenever taken, has a deciding effect
 # on the final route of the motorist
 class Decision < Connector
-  attr_reader :from_direction,:intersection,:turning_motion,:fractions,:weight,:drop_link,
+  attr_reader :from_direction,:intersection,:turning_motion,:fractions,:weight,
     :decide_from_direction, :decide_at_intersection
   def initialize(number)
     super(number)
     # the numbered option for this turning motion, when altertives for the
     # same turning motion exist
-    @fractions = []
+    @fractions = Fractions.new
+  end
+  def decid
+    "#{@from_direction}#{@intersection}#{@turning_motion}"
+  end
+  # use the in vissim defined drop link or find the furthest away
+  # link which does not split into several roads
+  def drop_link
+    return @drop_link if @drop_link
+    to_link = @to_link
+    
+    # continue along the road (to_link and further down) as long as
+    # no choices must be made between roads
+    # (method: more connectors may connect a road to the same downstream road)
+    while to_link.outgoing_connectors.map{|conn|conn.to_link}.uniq.size == 1
+      to_link = to_link.outgoing_connectors.first.to_link
+    end
+    @drop_link = to_link
   end
   def foreign_decision?
     @from_direction != @decide_from_direction or @intersection != @decide_at_intersection
@@ -47,6 +74,9 @@ class Decision < Connector
   end
   def decide_at
     "#{@decide_from_direction}#{@decide_at_intersection}"
+  end
+  def original_approach
+    "#{@from_direction}#{@intersection}"    
   end
   def time_intervals; @fractions.map{|f| f.interval}; end
   def add_fraction(interval, vehtype, quantity)

@@ -1,19 +1,22 @@
 require 'const'
+require 'vissim'
 
-# generate hourly values for day program at gl køge landevej
+vissim = Vissim.new
 
-sql = "SELECT avg(cars) * 4 as cars, avg(trucks) * 4 as trucks, from_direction,[turning motion] as turn, intersection FROM 
-  [counts$]
-  GROUP BY intersection,from_direction,to_direction,[turning motion]"
+decisions = vissim.decisions.find_all{|dec|%w{N2T E2L N3T N3L}.include?(dec.decid)}
+upstream = decisions.find_all{|dec|dec.intersection == 2}
+downstream = decisions - upstream
 
-data = [['Intersection','Period Start','Period End','Flow','Cars','Trucks','From_direction','to_direction','Turning Motion','Time of Day']]
-
-for row in DB[sql].all
-  data << [row[:intersection],'12:00','13:00',nil,row[:cars] * 0.75,row[:trucks] * 0.75,row[:from_direction],nil,row[:turn],'Dag']
-end
-
-#for row in data
-#  puts row.inspect
+#decisions.each do |dec|
+#  puts dec.time_intervals
 #end
 
-to_xls(data,'data',File.join(Base_dir,'data','day_plans.xls'))
+[:cars,:trucks].each do |vehtype|
+  decisions.map{|dec|dec.time_intervals}.flatten.uniq.sort.each do |interval|
+    upstreamfractions = upstream.map{|dec|dec.fractions.filter(interval,vehtype)}.flatten
+    downstreamfractions = downstream.map{|dec|dec.fractions.filter(interval,vehtype)}.flatten
+    upstreamsum = Fractions.sum(upstreamfractions)
+    downstreamsum = Fractions.sum(downstreamfractions)
+    puts "#{interval} #{vehtype} #{upstreamsum/downstreamsum}"
+  end
+end

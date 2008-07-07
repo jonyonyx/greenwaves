@@ -248,7 +248,7 @@ class Vissim
         
         # The link at which this decision should end, ie. drop
         # the affected vehicles so they may obtain a new route
-        opts[:drop_link] = links.find{|l| l.drop_for.include?(decid)} || opts[:to_link]
+        opts[:drop_link] = links.find{|l| l.drop_for.include?(decid)}# || opts[:to_link]
         
         Decision.new!(number,opts)        
       else

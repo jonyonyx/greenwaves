@@ -18,16 +18,13 @@ class Inputs < Array
       for veh_type, q in input.veh_flow_map      
         str << "INPUT #{inputnum}\n" +
           "      NAME \"#{veh_type} from #{link.from_direction}#{link.name.empty? ? '' : " ON " + link.name}\" LABEL  0.00 0.00\n" +
-          "      LINK #{link.number} Q #{q * 0.8} COMPOSITION #{Type_map[veh_type]}\n" +
+          "      LINK #{link.number} Q EXACT #{q.round.to_f} COMPOSITION #{Type_map[veh_type]}\n" +
           "      TIME FROM #{input.tstart - tbegin} UNTIL #{input.tend - tbegin}\n"
         
         inputnum += 1
       end
     end
     str
-  end
-  def to_a
-    
   end
 end
 
@@ -118,9 +115,11 @@ end
 
 if __FILE__ == $0
   puts "BEGIN"
+  require 'cowi_tests'
+  
   vissim = Vissim.new
   
-  inputs = get_inputs vissim
+  inputs = get_inputs vissim, MORNING
   inputs.write
   #puts inputs.to_vissim
   
