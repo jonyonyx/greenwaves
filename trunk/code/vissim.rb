@@ -5,6 +5,8 @@ require 'vissim_elem'
 require 'vissim_distance'
 require 'vissim_routes'
 require 'vissim_input'
+require 'autocountcontrol'
+require 'vissim_foreignadjust'
 
 # vissim element names. match anything that isn't the last quotation mark
 NAMEPATTERN = '\"([^\"]*)\"'
@@ -285,50 +287,7 @@ class Vissim
       [:cars,:trucks].each do |vehtype|
         dec.add_fraction(interval,vehtype,row[vehtype])
       end
-    end
-    
-    # For decisions which are made at upstream decision points, make 
-    # adjustments to maintain ratios
-    @decisions.find_all{|d|d.foreign_decision?}.group_by{|d|d.decide_at}.each do |dp,foreign_decisions|
-      affected_decisions = @decisions.find_all{|d|d.decide_at == dp} - foreign_decisions
-            
-      # TODO: find the donor decision using route discovery
-      donor_decision = affected_decisions.find{|dec|dec.turning_motion == 'T'}
-      
-      # for every time interval adjust the fractions of
-      # the affected decisions to maintain their relative proportions to the donor decision
-      foreign_decisions.map{|d|d.time_intervals}.flatten.uniq.each do |interval|
-        [:cars,:trucks].each do |vehtype|
-          decision_fractions = {} # decision => list of fractions
-          decision_quantity = {} # decision => quantity
-          
-          (affected_decisions + foreign_decisions).each do |dec|
-            fractions = dec.fractions.flatten.find_all{|f|f.interval == interval and f.veh_type == vehtype}
-            decision_fractions[dec] = fractions              
-            decision_quantity[dec] = fractions.map{|f|f.quantity}.sum
-          end
-          
-          affected_sum = affected_decisions.map{|dec|decision_quantity[dec]}.sum
-          foreign_sum =  foreign_decisions.map{|dec|decision_quantity[dec]}.sum
-          
-          diff = (foreign_sum-affected_sum).abs.to_f
-          
-          decisions_to_scale = if affected_sum > foreign_sum
-            foreign_decisions
-          else
-            affected_decisions
-          end
-          
-          reference_quantity = decisions_to_scale.map{|dec|decision_quantity[dec]}.max
-          
-          decisions_to_scale.each do |dec|
-            amount = diff * decision_quantity[dec] / reference_quantity
-            decision_fractions[dec].each{|f|f.adjust(amount)}
-          end
-        end
-      end
-    end
-    
+    end    
   end
   
   # Extract knot definitions for links and connectors
@@ -445,15 +404,4 @@ if __FILE__ == $0
       puts "   #{dec.name}: #{dec.fractions.find{|f|f.interval == interval and f.veh_type == :cars}}"
     end
   end
-  #  vissim.controllers_with_plans.each do |sc|
-  #    for grp in sc.groups
-  #      puts grp.program
-  #    end
-  #  end
-  #  rows = [['#','Name','Date Counted']]
-  #  DB['SELECT name, CLNG(number) as num, count_date FROM [intersections$] ORDER BY number'].each do |row|
-  #    rows << [row[:num], row[:name], row[:count_date] ?
-  #        Time.parse(row[:count_date].split(' ').first).strftime("%d-%m-%Y") : '-']
-  #  end
-  #  puts to_tex(rows,:row_sep => "\r", :caption => 'Groups for main traffic direction as perceived by traffic signal designer', :label => 'tab:traffic_counts')
 end

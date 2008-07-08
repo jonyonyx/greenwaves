@@ -51,7 +51,7 @@ AFTERNOON = TestPrograms.new!(
   :repeat_first_interval => true
 )
 
-FIXED_TIME_PROGRAM_NAME = {'Morgen' => 'M80', 'Dag' => 'D60', 'Eftermiddag' => 'E80'}
+FIXED_TIME_PROGRAM_NAME = {MORNING => 'M80', DAY => 'D60', AFTERNOON => 'E80'}
 
 class VissimTest
   attr_reader :name,:programs
@@ -90,7 +90,7 @@ class VissimTest
       inpfilename = Dir['*.inp'].first # Vissim => picky
       inppath = File.join(output_dir,inpfilename)
       
-      puts "Preparing '#{@opts[:detector_scheme] ? "Trafikstyring #{@opts[:detector_scheme]}" : FIXED_TIME_PROGRAM_NAME[program.name]}' #{program}"
+      puts "Preparing '#{@opts[:detector_scheme] ? "Trafikstyring #{@opts[:detector_scheme]}" : FIXED_TIME_PROGRAM_NAME[program]}' #{program}"
       Dir.chdir output_dir
       inpname = Dir['*.inp'].first
       raise "INP file not found in '#{output_dir}'" unless inpname
@@ -117,10 +117,10 @@ class VissimTest
         # gammel køge landevej remains pretimed - loss of coordination
         gkl = vissim.controllers_with_plans.find{|sc|sc.number == 1} 
     
-        generate_controller(gkl,output_dir,FIXED_TIME_PROGRAM_NAME[program.name])
+        generate_controller(gkl,output_dir,FIXED_TIME_PROGRAM_NAME[program])
       else
         vissim.controllers_with_plans.each do |sc|
-          program_name = FIXED_TIME_PROGRAM_NAME[program.name]
+          program_name = FIXED_TIME_PROGRAM_NAME[program]
           
           if @opts[:alternative_signal_program] # program (Morning...) => program name (M100...)
             altprogname = @opts[:alternative_signal_program][program]          

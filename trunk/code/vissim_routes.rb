@@ -34,6 +34,9 @@ class Vissim
     def to_vissim; @road_segments[1...-1].map{|rs|rs.number}.join(' '); end
     def to_s; "#{start} > ... (#{@road_segments.size-2}) > #{exit}"; end  
     def <=>(other); @road_segments.size <=> other.road_segments.size; end
+    def include?(rs)
+      @road_segments.include?(rs)
+    end
   end
   
   # route finding routine working directly on vissim network objects

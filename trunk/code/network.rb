@@ -32,10 +32,17 @@ end
 # A list of vehicle fractions for time intervals.
 class Fractions < Array
   def filter interval,vehtype
-    find_all{|f|f.interval == interval and f.veh_type == vehtype}
+    Fractions.new(find_all{|f|f.interval == interval and f.veh_type == vehtype})
   end
   def self.sum fractions
-    fractions.map{|f|f.quantity}.sum
+    if fractions.instance_of?(Fractions)
+      fractions.sum
+    else
+      fractions.map{|f|f.quantity}.sum      
+    end
+  end
+  def sum
+    map{|f|f.quantity}.sum
   end
 end
 # A decision is a connector, which, whenever taken, has a deciding effect
@@ -122,6 +129,10 @@ class Decision < Connector
     end
     def adjust(amount)
       @quantity += amount
+      @quantity = 0.0 if @quantity < 0
+    end
+    def set(value)
+      @quantity = value
     end
     def <=>(f2); @interval <=> f2.interval; end
     def to_s; "Fraction from #{@interval} = #{quantity} #{@veh_type}"; end

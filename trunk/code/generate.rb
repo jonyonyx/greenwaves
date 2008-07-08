@@ -15,11 +15,17 @@ end
 #opts = OptionParser.new
 #opts.on('-h','--help') {usage}
 #opts.on('all') do 
-  vissim = get_vissim_instance
-  get_inputs(vissim).write
-  get_decisions_with_fractions(vissim).write
-  generate_controllers(vissim, :dogs_enabled => true)  
-#end  
+require 'cowi_tests'
+
+vissim = get_vissim_instance
+#vissim.countadjust(%w{N2})
+vissim.foreignadjust
+get_inputs(vissim, MORNING).write
+get_routing_decisions(vissim, MORNING).write
+vissim.controllers_with_plans.each do |sc|
+  generate_controller sc,Vissim_dir,'M80'
+end
+#end
 #opts.on('vap'){generate_controllers(get_vissim_instance)}
 #opts.on('inputs'){get_inputs(get_vissim_instance).write}
 #opts.on('routes'){get_vissim_routes(get_vissim_instance).write}
