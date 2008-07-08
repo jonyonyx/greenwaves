@@ -4,19 +4,6 @@ require 'const'
 require 'vissim'
 require 'vissim_routes'
 
-class NodeEvaluation
-  attr_reader :testname, :node, :results, :fromlink, :tolink, :tstart, :tend
-  def initialize name, node, fromlink, tolink, tstart, tend, results
-    @testname = name
-    @node = node
-    @fromlink, @tolink = fromlink, tolink
-    @tstart, @tend = tstart, tend
-    @results = results # hash of result types to their values
-  end
-  def <=>(othernodeeval)
-    (@node == othernodeeval.node) ? (@testname <=> othernodeeval.testname) : (@node <=> othernodeeval.node)
-  end
-end
 class NodeEvals < Array
   
   # NodeEvaluation requires a vissim network instance to obtain 

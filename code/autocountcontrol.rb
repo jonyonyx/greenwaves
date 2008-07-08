@@ -7,6 +7,7 @@ class Vissim
       upstream_decisions = (@decisions - downstream_decisions).map do |dec2|
         routes = find_routes(dec2, downstream_decisions)
     
+        # must contain two decisions: the downstream decision and the upstream
         routes.delete_if{|r|r.decisions.size != 2}
     
         next if routes.empty?
