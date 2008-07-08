@@ -18,7 +18,7 @@ end
 require 'cowi_tests'
 
 vissim = get_vissim_instance
-#vissim.countadjust(%w{N2})
+vissim.countadjust(%w{N2})
 vissim.foreignadjust
 get_inputs(vissim, MORNING).write
 get_routing_decisions(vissim, MORNING).write

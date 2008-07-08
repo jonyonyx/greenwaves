@@ -7,6 +7,7 @@ require 'vissim_routes'
 require 'vissim_input'
 require 'autocountcontrol'
 require 'vissim_foreignadjust'
+require 'vissim_evaluation'
 
 # vissim element names. match anything that isn't the last quotation mark
 NAMEPATTERN = '\"([^\"]*)\"'
@@ -20,11 +21,12 @@ SECTION_PARSERS = {
   'Connectors' => :parse_connectors, 
   'Signal Controllers (SC)' => :parse_controllers,
   'Nodes' => :parse_nodes,
-  'Inputs' => :parse_inputs
+  'Inputs' => :parse_inputs,
+  'Data Collection Points' => :parse_collection_points
 }
 
 class Vissim
-  attr_reader :connectors,:decisions,:controllers,:nodes,:inputs
+  attr_reader :connectors,:decisions,:controllers,:nodes,:inputs,:collection_points
   def initialize inpfile = Default_network
     inp = IO.readlines(inpfile).map!{|link| link.strip}.delete_if{|link| link.empty?}
       
@@ -392,16 +394,24 @@ class Vissim
       @inputs << Input.new(link(linknum),$1.to_i,$2.to_i,comp => quantity)
     end
   end
+  def parse_collection_points inp
+    @collection_points = []
+    while line = inp.shift
+      next unless line =~ /COLLECTION_POINT\s+(\d+)\s+NAME #{NAMEPATTERN}/
+      num = $1.to_i
+      opts = {:name => $2}
+      inp.shift =~ /POSITION LINK (\d+) LANE (\d)/
+      opts[:position_link] = link($1.to_i) || @connectors.find{|conn|conn.number == $1.to_i}
+      opts[:lane] = $2.to_i
+      
+      @collection_points << CollectionPoint.new!(num,opts)
+    end
+  end
 end
 
 if __FILE__ == $0
   vissim = Vissim.new
-  
-  interval = Decision::Interval.new(Time.parse('8:15'),Time.parse('08:30'))
-  vissim.decisions.find_all{|d|not d.disable_route?}.group_by{|d|d.decide_at}.each do |approach,decisions|
-    puts "#{approach}"
-    decisions.each do |dec|
-      puts "   #{dec.name}: #{dec.fractions.find{|f|f.interval == interval and f.veh_type == :cars}}"
-    end
-  end
+  vissim.collection_points.group_by{|dcp|dcp.position_link}.each do |dec,dcps|
+    puts dec,dcps,''
+  end  
 end
