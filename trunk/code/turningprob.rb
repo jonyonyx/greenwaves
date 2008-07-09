@@ -50,7 +50,7 @@ class RoutingDecision
       # dump vehicles late on the route exit link to avoid placing the destination
       # upstream of the last connector
       str << "     ROUTE     #{j}  DESTINATION LINK #{exit_link.number}  AT   #{exit_link.exit? ? (exit_link.length - 5.0) : 4.0}\n"
-      str << "     #{fractions.sort.map{|f|f.to_vissim}.join(' ')}\n"
+      str << "     #{fractions.sort.join_by(:to_vissim,' ')}\n"
       str << "     OVER #{route.to_vissim}\n"
       j += 1
     end
@@ -105,12 +105,12 @@ class Vissim
           end
         
           if program.repeat_first_interval
-            first_fraction = dec.fractions.find_all{|f|f.veh_type == veh_type}.min_by{|f|f.interval}
+            first_fraction = dec.fractions.find_all{|f|f.veh_type == veh_type and program.interval === f.interval.tstart}.min_by{|f|f.interval}
           
             raise "Fractions at #{dec}:\n#{fractions.join("\n")}" unless first_fraction
-          
+            
             new_first_fraction = first_fraction.copy
-            new_first_fraction.interval.shift!(-program.resolution * 60)
+            new_first_fraction.interval.shift!(-program.resolution_in_seconds)
           
             fractions << new_first_fraction
           end
@@ -130,12 +130,12 @@ if __FILE__ == $0
   puts "BEGIN"
   
   require 'cowi_tests'
+  network = 'C:\projects\62832\test_scenarios\scenario_basis_eftermiddag\amagermotorvejen_avedore-havnevej.inp'
+  vissim = Vissim.new network
   
-  vissim = Vissim.new
-  
-  rds = vissim.get_routing_decisions MORNING
-  puts rds.to_vissim
-  #rds.write
+  rds = vissim.get_routing_decisions AFTERNOON
+  #puts rds.to_vissim
+  rds.write network
     
   puts "END"
 end
