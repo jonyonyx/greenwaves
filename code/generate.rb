@@ -20,8 +20,8 @@ require 'cowi_tests'
 vissim = get_vissim_instance
 vissim.countadjust(%w{N2})
 vissim.foreignadjust
-get_inputs(vissim, MORNING).write
-get_routing_decisions(vissim, MORNING).write
+vissim.get_inputs(MORNING).write
+vissim.get_routing_decisions(MORNING).write
 vissim.controllers_with_plans.each do |sc|
   generate_controller sc,Vissim_dir,'M80'
 end

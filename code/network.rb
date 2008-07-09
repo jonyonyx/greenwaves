@@ -89,7 +89,7 @@ class Decision < Connector
   def add_fraction(interval, vehtype, quantity)
     raise "Fractions at #{to_s} for #{vehtype} from #{interval} already exist!" if @fractions.any?{|f| f.interval == interval and f.veh_type == vehtype}
     
-    @fractions << Fraction.new!(:interval => interval, :veh_type => vehtype, :quantity => quantity)
+    @fractions << Fraction.new(interval, vehtype, quantity)
   end
   def <=>(d2)
     @intersection == d2.intersection ? 
@@ -109,6 +109,9 @@ class Decision < Connector
     def copy
       Interval.new(@tstart,@tend)
     end
+    def resolution_in_minutes
+      (@tend-@tstart)/60
+    end
     def hash
       @tstart.hash + @tend.hash
     end
@@ -124,8 +127,11 @@ class Decision < Connector
   end
   class Fraction
     attr_reader :interval, :veh_type, :quantity
+    def initialize interval, veh_type, quantity
+      @interval, @veh_type, @quantity = interval, veh_type, quantity
+    end
     def copy
-      Fraction.new!(:interval => @interval.copy,:veh_type => @veh_type,:quantity => @quantity)
+      Fraction.new(@interval.copy,@veh_type,@quantity)
     end
     def adjust(amount)
       @quantity += amount
@@ -172,11 +178,10 @@ end
 # A decision point is point on a link where a decision
 # must be made about which way to go from here ie. which
 # of the possible decisions to take.
-class DecisionPoint
+class DecisionPoint < Array
   attr_reader :from_direction,:intersection,:decisions
   def initialize from,intersection
     @from_direction,@intersection = from,intersection
-    @decisions = []
     @link = nil
   end
   
@@ -185,9 +190,9 @@ class DecisionPoint
   # decision point.
   # note that the decisions might not have flows in the same
   # time intervals
-  def time_intervals(program)
-    intervals = @decisions.map{|d|d.time_intervals}.flatten.uniq.find_all{|i|program.interval === i.tstart}
-    if program.repeat_first_interval
+  def time_intervals(program,insert_repeat_interval = true)
+    intervals = map{|d|d.time_intervals}.flatten.uniq.find_all{|i|program.interval === i.tstart}
+    if program.repeat_first_interval and insert_repeat_interval
       firstinterval = intervals.min.copy
       firstinterval.shift!(-program.resolution*60)
       intervals << firstinterval
@@ -211,9 +216,9 @@ class DecisionPoint
     return @link = input_link if input_link
     
     # otherwise, perform a backwards search for the best common starting point...    
-    raise "Decision point #{@from_direction}#{@intersection} has no decisions!" if @decisions.empty?
+    raise "Decision point #{@from_direction}#{@intersection} has no decisions!" if empty?
     
-    drop_links = @decisions.map{|dec|dec.drop_link}
+    drop_links = map{|dec|dec.drop_link}
     
     # Looking for a link which has routes ending at all of the drop links    
     link_routes = {}
@@ -228,7 +233,7 @@ class DecisionPoint
     
     # remove any link which has routes that does not traverse one of the decisions
     link_routes.delete_if do |link,routes|
-      not @decisions.all?{|dec|routes.any?{|route|route.decisions.include?(dec)}}
+      not all?{|dec|routes.any?{|route|route.decisions.include?(dec)}}
     end
     
     # We now have a number of candidates. We want the one closest 

@@ -5,47 +5,96 @@ require 'vissim'
 class Inputs < Array
   include VissimOutput
   def section_header; /^-- Inputs: --/; end
-  def get_by_link number
-    find_all{|i| i.link.number == number}
-  end
   def to_vissim
     str = ''
     inputnum = 1
-    tbegin = map{|i| i.tstart}.min
-    each do |input|
+    tbegin = map{|i| i.interval}.min.tstart
+    sort.each do |input|
       link = input.link
       
-      for veh_type, q in input.veh_flow_map      
-        str << "INPUT #{inputnum}\n" +
-          "      NAME \"#{veh_type} from #{link.from_direction}#{link.name.empty? ? '' : " ON " + link.name}\" LABEL  0.00 0.00\n" +
-          "      LINK #{link.number} Q EXACT #{q.round.to_f} COMPOSITION #{Type_map[veh_type]}\n" +
-          "      TIME FROM #{input.tstart - tbegin} UNTIL #{input.tend - tbegin}\n"
+      fraction = input.fraction
+      interval = input.interval
+      veh_type = fraction.veh_type
+      
+      str << "INPUT #{inputnum}\n" +
+        "      NAME \"#{veh_type.to_s.capitalize} from #{link.from_direction}#{link.name.empty? ? '' : " ON " + link.name}\" LABEL  0.00 0.00\n" +
+        "      LINK #{link.number} Q EXACT #{fraction.quantity.round.to_f} COMPOSITION #{Type_map[veh_type]}\n" +
+        "      TIME FROM #{interval.tstart - tbegin} UNTIL #{interval.tend - tbegin}\n"
         
-        inputnum += 1
-      end
+      inputnum += 1
     end
     str
   end
 end
 
 class Input
-  attr_reader :link,:tstart,:tend,:veh_flow_map
-  def initialize link, tstart, tend, veh_flow_map
-    @link, @tstart, @tend, @veh_flow_map = link, tstart, tend, veh_flow_map
-  end
-  def ratio veh_type1, veh_type2
-    flow_type1 = @veh_flow_map[veh_type1] || 0.0
-    flow_type1.to_f / (flow_type1 + (@veh_flow_map[veh_type2] || 0.0))
+  attr_reader :link,:fraction,:interval
+  def initialize link, fraction
+    @link, @fraction = link, fraction
+    @interval = fraction.interval
   end
   def to_s
-    "Input on #{@link} from #{@tstart} to #{@tend}: #{@veh_flow_map.inspect}"
+    "Input on #{@link}: #{@fraction}"
   end
+  
+  # sort by time intervals then vehicle types
   def <=>(other)
-    @tstart <=> other.tstart
+    if @interval == other.interval
+      @fraction.veh_type.to_s <=> other.fraction.veh_type.to_s
+    else
+      @interval <=> other.interval
+    end
   end
 end
 
-def get_inputs vissim,program
+class Vissim
+  def get_inputs program
+    
+    inputs = Inputs.new
+    
+    @decisions.group_by{|dec|dec.original_approach}.each do |approach,decisions|      
+      
+      # find a *start* link that reaches all decisions at the approach without
+      # traversing other decisions      
+      input_link = @start_links.find do |link|
+        routes = find_routes(link,decisions)
+        decisions.all?{|dec|routes.any?{|r|r.include?(dec)}} and routes.all?{|r|r.decisions.size == 1}
+      end
+      
+      next if input_link.nil? # this approach is not an input and is fed by upstream decisions
+      
+      raise "Unable to locate link with number #{link_number}" unless input_link
+        
+      dp = DecisionPoint.new(decisions.first.from_direction,decisions.first.intersection)
+      decisions.each{|dec|dp << dec}
+      
+      dp.time_intervals(program,false).each do |interval|
+        [:cars,:trucks].each do |vehtype|
+          fractions = decisions.map{|dec|dec.fractions.filter(interval,vehtype)}.flatten
+          total_quantity = Fractions.sum(fractions) * INPUT_SCALING * (60/interval.resolution_in_minutes)
+          
+          combined_fraction = Decision::Fraction.new(interval,vehtype,total_quantity)
+          inputs << Input.new(input_link,combined_fraction)
+        end
+      end
+  
+    end
+  
+    if program.repeat_first_interval
+      # heating of the simulator
+      time_offset = program.resolution * 60
+      inputs.find_all{|i|i.interval.tstart == program.from}.each do |input|    
+        newfraction = input.fraction.copy
+        newfraction.interval.shift!(-time_offset)
+        inputs << Input.new(input.link,newfraction)
+      end
+    end
+    
+    inputs
+  end
+end
+
+def get_inputs_old vissim,program
 
   links = vissim.input_links
   
@@ -119,7 +168,7 @@ if __FILE__ == $0
   
   vissim = Vissim.new
   
-  inputs = get_inputs vissim, MORNING
+  inputs = vissim.get_inputs MORNING
   inputs.write
   #puts inputs.to_vissim
   
