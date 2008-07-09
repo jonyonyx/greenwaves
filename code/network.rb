@@ -141,7 +141,7 @@ class Decision < Connector
       @quantity = value
     end
     def <=>(f2); @interval <=> f2.interval; end
-    def to_s; "Fraction from #{@interval} = #{quantity} #{@veh_type}"; end
+    def to_s; "Fraction from #{@interval} = #{@quantity} #{@veh_type}"; end
     def to_vissim; "FRACTION #{@quantity}";end
   end
 end

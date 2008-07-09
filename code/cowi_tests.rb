@@ -14,6 +14,9 @@ class TestPrograms
   def interval
     (@from..@to)
   end
+  def resolution_in_seconds
+    @resolution * 60
+  end
   # the number of intervals when
   # dividing the timespan of from-to by the resolution
   def interval_count
@@ -23,7 +26,7 @@ class TestPrograms
     @name
   end
   def vissim_start_time
-    (@from - (@repeat_first_interval ? 60 * resolution : 0)).to_hms
+    (@from - (@repeat_first_interval ? resolution_in_seconds : 0)).to_hms
   end
 end
 
@@ -90,7 +93,7 @@ class VissimTest
       inpfilename = Dir['*.inp'].first # Vissim => picky
       inppath = File.join(output_dir,inpfilename)
       
-      puts "Preparing '#{@opts[:detector_scheme] ? "Trafikstyring #{@opts[:detector_scheme]}" : FIXED_TIME_PROGRAM_NAME[program]}' #{program}"
+      puts "Preparing '#{@name}' #{program}"
       Dir.chdir output_dir
       inpname = Dir['*.inp'].first
       raise "INP file not found in '#{output_dir}'" unless inpname
@@ -100,8 +103,10 @@ class VissimTest
   
       # generate link inputs and routes using the time frame of the test program
       # write them to the vissim file in the workdir
-      get_inputs(vissim,program).write(inppath)  
-      get_routing_decisions(vissim, program).write(inppath)
+      vissim.countadjust(%w{N2 S3})
+      vissim.foreignadjust
+      vissim.get_inputs(program).write(inppath)  
+      vissim.get_routing_decisions(program).write(inppath)
       
       if @opts[:detector_scheme] # => traffic actuated, otherwise fixed signal timing 
         generate_master output_dir
@@ -145,7 +150,6 @@ TESTQUEUE = [
     :network_dir => 'dobbelt_venstre', :detector_scheme => 1), 
   VissimTest.new('Ekstra spor', [MORNING,AFTERNOON], 
     :network_dir => 'ekstra_spor',
-    :detector_scheme => 1,
     :alternative_signal_program => {MORNING => 'M80-2',AFTERNOON => 'E80-2'}
   ), 
   VissimTest.new('Hoejere omloebstid', [MORNING,AFTERNOON],
