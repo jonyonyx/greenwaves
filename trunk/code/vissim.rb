@@ -9,31 +9,32 @@ require 'autocountcontrol'
 require 'vissim_foreignadjust'
 require 'vissim_evaluation'
 
-# vissim element names. match anything that isn't the last quotation mark
-NAMEPATTERN = '\"([^\"]*)\"'
-SECTIONPATTERN = /-- ([^-:]+): --/ # section start
-COORDINATEPATTERN = '(\-?\d+.\d+) (\-?\d+.\d+)' # x, y
-
-# sections, which are parsed from the network file
-# and symbols for the methods, which handle them
-SECTION_PARSERS = {
-  'Links' => :parse_links, 
-  'Connectors' => :parse_connectors, 
-  'Signal Controllers (SC)' => :parse_controllers,
-  'Nodes' => :parse_nodes,
-  'Inputs' => :parse_inputs,
-  'Data Collection Points' => :parse_collection_points
-}
-
 class Vissim
-  attr_reader :connectors,:decisions,:controllers,:nodes,:inputs,:collection_points
+  attr_reader :connectors,:decisions,:controllers,:nodes,:inputs,:collection_points,:start_link,:simulation_starttime
+
+  # vissim element names. match anything that isn't the last quotation mark
+  NAMEPATTERN = '\"([^\"]*)\"'
+  SECTIONPATTERN = /-- ([^:]+): --/ # section start
+  COORDINATEPATTERN = '(\-?\d+.\d+) (\-?\d+.\d+)' # x, y
+
+  # sections, which are parsed from the network file
+  # and symbols for the methods, which handle them
+  SECTION_PARSERS = {
+    'Links' => :parse_links, 
+    'Connectors' => :parse_connectors, 
+    'Signal Controllers (SC)' => :parse_controllers,
+    'Nodes' => :parse_nodes,
+    'Inputs' => :parse_inputs,
+    'Data Collection Points' => :parse_collection_points
+  }
+
   def initialize inpfile = Default_network
-    inp = IO.readlines(inpfile).map!{|link| link.strip}.delete_if{|link| link.empty?}
-      
+    inp = IO.readlines(inpfile).map!{|line| line.strip}.delete_if{|line| line.empty?}
+    
     # find relevant sections of the vissim file
     section_start = section_name = nil
-    inp.each_with_index do |link, i| 
-      next unless link =~ SECTIONPATTERN
+    inp.each_with_index do |line, i| 
+      next unless line =~ SECTIONPATTERN
       if section_start
         if parser = SECTION_PARSERS[section_name] 
           # found a parser interested in the section
@@ -44,13 +45,21 @@ class Vissim
       else # first occurrence of section start
         section_start = i
         section_name = $1
+        
+        # we found the headers
+        for line in inp[0...section_start]
+          case line
+          when /SIMULATION_STARTTIME\s+"(\d+:\d+:\d+)"/
+            @simulation_starttime = Time.parse($1)
+          end
+        end
       end
-    end       
+    end
     
     # remove non-input links which cannot be reached
-    @links_map.delete_if do |n,link|
+    @links_map.delete_if do |n,line|
       # a predecessor exists if there is a connector to this link
-      not (link.input? or link.is_bus_input) and not @connectors.any?{|c| c.to_link == link}
+      not (line.input? or line.is_bus_input) and not @connectors.any?{|c| c.to_link == line}
     end
         
     # remove all outgoing connectors which no longer have a from link
@@ -58,6 +67,12 @@ class Vissim
     
     # notify the links of their outgoing connectors
     @connectors.each{|conn| conn.from_link.outgoing_connectors << conn}
+    
+    # start links are the links in vissim which
+    # cannot be reached by a connector, distinct from input links, which are manually marked (for now)
+    @start_links = links.find_all do |link|
+      not @connectors.any?{|conn|conn.to_link == link}
+    end
     
     if Project == 'dtu'
       # attempt to mark links as arterial
@@ -289,7 +304,7 @@ class Vissim
       [:cars,:trucks].each do |vehtype|
         dec.add_fraction(interval,vehtype,row[vehtype])
       end
-    end    
+    end
   end
   
   # Extract knot definitions for links and connectors
@@ -391,7 +406,14 @@ class Vissim
       quantity = $2.to_f
       comp = $3.to_i
       inp.shift =~ /TIME FROM (\d+)\.0 UNTIL (\d+)\.0/
-      @inputs << Input.new(link(linknum),$1.to_i,$2.to_i,comp => quantity)
+      
+      fraction = Decision::Fraction.new(
+        Decision::Interval.new(@simulation_starttime + $1.to_i,@simulation_starttime + $2.to_i),
+        Type_map_rev[comp],
+        quantity
+      )
+      
+      @inputs << Input.new(link(linknum),fraction)
     end
   end
   def parse_collection_points inp
@@ -411,7 +433,7 @@ end
 
 if __FILE__ == $0
   vissim = Vissim.new
-  vissim.collection_points.group_by{|dcp|dcp.position_link}.each do |dec,dcps|
-    puts dec,dcps,''
-  end  
+#  vissim.collection_points.group_by{|dcp|dcp.position_link}.each do |dec,dcps|
+#    puts dec,dcps,''
+#  end  
 end

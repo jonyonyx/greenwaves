@@ -58,73 +58,72 @@ class RoutingDecision
   end
 end
 
-def get_routing_decisions vissim, program
+class Vissim
+  def get_routing_decisions program
   
-  decisions = vissim.decisions.find_all do |dec| 
-    not dec.disable_route? and 
-      dec.fractions.any?{|fraction|program.interval === fraction.interval.tstart}
-  end
+    decisions = @decisions.find_all do |dec| 
+      not dec.disable_route? and 
+        dec.fractions.any?{|fraction|program.interval === fraction.interval.tstart}
+    end
   
-  routing_decisions = RoutingDecisions.new
+    routing_decisions = RoutingDecisions.new
   
-  decision_points = []
-  decisions.each do |dec|
+    decision_points = []
     
-    # create new dp, if no other decision created it before
-    dp = decision_points.find do |dp|
-      dp.from_direction == dec.decide_from_direction and 
-        dp.intersection == dec.decide_at_intersection
-    end || DecisionPoint.new(dec.decide_from_direction,dec.decide_at_intersection)    
-    
-    decision_points << dp unless decision_points.include?(dp)
-      
-    dp.decisions << dec
-  end
+    decisions.group_by{|dec|dec.decide_at_intersection}.each do |intersection,intersection_decisions|
+      intersection_decisions.group_by{|dec|dec.decide_from_direction}.each do |from_direction,approach_decisions|
+        dp = DecisionPoint.new(from_direction,intersection)
+        approach_decisions.each{|dec|dp << dec}
+        decision_points << dp
+      end      
+    end
   
-  # find the local routes from the decision point
-  # to the point where the vehicles are dropped off downstream of intersection
-  decision_points.sort.each do |dp|
-    decision_link = dp.link(vissim)
+    # find the local routes from the decision point
+    # to the point where the vehicles are dropped off downstream of intersection
+    decision_points.sort.each do |dp|
+      decision_link = dp.link(self)
     
-    for veh_type in [:cars,:trucks]
-      rd = RoutingDecision.new!(
-        :input_link => decision_link, 
-        :veh_type => veh_type, 
-        :time_intervals => dp.time_intervals(program))
+      for veh_type in [:cars,:trucks]
+        rd = RoutingDecision.new!(
+          :input_link => decision_link, 
+          :veh_type => veh_type, 
+          :time_intervals => dp.time_intervals(program))
   
-      # add routes to the decision point
-      for dec in dp.decisions
-        dest = dec.drop_link
+        # add routes to the decision point
+        for dec in dp
+          dest = dec.drop_link
     
-        # find the route through the intersection (ie. the turning motion)
-        local_routes = vissim.find_routes(decision_link,dest)
-        local_route = local_routes.find{|r| r.decisions.include?(dec)}
-        raise "No routes from #{decision_link} to #{dest} over #{dec} among these routes:
+          # find the route through the intersection (ie. the turning motion)
+          local_routes = find_routes(decision_link,dest)
+          local_route = local_routes.find{|r| r.decisions.include?(dec)}
+          raise "No routes from #{decision_link} to #{dest} over #{dec} among these routes:
                \n#{local_routes.map{|lr|lr.to_vissim}.join("\n")}" if local_route.nil?
                 
-        fractions = dec.fractions.find_all do |fraction| 
-          fraction.veh_type == veh_type and
-            program.interval === fraction.interval.tstart
+          fractions = dec.fractions.find_all do |fraction| 
+            fraction.veh_type == veh_type and
+              program.interval === fraction.interval.tstart
+          end
+        
+          if program.repeat_first_interval
+            first_fraction = dec.fractions.find_all{|f|f.veh_type == veh_type}.min_by{|f|f.interval}
+          
+            raise "Fractions at #{dec}:\n#{fractions.join("\n")}" unless first_fraction
+          
+            new_first_fraction = first_fraction.copy
+            new_first_fraction.interval.shift!(-program.resolution * 60)
+          
+            fractions << new_first_fraction
+          end
+          rd.add_route(local_route, fractions)
         end
-        if program.repeat_first_interval
-          first_fraction = dec.fractions.find_all{|f|f.veh_type == veh_type}.min_by{|f|f.interval}
-          
-          raise "Fractions at #{dec}:\n#{fractions.join("\n")}" unless first_fraction
-          
-          new_first_fraction = first_fraction.copy
-          new_first_fraction.interval.shift!(-program.resolution * 60)
-          
-          fractions << new_first_fraction
-        end
-        rd.add_route(local_route, fractions)
+  
+        routing_decisions << rd 
       end
-  
-      routing_decisions << rd 
-    end
     
-  end
+    end
   
-  routing_decisions
+    routing_decisions
+  end
 end
 
 if __FILE__ == $0  
@@ -134,9 +133,9 @@ if __FILE__ == $0
   
   vissim = Vissim.new
   
-  rds = get_routing_decisions vissim, MORNING
-  #puts rds.to_vissim
-  rds.write
+  rds = vissim.get_routing_decisions MORNING
+  puts rds.to_vissim
+  #rds.write
     
   puts "END"
 end
