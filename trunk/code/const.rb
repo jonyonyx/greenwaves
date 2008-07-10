@@ -136,7 +136,10 @@ class Array
     inject([]){|a,el|a << (el.respond_to?(:copy) ? el.copy : el)}
   end
   def join_by property,delimeter    
-    map{|d|d.send(property)}.join(delimeter)
+    map_by(property).join(delimeter)
+  end  
+  def map_by(property)
+    map{|e|e.send(property)}
   end
 end
 

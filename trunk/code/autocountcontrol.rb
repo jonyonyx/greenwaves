@@ -2,40 +2,46 @@ require 'const'
 require 'vissim'
 
 class Vissim
-  def countadjust adjust_for_approaches = []
-    @decisions.group_by{|dec|dec.original_approach}.each do |approach,downstream_decisions|
-      upstream_decisions = (@decisions - downstream_decisions).map do |dec2|
-        routes = find_routes(dec2, downstream_decisions)
+  def countadjust adjust_foreign_approaches = false
+    @decisions.group_by{|dec|dec.original_approach}.each do |approach,approach_decisions|
+      upstream_decisions = (@decisions - approach_decisions).map do |upstream_decision|
+        routes = find_routes(upstream_decision, approach_decisions)
     
         # must contain two decisions: the downstream decision and the upstream
         routes.delete_if{|r|r.decisions.size != 2}
     
         next if routes.empty?
     
-        routes.map{|r|r.decisions}.flatten.uniq - downstream_decisions
+        routes.map_by(:decisions).flatten.uniq - approach_decisions
       end.flatten.uniq - [nil]
   
       next if upstream_decisions.empty?
-  
-      [:cars,:trucks].each do |vehtype|
-        downstream_decisions.map{|dec|dec.time_intervals}.flatten.uniq.sort.each do |interval|
-          upstreamfractions = upstream_decisions.map{|dec|dec.fractions.filter(interval,vehtype)}.flatten
-          downstreamfractions = downstream_decisions.map{|dec|dec.fractions.filter(interval,vehtype)}.flatten
-          upstreamsum = Fractions.sum(upstreamfractions)
-          downstreamsum = Fractions.sum(downstreamfractions)
       
-          # adjust upstream fractions so that
-          # they together they deliver the sum at N2
-          # TODO: maintain turning fractions at upstream approaches
-          if adjust_for_approaches.include?(approach)
-            diff = downstreamsum - upstreamsum
-            upstreamfractions.each do |fraction|
-              fraction.adjust(diff / upstreamfractions.size) # split the load evenly
+      [:cars,:trucks].each do |vehtype|
+        approach_decisions.map_by(:time_intervals).flatten.uniq.sort.each do |interval|
+          approach_fractions = approach_decisions.map{|dec|dec.fractions.filter(interval,vehtype)}.flatten
+          approach_sum = Fractions.sum(approach_fractions)
+      
+          # the fractions of the approach decisions must be adjusted to fully
+          # cover the load of the upstream decision(s), which is not being used as a route
+          if adjust_foreign_approaches and approach_decisions.all?{|dec|dec.foreign_decision?}
+            
+            no_route_decisions = upstream_decisions.find_all{|dec|dec.disable_route?}
+            upstreamfractions = no_route_decisions.map{|dec|dec.fractions.filter(interval,vehtype)}.flatten
+            
+            upstreamsum = Fractions.sum(upstreamfractions)
+            
+            proportion = {}
+            approach_fractions.each do |fraction|
+              # split the load according to original fractions
+              proportion[fraction] = fraction.quantity / approach_sum
+              fraction.set(upstreamsum * proportion[fraction])
             end
-            #puts "Adjusted from #{upstreamsum} to #{Fractions.sum(upstreamfractions)} to match #{downstreamsum}"
+            
+            newapproachsum = Fractions.sum(approach_fractions)
+            raise "Adjusted fractions for #{vehtype} #{interval} at #{approach_decisions.join_by(:decid,' ')} (#{newapproachsum}) differs from fractions of upstream no-route decisions #{no_route_decisions.join_by(:decid,' ')} (#{upstreamsum})" if (upstreamsum-newapproachsum).abs > EPS
+            raise "Adjusted fractions for #{vehtype} #{interval} caused incorrect relative proportions in #{approach_decisions.join_by(:decid,' ')}" if approach_fractions.any?{|f|(proportion[f] - f.quantity / newapproachsum).abs > EPS}
           end
-        
-          yield interval,approach,downstream_decisions,upstream_decisions,vehtype,downstreamsum,upstreamsum if block_given?
         end
       end
     end
