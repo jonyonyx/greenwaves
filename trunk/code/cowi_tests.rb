@@ -62,12 +62,15 @@ class VissimTest
     @name,@programs = name,programs
     @opts = options
   end
+  def get_output_dir program
+    File.join(Base_dir,'test_scenarios', "scenario_#{@name.downcase.gsub(/\s+/, '_')}_#{program.name.downcase}")
+  end
   def setup
     
     # for each time-of-day program in the test
     @programs.each do |program|
   
-      output_dir = File.join(Base_dir,'test_scenarios', "scenario_#{@name.downcase.gsub(/\s+/, '_')}_#{program.name.downcase}")
+      output_dir = get_output_dir(program)
       
       begin
         Dir.mkdir output_dir
@@ -85,7 +88,7 @@ class VissimTest
       # dir then the specific network dir
       [Vissim_dir,vissim_dir].uniq.each do |vissim_source_dir|
         Dir.chdir(vissim_source_dir)
-        FileUtils.cp(%w{pua knk mdb szp fzi pua vap}.map{|ext| Dir["*.#{ext}"]}.flatten, output_dir)
+        FileUtils.cp(%w{pua knk mdb szp fzi pua vap mes qmk}.map{|ext| Dir["*.#{ext}"]}.flatten, output_dir)
       end
       
       FileUtils.cp(Dir[File.join(vissim_dir,'*.inp')],output_dir)
@@ -103,8 +106,7 @@ class VissimTest
   
       # generate link inputs and routes using the time frame of the test program
       # write them to the vissim file in the workdir
-      vissim.countadjust(%w{N2 S3})
-      vissim.foreignadjust
+      vissim.foreignadjust(true,'N2')
       vissim.get_inputs(program).write(inppath)  
       vissim.get_routing_decisions(program).write(inppath)
       

@@ -5,10 +5,9 @@ require 'vap'
 
 require 'cowi_tests'
 
-program = AFTERNOON
+program = MORNING
 vissim = Vissim.new
-vissim.countadjust(true)
-vissim.foreignadjust
+vissim.foreignadjust(true,'N2')
 vissim.get_inputs(program).write
 vissim.get_routing_decisions(program).write
 vissim.controllers_with_plans.each do |sc|
