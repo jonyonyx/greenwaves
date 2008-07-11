@@ -5,7 +5,6 @@ require 'vissim_elem'
 require 'vissim_distance'
 require 'vissim_routes'
 require 'vissim_input'
-require 'autocountcontrol'
 require 'vissim_foreignadjust'
 require 'vissim_evaluation'
 
