@@ -48,19 +48,15 @@ GROUP BY No_"
 
 require 'cowi_tests'
 
-#delayheaders = TESTQUEUE.map do |test|
-#  test.programs.map do |program|
-#    "#{test.name} - #{program.name}"
-#  end
-#end.flatten
-
 peakstart = {
   MORNING => Time.parse('7:30'),
   DAY => Time.parse('12:00'),
   AFTERNOON => Time.parse('15:30')
 }
 
-to_extract = [:queue]
+to_extract = []
+to_extract << :queue
+#to_extract << :delay
 
 for situation in [MORNING,DAY,AFTERNOON]
   itemdata = {}
@@ -92,14 +88,14 @@ for situation in [MORNING,DAY,AFTERNOON]
   end
 
   to_extract.each do |datatype|
-    puts "#{datatype} - #{situation}"
+    puts "#{datatype.to_s.capitalize} - #{situation}"
     transposeddata = itemdata[datatype].transpose
 
     for row in transposeddata
       puts row.inspect
     end
   
-    to_xls(transposeddata,"#{datatype}_#{situation.name.downcase}",File.join(Base_dir,'results','results.xls'))
+    #to_xls(transposeddata,"#{datatype}_#{situation.name.downcase}",File.join(Base_dir,'results','results.xls'))
   end
   
 end
