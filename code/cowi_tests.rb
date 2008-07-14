@@ -57,7 +57,7 @@ AFTERNOON = TestPrograms.new!(
 FIXED_TIME_PROGRAM_NAME = {MORNING => 'M80', DAY => 'D60', AFTERNOON => 'E80'}
 
 class VissimTest
-  attr_reader :name,:programs
+  attr_reader :name,:programs,:opts
   def initialize name, programs, options = {}
     @name,@programs = name,programs
     @opts = options
@@ -65,11 +65,13 @@ class VissimTest
   def get_output_dir program
     File.join(Base_dir,'test_scenarios', "scenario_#{@name.downcase.gsub(/\s+/, '_')}_#{program.name.downcase}")
   end
+  def is_traffic_actuated?
+    @opts[:detector_scheme] # => traffic actuated, otherwise fixed signal timing 
+  end
   def setup
     
     # for each time-of-day program in the test
     @programs.each do |program|
-  
       output_dir = get_output_dir(program)
       
       begin
@@ -110,7 +112,7 @@ class VissimTest
       vissim.get_inputs(program).write(inppath)  
       vissim.get_routing_decisions(program).write(inppath)
       
-      if @opts[:detector_scheme] # => traffic actuated, otherwise fixed signal timing 
+      if is_traffic_actuated?
         generate_master output_dir
         SLAVES.each do |slave|
           generate_slave(slave,STAGES[slave.name],program,@opts[:detector_scheme],output_dir)
@@ -155,7 +157,6 @@ TESTQUEUE = [
     :alternative_signal_program => {MORNING => 'M80-2',AFTERNOON => 'E80-2'}
   ), 
   VissimTest.new('Hoejere omloebstid', [MORNING,AFTERNOON],
-    :signal_program_scheme => 3,
     :alternative_signal_program => {MORNING => 'M100',AFTERNOON => 'E100'}
   ), 
   VissimTest.new('Laengere groentid', [MORNING,AFTERNOON], 
@@ -171,12 +172,12 @@ require 'vap_avedoere-havnevej' # methods for generating H&H master and slave co
 # B is for traffic coming off the highway and up from the ramp
 STAGES = {
   'nord' => [
-    ExtendableStage.new!(:name => 'A1',  :number => 1,
+    ExtendableStage.new!(:name => 'A1 + At1',  :number => 1,
       :greentime => {MORNING => [12,30], DAY => [12,20], AFTERNOON => [12,20]},
       :detectors => [7,8,20]
     ),
     ExtendableStage.new!(:name => 'At1', :number => 2, :wait_for_sync => true,
-      :greentime => {MORNING => [22-12, 44-30], DAY => [22-12,41-20], AFTERNOON => [24-12,50-20]},
+      :greentime => {MORNING => [10,14], DAY => [10,21], AFTERNOON => [12,30]},
       :detectors => [9,10,15]
     ),
     ExtendableStage.new!(:name => 'B1',  :number => 3,
@@ -185,12 +186,12 @@ STAGES = {
     )
   ],
   'syd' => [
-    ExtendableStage.new!(:name => 'A2',  :number => 1,
-      :greentime => {MORNING => [21-12, 38-21], DAY => [21-12,41-26], AFTERNOON => [21-12,55-34]},
+    ExtendableStage.new!(:name => 'A2 + At2',  :number => 1,
+      :greentime => {MORNING => [12,21], DAY => [12,26], AFTERNOON => [12,34]},
       :detectors => [5,6,14]
     ),
-    ExtendableStage.new!(:name => 'At2', :number => 2, :wait_for_sync => true,
-      :greentime => {MORNING => [12,21], DAY => [12,26], AFTERNOON => [12,34]},
+    ExtendableStage.new!(:name => 'A2', :number => 2, :wait_for_sync => true,
+      :greentime => {MORNING => [10, 17], DAY => [9,15], AFTERNOON => [9,21]},
       :detectors => [3,4]
     ),
     ExtendableStage.new!(:name => 'B2',  :number => 3,
@@ -208,6 +209,8 @@ end
 if __FILE__ == $0
   networks = [['Path','Start Time']]
   TESTQUEUE.each do |test|
+    # rerun all traffic actuated settings
+    next unless test.opts[:detector_scheme]
     test.setup do |inppath,simstarttime|
       networks << [inppath,simstarttime]
     end

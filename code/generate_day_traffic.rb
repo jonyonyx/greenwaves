@@ -9,7 +9,7 @@ sql = "SELECT avg(cars) * 4 as cars, avg(trucks) * 4 as trucks, from_direction,[
 data = [['Intersection','Period Start','Period End','Flow','Cars','Trucks','From_direction','to_direction','Turning Motion','Time of Day']]
 
 for row in DB[sql].all
-  data << [row[:intersection],'12:00','13:00',nil,row[:cars] * 0.75,row[:trucks] * 0.75,row[:from_direction],nil,row[:turn],'Dag']
+  data << [row[:intersection],'12:00','13:00',nil,row[:cars] * 0.60,row[:trucks] * 0.60,row[:from_direction],nil,row[:turn],'Dag']
 end
 
 #for row in data

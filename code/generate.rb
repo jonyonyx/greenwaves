@@ -5,7 +5,7 @@ require 'vap'
 
 require 'cowi_tests'
 
-program = MORNING
+program = AFTERNOON
 vissim = Vissim.new
 vissim.foreignadjust(true,'N2')
 vissim.get_inputs(program).write
