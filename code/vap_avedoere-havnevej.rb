@@ -127,7 +127,7 @@ def generate_master output_dir
   cp.write(File.join(output_dir,'master.vap'))
 end
 
-def generate_slave slave,stages,program,detector_scheme,output_dir
+def generate_slave slave,stages,program,detector_scheme,output_dir,extra_green
   
   cp = CodePrinter.new
 
@@ -171,7 +171,11 @@ def generate_slave slave,stages,program,detector_scheme,output_dir
     
     adjust_cur_isl = (current_stage.wait_for_sync ? " - isl(#{current_stage.number-1},#{current_stage.number})" : '')
     tmin,tmax = current_stage.greentime[program].min, current_stage.greentime[program].max
-    
+
+    if extra_green and extra_stage_time = extra_green[current_stage.number]
+      tmax += extra_stage_time
+    end
+
     cp << "   IF (time_in_stage > " + 
       (adjust_cur_isl.empty? ? tmin.to_s : "(#{tmin}#{adjust_cur_isl})") + ') ' +
       "AND ((green_time_extension <= 0) OR " +

@@ -88,16 +88,14 @@ class VissimTest
       
       # copy all relevant files to the instance workdir, first from try the main network
       # dir then the specific network dir
-      [Vissim_dir,vissim_dir].uniq.each do |vissim_source_dir|
-        Dir.chdir(vissim_source_dir)
-        FileUtils.cp(%w{pua knk mdb szp fzi pua vap mes qmk}.map{|ext| Dir["*.#{ext}"]}.flatten, output_dir)
-      end
-      
-      FileUtils.cp(Dir[File.join(vissim_dir,'*.inp')],output_dir)
-      
-      inpfilename = Dir['*.inp'].first # Vissim => picky
-      inppath = File.join(output_dir,inpfilename)
-      
+      Dir.chdir(vissim_dir)
+      # extensions = %w{pua knk mdb szp fzi pua vap mes qmk}
+      extensions = %w{mdb inp}
+      FileUtils.cp(extensions.map{|ext| Dir["*.#{ext}"]}.flatten, output_dir)
+
+      # master is the same for all runs
+      FileUtils.cp(['master.pua','master.vap'],output_dir)
+            
       puts "Preparing '#{@name}' #{program}"
       Dir.chdir output_dir
       inpname = Dir['*.inp'].first
@@ -115,7 +113,7 @@ class VissimTest
       if is_traffic_actuated?
         generate_master output_dir
         SLAVES.each do |slave|
-          generate_slave(slave,STAGES[slave.name],program,@opts[:detector_scheme],output_dir)
+          generate_slave(slave,STAGES[slave.name],program,@opts[:detector_scheme],output_dir,@opts[:extra_green])
       
           # copy a PUA file tailored for the traffic actuation scheme
           name = slave.name.downcase
@@ -124,8 +122,7 @@ class VissimTest
         end
     
         # gammel køge landevej remains pretimed - loss of coordination
-        gkl = vissim.controllers_with_plans.find{|sc|sc.number == 1} 
-    
+        gkl = vissim.controllers_with_plans.find{|sc|sc.number == 1}
         generate_controller(gkl,output_dir,FIXED_TIME_PROGRAM_NAME[program])
       else
         vissim.controllers_with_plans.each do |sc|
@@ -148,10 +145,13 @@ end
 
 TESTQUEUE = [
   VissimTest.new('Basis', [MORNING,DAY,AFTERNOON]), 
-  VissimTest.new('Trafikstyring 1', [MORNING,DAY,AFTERNOON], :detector_scheme => 1), 
-  VissimTest.new('Trafikstyring 2', [DAY], :detector_scheme => 2), 
+  VissimTest.new('Trafikstyring 1', [MORNING,DAY,AFTERNOON],
+    :detector_scheme => 1),
+  VissimTest.new('Trafikstyring 2', [DAY],
+    :detector_scheme => 2),
   VissimTest.new('Dobbelt venstresving', [MORNING,AFTERNOON], 
-    :network_dir => 'dobbelt_venstre', :detector_scheme => 1), 
+    :network_dir => 'dobbelt_venstre',
+    :detector_scheme => 1),
   VissimTest.new('Ekstra spor', [MORNING,AFTERNOON], 
     :network_dir => 'ekstra_spor',
     :alternative_signal_program => {MORNING => 'M80-2',AFTERNOON => 'E80-2'}
@@ -160,7 +160,8 @@ TESTQUEUE = [
     :alternative_signal_program => {MORNING => 'M100',AFTERNOON => 'E100'}
   ), 
   VissimTest.new('Laengere groentid', [MORNING,AFTERNOON], 
-    :detector_scheme => 1
+    :detector_scheme => 1,
+    :extra_green => {2 => 4} # stage 2 gets 4 extra seconds to max green
   )
 ]
 
@@ -209,8 +210,6 @@ end
 if __FILE__ == $0
   networks = [['Path','Start Time']]
   TESTQUEUE.each do |test|
-    # rerun all traffic actuated settings
-    next unless test.opts[:detector_scheme]
     test.setup do |inppath,simstarttime|
       networks << [inppath,simstarttime]
     end
